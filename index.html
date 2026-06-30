@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -844,13 +845,13 @@
         // JSONP — script-tag GET bypasses CORS; callback always redirects
         window[cbName] = function() {
           delete window[cbName];
-          window.location.href = '/thank-you.html';
+          window.location.href = 'https://drive.google.com/drive/folders/1EoDq1qoG9UsS26KAChCFENsqTLdNTNyX?usp=drive_link';
         };
 
         var script = document.createElement('script');
         script.onerror = function() {
           delete window[cbName];
-          window.location.href = '/thank-you.html';
+          window.location.href = 'https://drive.google.com/drive/folders/1EoDq1qoG9UsS26KAChCFENsqTLdNTNyX?usp=drive_link';
         };
         script.src = endpoint;
         document.head.appendChild(script);
