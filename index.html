@@ -826,35 +826,77 @@
     // ──────────────────────────────────────────────────────────────────
 
     document.querySelectorAll('.ffm-form').forEach(function(form) {
+      var btn = form.querySelector('button[type="submit"]');
+      var defaultLabel = btn ? btn.innerHTML : '';
+
+      // Inline error message element (hidden until needed)
+      var errorEl = document.createElement('p');
+      errorEl.setAttribute('role', 'alert');
+      errorEl.style.cssText = 'display:none;color:#c0392b;font-size:14px;line-height:1.4;margin:10px 0 0;';
+      form.appendChild(errorEl);
+
+      function setSending(sending) {
+        if (!btn) return;
+        btn.disabled = sending;
+        if (sending) { btn.textContent = 'Sending...'; }
+        else { btn.innerHTML = defaultLabel; }
+      }
+
+      function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+        setSending(false);
+      }
+
       form.addEventListener('submit', function(e) {
         e.preventDefault();
-        var btn = form.querySelector('button[type="submit"]');
-        if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+        errorEl.style.display = 'none';
+        setSending(true);
 
         var email     = (form.querySelector('[name="email"]') || {}).value || '';
         var firstName = (form.querySelector('[name="first-name"]') || {}).value || '';
 
-        var cbName = 'mlCb_' + Date.now();
-        var params = 'fields%5Bemail%5D=' + encodeURIComponent(email)
-                   + '&fields%5Bname%5D='  + encodeURIComponent(firstName)
-                   + '&ml-submit=1&anticsrf=true&callback=' + cbName;
-
         var endpoint = 'https://assets.mailerlite.com/jsonp/'
-                       + ML_ACCOUNT_ID + '/forms/' + ML_FORM_ID + '/subscribe?' + params;
+                       + ML_ACCOUNT_ID + '/forms/' + ML_FORM_ID + '/subscribe';
 
-        // JSONP — script-tag GET bypasses CORS; callback always redirects
-        window[cbName] = function() {
-          delete window[cbName];
-          window.location.href = '/thank-you.html';
-        };
+        var body = 'fields%5Bemail%5D=' + encodeURIComponent(email)
+                 + '&fields%5Bname%5D='  + encodeURIComponent(firstName)
+                 + '&ml-submit=1&anticsrf=true';
 
-        var script = document.createElement('script');
-        script.onerror = function() {
-          delete window[cbName];
-          window.location.href = '/thank-you.html';
-        };
-        script.src = endpoint;
-        document.head.appendChild(script);
+        // Timeout so the button can never stay stuck (Safari-safe)
+        var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        var timer = setTimeout(function() {
+          if (controller) { controller.abort(); }
+          showError('This is taking longer than expected. Please try again.');
+        }, 15000);
+
+        // Official MailerLite embedded-form submission: POST + JSON response.
+        // Works in Chrome and Safari; redirect happens only after MailerLite accepts.
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body,
+          signal: controller ? controller.signal : undefined
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          clearTimeout(timer);
+          if (data && data.success) {
+            window.location.href = '/thank-you.html';
+          } else {
+            var msg = 'Something went wrong. Please check your email address and try again.';
+            try {
+              var fields = data && data.errors && data.errors.fields;
+              var firstKey = fields && Object.keys(fields)[0];
+              if (firstKey && fields[firstKey] && fields[firstKey][0]) { msg = fields[firstKey][0]; }
+            } catch (ignore) {}
+            showError(msg);
+          }
+        })
+        .catch(function() {
+          clearTimeout(timer);
+          showError('Could not reach the signup service. Please check your connection and try again.');
+        });
       });
     });
   </script>
