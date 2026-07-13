@@ -2,12 +2,13 @@
 
 ## Short Result Explanation
 
-Your Financial Flight Score reflects four core signals:
+Your Financial Flight Score reflects five core signals:
 
 1. Cash flow
-2. Emergency runway
-3. Debt pressure
-4. Savings and future fuel
+2. Savings system
+3. Emergency runway
+4. Debt load
+5. Wealth fuel
 
 This score is not a judgment. It is a cockpit check.
 
@@ -59,7 +60,7 @@ Best next move:
 
 Set up your monthly budget cockpit and identify where money is drifting.
 
-### Stabilizing
+### On Approach
 
 You have some control, but a few signals need attention.
 

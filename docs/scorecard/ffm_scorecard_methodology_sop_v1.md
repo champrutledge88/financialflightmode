@@ -130,14 +130,14 @@ Recommended simplified public status categories:
 
 | Score Range | Status | Meaning |
 |---:|---|---|
-| 0 to 49 | Pre-Flight | The pilot needs clarity, control, and a basic plan. |
-| 50 to 74 | Stabilizing | The pilot has some control but still has key pressure points. |
-| 75 to 89 | Cruise Control | The pilot has solid momentum and should focus on consistency. |
+| 0 to 39 | Pre-Flight | The pilot needs clarity, control, and a basic plan. |
+| 40 to 69 | On Approach | The pilot has some control but still has key pressure points. |
+| 70 to 89 | Cruise Control | The pilot has solid momentum and should focus on consistency. |
 | 90 to 100 | Flight Mode | The pilot has strong control and can focus on growth, ownership, and optimization. |
 
 Note:
 
-If the current website uses Grounded, Takeoff Ready, Cruising, and Flight Mode, the SOP should decide whether to keep those labels or migrate toward the brand journey terms.
+The current website uses Pre-Flight, On Approach, Cruise Control, and Flight Mode.
 
 ## Public Explanation Rule
 
@@ -147,12 +147,13 @@ Use this structure:
 
 ### Why this score?
 
-Your score reflects four core signals:
+Your score reflects five core signals:
 
 1. Cash flow
-2. Emergency runway
-3. Debt pressure
-4. Savings and future fuel
+2. Savings system
+3. Emergency runway
+4. Debt load
+5. Wealth fuel
 
 Then show short signal labels:
 

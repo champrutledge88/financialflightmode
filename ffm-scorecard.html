@@ -205,6 +205,31 @@
     .mval.neg { color: #f87171; }
     .mval.org { color: var(--orange); }
     .msub { font-size: 10px; color: #333; margin-top: 3px; font-style: italic; }
+    .next-moves {
+      background: var(--charcoal);
+      border: 1px solid #1a1a1a;
+      border-top: none;
+      padding: 18px;
+    }
+    .next-moves-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-style: italic;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--orange);
+    }
+    .next-moves-list {
+      display: grid;
+      gap: 8px;
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: #777;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .next-moves-list li { padding-left: 4px; }
 
     /* STAGE STRIP */
     .stage-strip {
@@ -305,7 +330,7 @@
         <div>
           <div class="eyebrow"><div class="eyebrow-line"></div>Flight Plan Budget Scorecard</div>
           <h1>Check Your Numbers.<br /><span>Find Your Stage.</span></h1>
-          <p class="page-sub">Enter your numbers below. Your Financial Flight Score tells you exactly where you stand and what to do next. Takes under 2 minutes.</p>
+          <p class="page-sub">Enter your numbers below. Your Financial Flight Score gives you a clear snapshot of your current stage and the next move to focus on first. Takes under 2 minutes.</p>
         </div>
         <div class="header-badges">
           <div class="status-row">
@@ -453,8 +478,8 @@
             </div>
             <div class="metric">
               <div class="mlabel">Debt Load</div>
-              <div class="mval" id="r-dti">--%</div>
-              <div class="msub">Total debt compared against monthly income.</div>
+              <div class="mval" id="r-dti">--</div>
+              <div class="msub">Total debt shown as months of take-home income.</div>
             </div>
             <div class="metric">
               <div class="mlabel">Emergency Fund Level</div>
@@ -466,6 +491,14 @@
               <div class="mval org" id="r-inv">--</div>
               <div class="msub" id="r-inv-sub">401k, IRA, and brokerage accounts</div>
             </div>
+          </div>
+          <div class="next-moves">
+            <div class="next-moves-title">Next 3 Moves</div>
+            <ol class="next-moves-list" id="next-moves">
+              <li>Enter your numbers to see the first move.</li>
+              <li>Calculate your score to reveal your current focus.</li>
+              <li>Use the Starter Kit to turn the result into a plan.</li>
+            </ol>
           </div>
         </div>
 
@@ -564,7 +597,7 @@
       return 0;
     }
     function scoreDebt(p) {
-      // p = totalDebt / (income * 100) * 100
+      // p = total debt as a multiple of monthly take-home income
       if (p <= 3)  return 20;
       if (p <= 7)  return 16;
       if (p <= 15) return 10;
@@ -598,6 +631,36 @@
       return                  ['NOT STARTED','neg'];
     }
 
+    function movesFor(total, cashRem, emPct, debtMonths, savePct) {
+      const moves = [];
+
+      if (cashRem <= 0) {
+        moves.push('Protect cash flow first: reduce one flexible category or pause one nonessential expense before next payday.');
+      } else {
+        moves.push('Keep positive cash flow protected: assign the remaining cash before it disappears into random spending.');
+      }
+
+      if (emPct < 25) {
+        moves.push('Build the first emergency runway target before chasing every other goal.');
+      } else if (debtMonths > 7) {
+        moves.push('Choose one debt target and make the next payment intentional.');
+      } else if (savePct < 10) {
+        moves.push('Increase the savings system by one small repeatable amount.');
+      } else {
+        moves.push('Keep the weekly review rhythm so the system stays current.');
+      }
+
+      if (debtMonths > 3 && !moves.some(m => m.includes('debt target'))) {
+        moves.push('Pick one debt target before the next payday and track progress weekly.');
+      } else if (total < 70) {
+        moves.push('Use the Starter Kit to build the next payday plan before money lands.');
+      } else {
+        moves.push('Use the Starter Kit to keep the cockpit updated and increase altitude consistently.');
+      }
+
+      return moves.slice(0, 3);
+    }
+
     function run() {
       const income = n('i-income');
       if (!income) { alert('Please enter your monthly take-home income to calculate your score.'); return; }
@@ -614,14 +677,14 @@
       const cashRem   = income - needs - wants - savings - debtPmt;
       const cashPct   = (cashRem / income) * 100;
       const savePct   = (savings / income) * 100;
-      const dtiPct    = (totalDebt / (income * 100)) * 100;
+      const debtMonths = totalDebt / income;
       const emPct     = emGoal > 0 ? clamp((emSaved / emGoal) * 100, 0, 100) : 0;
       const iRatio    = invest / income;
 
       const s1 = scoreCashFlow(cashPct);
       const s2 = scoreSavings(savePct);
       const s3 = scoreEmergency(emPct);
-      const s4 = scoreDebt(dtiPct);
+      const s4 = scoreDebt(debtMonths);
       const s5 = scoreInvest(iRatio);
       const total = clamp(s1+s2+s3+s4+s5, 0, 100);
 
@@ -646,8 +709,11 @@
 
       // Other metrics
       document.getElementById('r-save').textContent = pct(savePct);
-      document.getElementById('r-dti').textContent  = pct(dtiPct);
+      document.getElementById('r-dti').textContent  = debtMonths.toFixed(1) + 'x';
       document.getElementById('r-em').textContent   = pct(emPct);
+
+      const moves = movesFor(total, cashRem, emPct, debtMonths, savePct);
+      document.getElementById('next-moves').innerHTML = moves.map(move => '<li>' + move + '</li>').join('');
 
       const [ilbl, icls] = investLabel(iRatio);
       const ie = document.getElementById('r-inv');

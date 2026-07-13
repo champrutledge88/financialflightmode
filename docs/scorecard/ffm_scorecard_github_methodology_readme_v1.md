@@ -43,12 +43,12 @@ Recommended current categories:
 
 | Score | Status |
 |---:|---|
-| 0 to 49 | Pre-Flight |
-| 50 to 74 | Stabilizing |
-| 75 to 89 | Cruise Control |
+| 0 to 39 | Pre-Flight |
+| 40 to 69 | On Approach |
+| 70 to 89 | Cruise Control |
 | 90 to 100 | Flight Mode |
 
-If the live website still uses Grounded, Takeoff Ready, Cruising, and Flight Mode, document that as the current front-end label set before changing.
+The live website uses Pre-Flight, On Approach, Cruise Control, and Flight Mode.
 
 ## Public Copy Standard
 
