@@ -2,6 +2,12 @@
   pretty_urls = false
 
 [[redirects]]
+  from = "/thank-you.html"
+  to = "/thank-you-download.html"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/docs/scorecard/*"
   to = "/404.html"
   status = 404
