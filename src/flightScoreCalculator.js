@@ -20,7 +20,7 @@ export const STAGES = {
     key: "cruise",
     name: "Cruise Control",
     message:
-      "You have stability. Now your job is to keep the system repeatable and increase the quality of each paycheck decision.",
+      "You've created breathing room and started building your foundation. Your next mission is to strengthen your emergency fund, reduce debt, and make your progress repeatable.",
     nextAction:
       "Automate savings, review your emergency runway, and choose one number to improve before the next payday.",
     starterSection: "Dashboard Signals + Recommended Rhythm",
@@ -94,7 +94,7 @@ export const getInvestmentLabel = (investmentsCurrentValue) => {
   if (investmentsCurrentValue <= 0) return "No Fuel";
   if (investmentsCurrentValue < 500) return "Ignition";
   if (investmentsCurrentValue < 2500) return "Building";
-  if (investmentsCurrentValue < 10000) return "Strong";
+  if (investmentsCurrentValue < 10000) return "Building";
   return "Command";
 };
 
@@ -110,7 +110,7 @@ export const getStage = ({ score, cashRemaining, savingsRate, emergencyFundLevel
 const signalLabels = {
   cashRemaining: "Cash Remaining",
   savingsRate: "Savings Rate",
-  debtPressure: "Debt Pressure",
+  debtPressure: "Debt Load",
   emergencyFund: "Emergency Runway",
   investments: "Investment Status",
 };

@@ -540,7 +540,11 @@ h1 span {
 
 .money-field em {
   color: rgba(5, 5, 5, 0.66);
+  display: block;
+  font-size: 0.82rem;
   font-style: normal;
+  font-weight: 700;
+  margin-top: 2px;
 }
 
 .field-control {
@@ -583,6 +587,19 @@ h1 span {
 .full-button {
   margin-top: 18px;
   width: 100%;
+}
+
+.example-note {
+  color: rgba(5, 5, 5, 0.74);
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.4;
+  margin: 0 0 14px;
+}
+
+.example-note-bottom {
+  margin: 16px 0 -4px;
+  text-align: center;
 }
 
 .privacy-note,
@@ -770,6 +787,15 @@ h1 span {
   color: var(--orange) !important;
   font-size: 1.6rem;
   margin-top: 14px;
+}
+
+.score-reassurance {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 14px auto 0;
+  max-width: 300px;
 }
 
 .stage-card {

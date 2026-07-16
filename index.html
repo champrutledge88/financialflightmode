@@ -67,10 +67,12 @@
               <h3>Your Inputs</h3>
             </div>
 
+            <p class="example-note">See how the score works with a realistic example.</p>
+
             <div class="field-stack">
               <label class="money-field" for="income">
-                <span>Monthly Income <em>After Tax</em></span>
-                <span class="field-control"><b>$</b><input id="income" name="income" type="number" inputmode="decimal" min="0" step="1" value="6000" /></span>
+                <span>Monthly Take-Home Income <em>What actually reaches your account</em></span>
+                <span class="field-control"><b>$</b><input id="income" name="income" type="number" inputmode="decimal" min="0" step="1" value="4800" /></span>
               </label>
               <label class="money-field" for="needs">
                 <span>Monthly Needs <em>Bills</em></span>
@@ -78,35 +80,36 @@
               </label>
               <label class="money-field" for="wants">
                 <span>Monthly Wants <em>Lifestyle</em></span>
-                <span class="field-control"><b>$</b><input id="wants" name="wants" type="number" inputmode="decimal" min="0" step="1" value="900" /></span>
+                <span class="field-control"><b>$</b><input id="wants" name="wants" type="number" inputmode="decimal" min="0" step="1" value="750" /></span>
               </label>
               <label class="money-field" for="savings">
                 <span>Monthly Savings</span>
-                <span class="field-control"><b>$</b><input id="savings" name="savings" type="number" inputmode="decimal" min="0" step="1" value="600" /></span>
+                <span class="field-control"><b>$</b><input id="savings" name="savings" type="number" inputmode="decimal" min="0" step="1" value="400" /></span>
               </label>
               <label class="money-field" for="extraDebtPayment">
                 <span>Extra Debt Payment</span>
-                <span class="field-control"><b>$</b><input id="extraDebtPayment" name="extraDebtPayment" type="number" inputmode="decimal" min="0" step="1" value="300" /></span>
+                <span class="field-control"><b>$</b><input id="extraDebtPayment" name="extraDebtPayment" type="number" inputmode="decimal" min="0" step="1" value="200" /></span>
               </label>
               <label class="money-field" for="totalDebtBalance">
                 <span>Total Debt Balance</span>
-                <span class="field-control"><b>$</b><input id="totalDebtBalance" name="totalDebtBalance" type="number" inputmode="decimal" min="0" step="1" value="12500" /></span>
+                <span class="field-control"><b>$</b><input id="totalDebtBalance" name="totalDebtBalance" type="number" inputmode="decimal" min="0" step="1" value="14500" /></span>
               </label>
               <label class="money-field" for="emergencyFundSaved">
                 <span>Emergency Fund Saved</span>
-                <span class="field-control"><b>$</b><input id="emergencyFundSaved" name="emergencyFundSaved" type="number" inputmode="decimal" min="0" step="1" value="1500" /></span>
+                <span class="field-control"><b>$</b><input id="emergencyFundSaved" name="emergencyFundSaved" type="number" inputmode="decimal" min="0" step="1" value="3000" /></span>
               </label>
               <label class="money-field" for="emergencyFundGoal">
                 <span>Emergency Fund Goal</span>
                 <span class="field-control"><b>$</b><input id="emergencyFundGoal" name="emergencyFundGoal" type="number" inputmode="decimal" min="0" step="1" value="6000" /></span>
               </label>
               <label class="money-field" for="investmentsCurrentValue">
-                <span>Investments <em>Current Value</em></span>
-                <span class="field-control"><b>$</b><input id="investmentsCurrentValue" name="investmentsCurrentValue" type="number" inputmode="decimal" min="0" step="1" value="8750" /></span>
+                <span>Money Already Invested <em>Retirement accounts and other investments</em></span>
+                <span class="field-control"><b>$</b><input id="investmentsCurrentValue" name="investmentsCurrentValue" type="number" inputmode="decimal" min="0" step="1" value="3500" /></span>
               </label>
             </div>
 
-            <button class="primary-button full-button" type="submit">Calculate My Score</button>
+            <p class="example-note example-note-bottom">Your numbers will look different, and that's okay. Find your current stage and get your next move.</p>
+            <button class="primary-button full-button" type="submit">Check My Financial Flight Score</button>
             <p class="privacy-note">
               <span class="lock-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" focusable="false" fill="none" stroke="#ff5a00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -142,7 +145,7 @@
                       </svg>
                     </span>
                     <span><strong>Cash Remaining</strong><small>After expenses, savings, and debt</small></span>
-                    <b id="cashRemaining">$1,400</b>
+                    <b id="cashRemaining">$650</b>
                   </div>
                   <div class="metric-row">
                     <span class="metric-icon savings-icon" aria-hidden="true">
@@ -156,7 +159,7 @@
                       </svg>
                     </span>
                     <span><strong>Savings Rate</strong><small>Savings divided by income</small></span>
-                    <b id="savingsRate">10.0%</b>
+                    <b id="savingsRate">8.3%</b>
                   </div>
                   <div class="metric-row">
                     <span class="metric-icon debt-icon" aria-hidden="true">
@@ -168,8 +171,8 @@
                         <path d="M8 9l16 16" />
                       </svg>
                     </span>
-                    <span><strong>Debt-To-Income Ratio</strong><small>Total debt divided by income</small></span>
-                    <b id="debtToIncome">2.08x</b>
+                    <span><strong>Debt Load</strong><small>Total debt compared with monthly take-home income</small></span>
+                    <b id="debtToIncome">3.02x</b>
                   </div>
                   <div class="metric-row">
                     <span class="metric-icon shield-icon" aria-hidden="true">
@@ -179,7 +182,7 @@
                       </svg>
                     </span>
                     <span><strong>Emergency Fund Level</strong><small>Saved divided by goal</small></span>
-                    <b id="emergencyFundLevel">25%</b>
+                    <b id="emergencyFundLevel">50%</b>
                   </div>
                   <div class="metric-row">
                     <span class="metric-icon invest-icon" aria-hidden="true">
@@ -193,23 +196,24 @@
                       </svg>
                     </span>
                     <span><strong>Investment Status</strong><small>Long-term wealth fuel</small></span>
-                    <b id="investmentStatus">Strong</b>
+                    <b id="investmentStatus">Building</b>
                   </div>
                 </div>
               </div>
 
               <div class="score-bank">
                 <p class="score-label">Financial Flight Score</p>
-                <div class="score-ring" id="scoreRing" style="--score: 72">
+                <div class="score-ring" id="scoreRing" style="--score: 71">
                   <div class="score-core">
-                    <strong id="scoreValue">72</strong>
+                    <strong id="scoreValue">71</strong>
                     <span>Out of 100</span>
                     <span class="wing-star" aria-hidden="true">★</span>
                   </div>
                 </div>
+                <p class="score-reassurance">This measures financial control, not income, wealth, or status.</p>
                 <div class="stage-card" id="stageCard">
-                  <h4 id="stageName">Pre-Flight</h4>
-                  <p id="stageMessage">Start with the baseline numbers. Your first move is getting the cockpit ready before the next payday.</p>
+                  <h4 id="stageName">Cruise Control</h4>
+                  <p id="stageMessage">You've created breathing room and started building your foundation. Your next mission is to strengthen your emergency fund, reduce debt, and make your progress repeatable.</p>
                 </div>
               </div>
             </div>
@@ -230,7 +234,7 @@
               <article>
                 <span class="stage-signal amber"></span>
                 <strong>Cruise Control</strong>
-                <p>Stable enough to automate, refine, and improve one signal at a time.</p>
+                <p>Breathing room is showing. Strengthen the runway and make progress repeatable.</p>
                 <span class="stage-range">70-89</span>
               </article>
               <article>
@@ -267,7 +271,7 @@
           </article>
           <article>
             <span>Your Warning Light</span>
-            <strong id="warningLight">Debt Pressure</strong>
+            <strong id="warningLight">Debt Load</strong>
           </article>
           <article>
             <span>Next 7-Day Action</span>
