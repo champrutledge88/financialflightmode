@@ -147,7 +147,8 @@ input {
 .header-actions a:focus-visible {
   background: rgba(255, 255, 255, 0.08);
   color: var(--white);
-  outline: none;
+  outline: 2px solid rgba(255, 90, 0, 0.84);
+  outline-offset: 3px;
 }
 
 .header-actions .header-cta {
@@ -391,7 +392,8 @@ h1 span {
 .secondary-link:hover,
 .secondary-link:focus-visible {
   color: var(--white);
-  outline: none;
+  outline: 2px solid rgba(255, 90, 0, 0.84);
+  outline-offset: 4px;
 }
 
 .scorecard-shell,
@@ -574,7 +576,6 @@ h1 span {
   font-weight: 800;
   height: 100%;
   min-width: 0;
-  outline: none;
   padding: 0 12px 0 0;
   text-align: right;
 }
@@ -1128,13 +1129,14 @@ h1 span {
   border-radius: 8px;
   color: var(--black);
   min-height: 48px;
-  outline: none;
   padding: 0 14px;
 }
 
 .lead-form input:focus {
   border-color: var(--orange);
   box-shadow: 0 0 0 3px rgba(255, 90, 0, 0.18);
+  outline: 2px solid rgba(255, 90, 0, 0.42);
+  outline-offset: 2px;
 }
 
 .lead-form p {
@@ -1169,6 +1171,94 @@ h1 span {
 
 .light-link {
   color: rgba(255, 255, 255, 0.86);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.footer-links a,
+.legal-back {
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible,
+.legal-back:hover,
+.legal-back:focus-visible {
+  color: var(--white);
+  outline: 2px solid rgba(255, 90, 0, 0.84);
+  outline-offset: 4px;
+}
+
+.legal-page {
+  background:
+    radial-gradient(circle at 78% 12%, rgba(255, 90, 0, 0.22), transparent 28rem),
+    var(--black);
+  color: var(--white);
+}
+
+.legal-shell {
+  margin: 0 auto;
+  max-width: 940px;
+  padding: clamp(36px, 8vw, 86px) 22px;
+}
+
+.legal-shell h1 {
+  font-family: Impact, Oswald, "Arial Narrow", sans-serif;
+  font-size: clamp(3.2rem, 10vw, 7.6rem);
+  font-style: italic;
+  line-height: 0.9;
+  margin: 24px 0 14px;
+  text-transform: uppercase;
+}
+
+.legal-shell h2 {
+  color: var(--orange);
+  font-family: Impact, Oswald, "Arial Narrow", sans-serif;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+
+.legal-shell p {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 760px;
+}
+
+.legal-shell section {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  margin-top: 28px;
+  padding-top: 24px;
+}
+
+.legal-updated {
+  color: rgba(255, 255, 255, 0.58) !important;
+  font-weight: 800;
+  margin-bottom: 28px !important;
+  text-transform: uppercase;
+}
+
+.product-shell {
+  max-width: 1040px;
+}
+
+.legal-action-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 30px 0 40px;
 }
 
 .disclaimer {

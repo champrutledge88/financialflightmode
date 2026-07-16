@@ -132,7 +132,7 @@ const validateInputs = () => {
   }
 
   if (Number(scoreForm.elements.income.value) <= 0) {
-    errorNode.textContent = "Enter monthly after-tax income to calculate your score.";
+    errorNode.textContent = "Enter monthly take home income to calculate your score.";
     return false;
   }
 
