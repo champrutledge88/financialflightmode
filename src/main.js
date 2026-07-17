@@ -1,4 +1,5 @@
 import { calculateFlightScore } from "./flightScoreCalculator.js?v=stage-order-1";
+import { getScoreBand, trackEvent } from "./analytics.js?v=ga4-1";
 
 const MAILERLITE_ACCOUNT_ID = "2411474";
 const MAILERLITE_FORM_ID = "189897889621738735";
