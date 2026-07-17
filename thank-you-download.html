@@ -31,5 +31,17 @@
       </div>
       <p class="note">If your phone previews the file instead of saving it, use the share button and choose Save to Files.</p>
     </main>
+    <script type="module">
+      import { trackEvent } from "/src/analytics.js?v=ga4-1";
+
+      trackEvent("thank_you_view");
+
+      document.querySelector('a[download]')?.addEventListener("click", () => {
+        trackEvent("starter_kit_download", {
+          file_name: "financial-flight-mode-starter-kit.zip",
+          transport_type: "beacon",
+        });
+      });
+    </script>
   </body>
 </html>
