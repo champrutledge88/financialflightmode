@@ -24,6 +24,13 @@ const fields = [
 ];
 
 let currentFlightBriefing = null;
+let hasTrackedScorecardStart = false;
+
+const trackScorecardStart = () => {
+  if (hasTrackedScorecardStart) return;
+  hasTrackedScorecardStart = true;
+  trackEvent("scorecard_start");
+};
 
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -193,14 +200,19 @@ const submitLeadToMailerLite = async ({ name, email }) => {
 
 scoreForm.addEventListener("submit", (event) => {
   event.preventDefault();
+  trackScorecardStart();
 
   if (!validateInputs()) return;
 
   const result = calculateFlightScore(getInputValues());
+  trackEvent("scorecard_complete");
   renderResults(result, true);
+  trackEvent("briefing_view");
 });
 
 scoreForm.addEventListener("input", (event) => {
+  if (event.target.matches("input")) trackScorecardStart();
+
   if (event.target.matches("input") && Number(event.target.value) < 0) {
     event.target.value = 0;
   }
@@ -229,16 +241,24 @@ leadForm.addEventListener("submit", (event) => {
   };
 
   void leadPayload;
+  trackEvent("briefing_submit_start");
   leadStatus.textContent = "Sending your Flight Briefing...";
   setLeadFormSending(true);
 
   submitLeadToMailerLite({ name, email })
     .then(() => {
+      trackEvent("sign_up", { transport_type: "beacon" });
+      trackEvent("briefing_submit_success", { transport_type: "beacon" });
       leadStatus.textContent = "Success. Opening your Starter Kit download page.";
       leadForm.reset();
-      window.location.href = THANK_YOU_URL;
+      window.setTimeout(() => {
+        window.location.href = THANK_YOU_URL;
+      }, 250);
     })
     .catch((error) => {
+      trackEvent("briefing_submit_error", {
+        error_type: error.name === "AbortError" ? "timeout" : "provider_error",
+      });
       leadStatus.textContent =
         error.name === "AbortError"
           ? "This is taking longer than expected. Please try again."
