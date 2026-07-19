@@ -155,7 +155,7 @@ const setLeadFormSending = (isSending) => {
   if (!button) return;
 
   button.disabled = isSending;
-  button.textContent = isSending ? "Sending..." : "Send Me My Flight Briefing";
+  button.textContent = isSending ? "Sending..." : "Send Me The Starter Kit";
 };
 
 const extractMailerLiteError = (data) => {
