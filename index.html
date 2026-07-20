@@ -71,7 +71,7 @@
       <nav class="header-actions" aria-label="Page actions">
         <a href="#scorecard">Scorecard</a>
         <a href="#briefing">Briefing</a>
-        <a class="header-cta" href="#flight-briefing-form">Send Briefing</a>
+        <a class="header-cta" href="#flight-briefing-form">Get Starter Kit</a>
       </nav>
     </header>
 
@@ -358,19 +358,27 @@
 
       <section class="email-section" id="flight-briefing-form" aria-labelledby="email-title">
         <div class="email-copy">
-          <p class="eyebrow">Send Me My Flight Briefing</p>
-          <h2 id="email-title">Get Your Score And Next Action In Your Inbox.</h2>
+          <p class="eyebrow">Starter Kit Access</p>
+          <h2 id="email-title">Get the Starter Kit and Weekly Control Tower Briefing updates in your inbox.</h2>
           <p>
-            Get your score, flight stage, next action, Starter Kit, and future Weekly Control Tower
-            Briefing updates.
+            Enter your name and email to receive the complete setup package and future briefing updates.
           </p>
+          <div class="offer-includes" aria-label="Starter Kit contents">
+            <p class="offer-includes-title">Your download includes</p>
+            <ul>
+              <li><strong>7 tab workbook</strong><span>Build and review your complete Flight Plan Budget System.</span></li>
+              <li><strong>12 page Starter Kit</strong><span>Follow the mission briefing and first action path.</span></li>
+              <li><strong>8 page Setup Guide</strong><span>Complete setup in about 30 to 45 minutes.</span></li>
+              <li><strong>10 minute weekly reset</strong><span>Keep the system current before money starts drifting.</span></li>
+            </ul>
+          </div>
         </div>
         <form class="lead-form" id="lead-form" method="post" action="/thank-you.html">
           <label for="leadName">Name</label>
           <input id="leadName" name="leadName" type="text" autocomplete="name" placeholder="Pilot name" required />
           <label for="leadEmail">Email</label>
           <input id="leadEmail" name="leadEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
-          <button class="primary-button full-button" type="submit">Send Me My Flight Briefing</button>
+          <button class="primary-button full-button" type="submit">Send Me The Starter Kit</button>
           <p id="leadStatus" aria-live="polite"></p>
         </form>
       </section>
