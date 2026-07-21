@@ -23,7 +23,6 @@ const fields = [
   "investmentsCurrentValue",
 ];
 
-let currentFlightBriefing = null;
 let hasTrackedScorecardStart = false;
 
 const trackScorecardStart = () => {
@@ -79,22 +78,6 @@ const animateScore = (start, end) => {
   requestAnimationFrame(tick);
 };
 
-const buildBriefingPayload = (result) => ({
-  score: result.score,
-  stage: result.stage.name,
-  cashRemaining: result.metrics.cashRemaining,
-  savingsRate: result.metrics.savingsRate,
-  debtToIncome: result.metrics.debtToIncome,
-  emergencyFundLevel: result.metrics.emergencyFundLevel,
-  investmentStatus: result.metrics.investmentStatus,
-  strongestSignal: result.briefing.strongestSignal,
-  warningLight: result.briefing.warningLight,
-  nextAction: result.briefing.sevenDayAction,
-  starterSection: result.briefing.starterSection,
-  controlTowerBriefing:
-    "Review cash flow, debt, savings, and your next action before money starts drifting again.",
-});
-
 const renderResults = (result, shouldScroll = false) => {
   const previousScore = Number(document.querySelector("#scoreValue").textContent) || 0;
   const cashNode = document.querySelector("#cashRemaining");
@@ -124,7 +107,6 @@ const renderResults = (result, shouldScroll = false) => {
   document.querySelector("#sevenDayAction").textContent = result.briefing.sevenDayAction;
   document.querySelector("#starterSection").textContent = result.briefing.starterSection;
 
-  currentFlightBriefing = buildBriefingPayload(result);
   animateScore(previousScore, result.score);
 
   if (shouldScroll) {
@@ -170,10 +152,9 @@ const extractMailerLiteError = (data) => {
   return null;
 };
 
-const submitLeadToMailerLite = async ({ name, email }) => {
+const submitLeadToMailerLite = async ({ email }) => {
   const body = new URLSearchParams({
     "fields[email]": email,
-    "fields[name]": name,
     "ml-submit": "1",
     anticsrf: "true",
   });
@@ -221,31 +202,18 @@ scoreForm.addEventListener("input", (event) => {
 leadForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
-  const name = leadForm.elements.leadName.value.trim();
   const email = leadForm.elements.leadEmail.value.trim();
 
-  if (!name) {
-    leadStatus.textContent = "Enter your name to prepare the Flight Briefing.";
-    return;
-  }
-
   if (!isValidEmail(email)) {
-    leadStatus.textContent = "Enter a valid email to prepare the Flight Briefing.";
+    leadStatus.textContent = "Enter a valid email address.";
     return;
   }
 
-  const leadPayload = {
-    name,
-    email,
-    briefing: currentFlightBriefing,
-  };
-
-  void leadPayload;
   trackEvent("briefing_submit_start");
-  leadStatus.textContent = "Sending your Flight Briefing...";
+  leadStatus.textContent = "Preparing your Starter Kit access...";
   setLeadFormSending(true);
 
-  submitLeadToMailerLite({ name, email })
+  submitLeadToMailerLite({ email })
     .then(() => {
       trackEvent("sign_up", { transport_type: "beacon" });
       trackEvent("briefing_submit_success", { transport_type: "beacon" });
