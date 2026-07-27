@@ -1219,6 +1219,12 @@ h1 span {
   min-height: 22px;
 }
 
+.lead-form .signup-disclosure {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  min-height: 0;
+}
+
 .trust-section {
   display: grid;
   gap: 14px;
