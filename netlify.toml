@@ -8,6 +8,12 @@
   force = true
 
 [[redirects]]
+  from = "/flight-plan-budget-system.html"
+  to = "/#flight-briefing-form"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/docs/scorecard/*"
   to = "/404.html"
   status = 404
