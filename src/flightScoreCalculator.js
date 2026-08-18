@@ -5,7 +5,7 @@ export const STAGES = {
     message: "Start with the baseline numbers. Your first move is getting the cockpit ready before the next payday.",
     nextAction:
       "Enter your baseline budget, confirm income and bills, and identify the first number that needs attention.",
-    starterSection: "Know Your Numbers + Monthly Budget",
+    starterSection: "KNOW YOUR NUMBERS + MONTHLY BUDGET",
   },
   turbulence: {
     key: "turbulence",
@@ -14,7 +14,7 @@ export const STAGES = {
       "You are not behind. You are getting your signal. Start by stabilizing the cockpit before trying to build wealth.",
     nextAction:
       "Complete your Monthly Budget, identify 1-3 spending leaks, and choose one debt or cash-flow pressure point to address this week.",
-    starterSection: "Spending Leak Audit + Payday Pre-Flight Checklist",
+    starterSection: "MONTHLY BUDGET + WEEKLY REVIEW",
   },
   cruise: {
     key: "cruise",
@@ -23,7 +23,7 @@ export const STAGES = {
       "You've created breathing room and started building your foundation. Your next mission is to strengthen your emergency fund, reduce debt, and make your progress repeatable.",
     nextAction:
       "Automate savings, review your emergency runway, and choose one number to improve before the next payday.",
-    starterSection: "Dashboard Signals + Recommended Rhythm",
+    starterSection: "DEBT & RUNWAY + WEEKLY REVIEW",
   },
   flight: {
     key: "flight",
@@ -32,7 +32,7 @@ export const STAGES = {
       "You are in command. Keep the cockpit running, optimize your system, and use stable cash flow to build long-term options.",
     nextAction:
       "Review your full dashboard, increase income or investing capacity, and schedule your next month-end reset.",
-    starterSection: "Next Flight Path + Monthly Flight Checklist",
+    starterSection: "FLIGHT PLAN SUMMARY + WEEKLY REVIEW",
   },
 };
 
