@@ -24,6 +24,8 @@ const fields = [
 ];
 
 let hasTrackedScorecardStart = false;
+let hasTrackedScorecardComplete = false;
+let hasTrackedBriefingView = false;
 
 const trackScorecardStart = () => {
   if (hasTrackedScorecardStart) return;
@@ -186,9 +188,15 @@ scoreForm.addEventListener("submit", (event) => {
   if (!validateInputs()) return;
 
   const result = calculateFlightScore(getInputValues());
-  trackEvent("scorecard_complete");
+  if (!hasTrackedScorecardComplete) {
+    hasTrackedScorecardComplete = true;
+    trackEvent("scorecard_complete");
+  }
   renderResults(result, true);
-  trackEvent("briefing_view");
+  if (!hasTrackedBriefingView) {
+    hasTrackedBriefingView = true;
+    trackEvent("briefing_view");
+  }
 });
 
 scoreForm.addEventListener("input", (event) => {
