@@ -24,6 +24,8 @@ const fields = [
 ];
 
 let hasTrackedScorecardStart = false;
+let hasTrackedScorecardComplete = false;
+let hasTrackedBriefingView = false;
 
 const trackScorecardStart = () => {
   if (hasTrackedScorecardStart) return;
@@ -186,9 +188,15 @@ scoreForm.addEventListener("submit", (event) => {
   if (!validateInputs()) return;
 
   const result = calculateFlightScore(getInputValues());
-  trackEvent("scorecard_complete");
+  if (!hasTrackedScorecardComplete) {
+    hasTrackedScorecardComplete = true;
+    trackEvent("scorecard_complete");
+  }
   renderResults(result, true);
-  trackEvent("briefing_view");
+  if (!hasTrackedBriefingView) {
+    hasTrackedBriefingView = true;
+    trackEvent("briefing_view");
+  }
 });
 
 scoreForm.addEventListener("input", (event) => {
@@ -230,7 +238,7 @@ leadForm.addEventListener("submit", (event) => {
       leadStatus.textContent =
         error.name === "AbortError"
           ? "This is taking longer than expected. Please try again."
-          : error.message || "Could not reach the signup service. Please check your connection and try again.";
+          : "We couldn't complete your request right now. Please try again.";
     })
     .finally(() => {
       setLeadFormSending(false);
