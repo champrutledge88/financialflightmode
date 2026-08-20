@@ -1,4 +1,5 @@
 import { calculateFlightScore } from "./flightScoreCalculator.js?v=stage-order-1";
+import { buildFlightPlanReport } from "./flightPlanReport.js?v=report-1";
 import { getScoreBand, trackEvent } from "./analytics.js?v=ga4-1";
 
 const MAILERLITE_ACCOUNT_ID = "2411474";
@@ -109,12 +110,30 @@ const renderResults = (result, shouldScroll = false) => {
   document.querySelector("#sevenDayAction").textContent = result.briefing.sevenDayAction;
   document.querySelector("#starterSection").textContent = result.briefing.starterSection;
 
+  const report = buildFlightPlanReport(result);
+  document.querySelector("#reportTitle").textContent = report.title;
+  document.querySelector("#reportSummary").textContent = report.summary;
+  document.querySelector("#reportPriorities").innerHTML = report.priorities
+    .map(({ title, action }, index) => `<li><span>0${index + 1}</span><div><strong>${title}</strong><p>${action}</p></div></li>`)
+    .join("");
+  document.querySelector("#reportTargets").innerHTML = report.targets
+    .map(({ label, value }) => `<article><span>${label}</span><strong>${value}</strong></article>`)
+    .join("");
+  document.querySelector("#reportMissions").innerHTML = report.missions
+    .map(({ timeframe, action }) => `<article><strong>${timeframe}</strong><p>${action}</p></article>`)
+    .join("");
+
   animateScore(previousScore, result.score);
 
   if (shouldScroll) {
     document.querySelector("#briefing").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 };
+
+document.querySelector("#printReport").addEventListener("click", () => {
+  trackEvent("personalized_report_print");
+  window.print();
+});
 
 const validateInputs = () => {
   const invalid = fields.find((field) => Number(scoreForm.elements[field].value) < 0);

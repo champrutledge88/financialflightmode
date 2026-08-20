@@ -1035,6 +1035,36 @@ h1 span {
   line-height: 1.35;
 }
 
+.flight-report {
+  background: linear-gradient(145deg, #f7f3ec, #fff);
+  color: #151515;
+  margin: 44px auto;
+  max-width: 1240px;
+  padding: clamp(28px, 5vw, 58px);
+}
+
+.report-header { align-items: end; display: flex; gap: 28px; justify-content: space-between; }
+.report-header h2 { color: #151515; margin-bottom: 12px; }
+.report-header > div > p:last-child { color: #4b4b4b; line-height: 1.6; max-width: 720px; }
+.secondary-button { background: transparent; border: 2px solid #151515; color: #151515; cursor: pointer; font-weight: 900; padding: 14px 18px; text-transform: uppercase; }
+.secondary-button:hover, .secondary-button:focus-visible { background: #151515; color: #fff; }
+.report-callout { border-bottom: 1px solid #cfc8bd; border-top: 1px solid #cfc8bd; margin-top: 34px; padding: 28px 0; }
+.report-callout > strong { font-family: Impact, Oswald, "Arial Narrow", sans-serif; font-size: 1.45rem; text-transform: uppercase; }
+.report-callout ol { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); list-style: none; margin: 22px 0 0; padding: 0; }
+.report-callout li { display: flex; gap: 14px; }
+.report-callout li > span { color: var(--orange); font-family: Impact, Oswald, "Arial Narrow", sans-serif; font-size: 1.5rem; }
+.report-callout li strong, .report-callout li p { display: block; }
+.report-callout li p { color: #555; font-size: .92rem; line-height: 1.5; margin: 6px 0 0; }
+.report-targets { display: grid; gap: 1px; grid-template-columns: repeat(4, 1fr); margin-top: 30px; }
+.report-targets article { background: #171717; min-height: 118px; padding: 20px; }
+.report-targets span { color: #bbb; display: block; font-size: .72rem; font-weight: 900; text-transform: uppercase; }
+.report-targets strong { color: #fff; display: block; font-family: Impact, Oswald, "Arial Narrow", sans-serif; font-size: 1.65rem; margin-top: 14px; }
+.report-missions { margin-top: 34px; }
+.report-missions > div { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
+.report-missions article { border-left: 4px solid var(--orange); padding: 6px 18px; }
+.report-missions article p { color: #555; line-height: 1.55; }
+.report-note { border-top: 1px solid #cfc8bd; color: #666; font-size: .78rem; line-height: 1.5; margin: 30px 0 0; padding-top: 18px; }
+
 .score-legend article {
   border-right: 1px solid rgba(255, 255, 255, 0.22);
   min-height: 124px;
@@ -1686,6 +1716,10 @@ h1 span {
     grid-column: auto;
   }
 
+  .flight-report { margin: 28px 18px; }
+  .report-header { align-items: stretch; flex-direction: column; }
+  .report-callout ol, .report-targets, .report-missions > div { grid-template-columns: 1fr; }
+
   .pillar-grid,
   .pillar-grid.compact-grid,
   .trust-section {
@@ -1710,6 +1744,14 @@ h1 span {
     padding-left: 18px;
     padding-right: 18px;
   }
+}
+
+@media print {
+  body { background: #fff; }
+  body > * { display: none !important; }
+  body > main, .flight-report { display: block !important; }
+  main > *:not(.flight-report), .secondary-button { display: none !important; }
+  .flight-report { margin: 0; max-width: none; padding: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
