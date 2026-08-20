@@ -238,7 +238,7 @@ leadForm.addEventListener("submit", (event) => {
       leadStatus.textContent =
         error.name === "AbortError"
           ? "This is taking longer than expected. Please try again."
-          : error.message || "Could not reach the signup service. Please check your connection and try again.";
+          : "We couldn't complete your request right now. Please try again.";
     })
     .finally(() => {
       setLeadFormSending(false);
