@@ -1,17 +1,43 @@
-# FFM Customized Flight Plan V1 — Product Specification
+# FFM Personalized Flight Plan V1 — Product Specification
 
-Phase: PRODUCT RECONCILIATION (Revision 3)
+Phase: SPEC CLOSURE (Revision 4)
 Author role: FFM Product Architect / SPEC Owner
-Status: Revision 3 — reconciled against the previously-approved MVP concept,
-`FFM_Personalized_Flight_Plan_One_Page_Spec.md`, which was not available during earlier
-repository grounding (Revision 1) or the independent Product Challenge (Revision 2).
+Status: Revision 4 — closes the two remaining P1 findings from the independent Revision 3
+Product Re-Review (`PASS WITH CHANGES`). Product thesis and personalization engine are approved
+and not reopened in this revision.
+
+**Canonical product name (Revision 4):** **Personalized Flight Plan** — the name used in the
+approved original MVP spec (`ffm_personalized_flight_plan_one_page_spec_approved.md`), the name
+already used in the restored Product Promise (§1), and a more accurate description of
+deterministic self-service personalization than "Customized," which can imply bespoke
+Founder/manual work. Used throughout this document from Revision 4 forward. The file path
+remains `ffm_customized_flight_plan_v1_spec.md` through PR #10 to avoid unnecessary Git churn —
+this is a documentation-content rename only, not a file rename. Quoted material inside the
+Revision 3 Reconciliation Log below is left verbatim as a historical record of what each prior
+revision literally said at the time; it is not restated under the new name.
 
 Grounding note: reconciled against `docs/scorecard/*`, `docs/funnel/README.md`,
 `src/flightScoreCalculator.js`, `src/main.js`, `index.html`, `privacy.html`, `terms.html`, and
-the originally-approved one-page MVP spec (uploaded, not yet in-repo). Stage taxonomy remains
+the approved original one-page MVP spec (now in-repo:
+`ffm_personalized_flight_plan_one_page_spec_approved.md`). Stage taxonomy remains
 **Pre-Flight → Turbulence → Cruise Control → Flight Mode** (live code is authoritative over the
 Scorecard docs' stale "On Approach" label). No new stages introduced. Nothing here changes the
 live `getStage`/`calculateFlightScore` code.
+
+---
+
+## Revision 4 — SPEC Closure Log
+
+Closes the two P1 findings from the independent Revision 3 Product Re-Review (`PASS WITH
+CHANGES`). Product strategy and the personalization engine are not reopened.
+
+| # | Finding | SPEC Change | Status |
+|---|---|---|---|
+| 1 | Strong Signal was REQUIRED but Persona 1 omitted it with no deterministic rule | §6, §8, §10 (Persona 1 and 4), §16 — Strong Signal is now **always shown** (Option A), copy framed as relative-strongest not overall-financial-health, with a deterministic tie-break for the all-signals-tied case reusing the live `getStrongestSignal` stable-sort order | Resolved |
+| 2 | Calibration Mode needed a defined evidence schema without reintroducing financial-data retention | §11, §13, §16 — explicit calibration record MAY/MUST-NOT-contain schema; temporary, pilot-only, separated from any user-facing data; no account or persistent financial profile | Resolved |
+| 3 | Product carried two names ("Customized" and "Personalized" Flight Plan) | Title (above), §1, §4, and all current-tense prose renamed to **Personalized Flight Plan**; file path intentionally unchanged | Resolved |
+| 4 | Pilot structure needed a stronger validation checkpoint | §15 — Cohort 1 restructured to **5 observed independent users → checkpoint → 5 additional independent users**, still 10 total, still fully self-service, no delivered plan rewritten | Resolved |
+| 5 | "Calibration Override Rate" implied plans were being overridden | §11, §13, §15, §16 — renamed **Engine Failure Rate**, explicitly diagnostic-only; manual intervention tracked separately only if it ever occurs unexpectedly | Resolved |
 
 ---
 
@@ -45,7 +71,7 @@ strengthen rather than contradict the original.
 **Product Promise (restored, original wording):** *Your score shows where you are. Your
 Personalized Flight Plan shows what to do next.*
 
-Customized Flight Plan V1 is a **self-service, deterministic** personalization layer that sits
+Personalized Flight Plan V1 is a **self-service, deterministic** personalization layer that sits
 between the free Scorecard/Starter Kit and the future Flight Crew/Membership tiers. Immediately
 after completing the existing Scorecard, the pilot sees — in the browser, with no gate, no
 founder step, and no additional financial data leaving the device — their score, stage, a
@@ -100,9 +126,11 @@ core job itself, not just an implementation detail.)
 
 *(Unchanged by Revision 3.)*
 
-`Scorecard → Starter Kit → Flight Plan System → Customized Flight Plan → Flight Crew → Membership`
+`Scorecard → Starter Kit → Flight Plan System → Personalized Flight Plan → Flight Crew → Membership`
+*(renamed from "Customized Flight Plan" per Revision 4's canonical-name decision — same
+ecosystem step, same position, name only)*
 
-Customized Flight Plan V1 reuses the Scorecard's existing five signals and scoring logic and
+Personalized Flight Plan V1 reuses the Scorecard's existing five signals and scoring logic and
 routes its output back into the Starter Kit's existing workbook — not a parallel product.
 
 ---
@@ -146,6 +174,26 @@ conflict with the original, and are kept in full:
   fallback action is the original's **Ownership Mindset** pillar (§8) — a Control Tower Review
   — rather than a manufactured weakness.
 
+**Strong Signal selection (Revision 4 — resolves P1-1, "Strong Signal Omission Rule").**
+**Always show the strongest relative signal.** No omission threshold is invented: no existing
+FFM methodology document defines a principled minimum bar for what counts as "strong," so
+inventing one would be exactly the arbitrary threshold the reviewer warned against. The rule is
+therefore Option A, applied with no exception:
+
+- Strong Signal is the category returned by the existing `getStrongestSignal` logic — the single
+  highest relative score (score ÷ category max) among the five signals — shown on **every**
+  plan, regardless of how strong or weak that top score actually is in absolute terms.
+- **Copy meaning is strictly relative, never absolute:** the user-facing line always reads as
+  *"Among your current signals, this is the strongest one"* — never *"you are financially strong
+  in this area."* This holds even when the strongest relative score is itself low (e.g., 0.50) —
+  see Persona 1 (§10), which is now the worked proof that the copy doesn't overstate financial
+  health.
+- **Deterministic tie-break when multiple signals are equally strongest** (including the
+  all-five-tied-at-1.0 case): resolved by the existing `getStrongestSignal` implementation's own
+  stable-sort behavior, not a new rule — ties resolve in the fixed order **Cash Flow Control >
+  Savings System > Debt Load > Emergency Runway > Wealth Fuel** (the category object's existing
+  key order in `flightScoreCalculator.js`). See Persona 4 (§10).
+
 **Terminology change (Revision 3):** what Revision 2 called "Priority #1 / Priority #2" is now
 presented to the user as **Warning Light #1 / Warning Light #2** — same ranking output, restored
 approved terminology, and it reuses the live calculator's own `getWarningLight` naming rather
@@ -170,12 +218,12 @@ reconciliation.)*
 
 ---
 
-## 8. Customized Flight Plan Output (Reconciled — restores the original's Required Result table)
+## 8. Personalized Flight Plan Output (Reconciled — restores the original's Required Result table)
 
 | Element | Classification | Source / Notes |
 |---|---|---|
 | Score + Stage | REQUIRED | Existing score ring + stage badge, rendered client-side exactly as the live Scorecard already does. |
-| **Strong Signal** | **REQUIRED — restored** | The single strongest relative signal (`getStrongestSignal`), shown as positive evidence. Revision 2 dropped this; it is the only wholly positive-framed element and directly matches the live product's own "your score is a signal, not a verdict" trust copy. Not duplicative of the Warning Lights below — it names what's already working. |
+| **Strong Signal** | **REQUIRED — always shown (Revision 4, §6)** | The single strongest relative signal (`getStrongestSignal`), shown on every plan with no omission threshold — copy is explicitly relative ("the strongest of your current signals"), never a claim of overall financial health. Revision 2 had dropped this element; Revision 3 restored it but left its omission condition (Persona 1) non-deterministic, which Revision 4 closes. Not duplicative of the Warning Lights below — it names what's already working, even when that "strongest" score is itself modest. |
 | **Warning Light #1** | REQUIRED | The engine's top-ranked signal (§6), with its explanation and exact next action folded in — this *is* Revision 2's Priority #1, renamed to the originally-approved term. No separate redundant "Warning Indicator" summary exists (Revision 2's correct fix, kept). |
 | **Warning Light #2** | REQUIRED | Second-ranked signal, same treatment — this *is* Revision 2's Priority #2, renamed. |
 | Next Three Moves — **Do Now / This Payday / This Month** | REQUIRED | Cadence relabeled to the original's approved, payday-anchored terms (matches the live site's own "give every paycheck a mission" language) — replaces Revision 2's generic NOW/THIS WEEK/THIS MONTH. |
@@ -222,17 +270,22 @@ Relabeled to the original's approved cadence (Revision 3):
 
 ## 10. Four Personalization Examples (Relabeled — math unchanged and re-verified)
 
-*Figures are identical to Revision 2, hand-verified against `calculateFlightScore`; only the
-output terminology changes (Priority #1/#2 → Warning Light #1/#2; cadence labels; restored CTAs
-and Strong Signal).*
+*Figures are identical to Revision 2, hand-verified against `calculateFlightScore`; output
+terminology changes (Priority #1/#2 → Warning Light #1/#2; cadence labels; restored CTAs). Strong
+Signal is recomputed for every persona per Revision 4's always-show rule (§6) — Persona 1 and
+Persona 4 are the two worked cases that previously left this ambiguous.*
 
 ### Persona 1 — Pre-Flight, exactly zero remaining cash: "Maya"
 Income $3,000 · Needs $2,200 · Wants $650 · Savings $150 · Extra debt payment $0 · Total debt
 $14,000 · Emergency fund $500 / $2,000 goal · Investments $0. Pressure: Stable.
 - `cashRemaining = $0` → score 35 → **Pre-Flight** (stage calculation untouched).
 - `cashRemaining <= 0` → **Hard Override**.
-- **Strong Signal:** none stand out cleanly at this profile — omitted rather than manufactured
-  (the engine never fabricates positivity; see §8's "neutral next step" rule applied in reverse).
+- **Strong Signal (Revision 4 — resolves the P1-1 omission ambiguity):** relative scores are
+  cashRemaining 0.40, savingsRate 0.48, debtPressure 0.15, **emergencyFund 0.50**, investments 0.
+  Emergency Runway is the mathematical strongest at 0.50 — modest in absolute terms, which is
+  exactly why the copy stays relative: *"Emergency Runway — among your current signals, this is
+  your strongest one right now. It's not finished, just furthest along."* This is the proof case
+  that the always-show rule doesn't overstate financial health even at a low top score.
 - **Warning Light #1:** Cash Flow Control — "Your cash flow is exactly break-even, which means
   any surprise expense puts you negative. That comes before anything else."
 - **Warning Light #2:** Debt Load (relative score 0.15 — weakest non-suppressed signal;
@@ -280,9 +333,12 @@ debt $0 · Emergency fund $15,000 / $15,000 goal · Investments $40,000. Pressur
 - No Objective Fragility Signal corroborates the reported pressure → **Flag/Context**, not
   Hard Override — direct proof a strong profile's self-reported pressure alone doesn't override
   the numbers.
-- **Strong Signal:** genuinely all five — the plan names Cash Flow Control as the headline
-  Strong Signal and folds the rest into the Current Position summary rather than listing five
-  redundant "strong" callouts.
+- **Strong Signal (Revision 4 — deterministic tie-break, §6):** all five relative scores are
+  tied at 1.0. Per the restored `getStrongestSignal` stable-sort tie order (Cash Flow Control >
+  Savings System > Debt Load > Emergency Runway > Wealth Fuel), **Cash Flow Control** is shown
+  as the single Strong Signal — not because the other four are hidden, but because the rule
+  never displays more than one Strong Signal line, and this is the deterministic answer for a
+  five-way tie rather than an arbitrary pick.
 - **Warning Light #1 (fallback, §6 Step 5):** Ownership Mindset — Complete a Control Tower
   Review before payday, with a short contextual note: "You flagged an unexpected bill — your
   reserves look strong enough to absorb it. If this reflects a bigger recent change, retake this
@@ -291,7 +347,7 @@ debt $0 · Emergency fund $15,000 / $15,000 goal · Investments $40,000. Pressur
 
 ---
 
-## 11. Automated vs. Founder Calibration Mode (Rewritten — Reconciliation Finding: Founder Assistance)
+## 11. Automated vs. Founder Calibration Mode (Rewritten — Reconciliation Finding: Founder Assistance; Revision 4 adds the Calibration Record Schema below)
 
 **Resolution: the original's "without founder assistance" requirement is restored as the V1
 default, and is the strongest architecture — not a compromise.** Revision 2's founder-written
@@ -304,16 +360,66 @@ Founder to be a custodian of in the first place.
 
 | Fully Automated (every user, every time) | Founder Calibration Mode (pilot-only, sampled/complete QA — not a delivery gate) | Deferred |
 |---|---|---|
-| Stage determination (existing calculator, unmodified) | Reviewing Cohort 1's generated outputs (score/stage/Warning Lights/action, not raw financial inputs — those were never transmitted) for tone, correctness, and logic gaps | Full narrative generation via an LLM |
-| Warning Light #1/#2 ranking, including Hard Override / tie-break (§6) | Logging a Calibration Override — an entry noting the automated output looks wrong, with the Founder's proposed correction and reasoning, used to refine the *rules*, not to hand-fix that user's plan | Founder-assisted, deeper/white-glove sessions as a possible **future paid** offering — see §14 |
-| Strong Signal selection | Collecting the qualitative pilot-metrics answers (§15) | Dynamic re-personalization on repeat visits |
+| Stage determination (existing calculator, unmodified) | Reviewing the pilot's generated outputs across Batches 1–2 (score/stage/Warning Lights/action, not raw financial inputs — those were never transmitted) for tone, correctness, and logic gaps | Full narrative generation via an LLM |
+| Warning Light #1/#2 ranking, including Hard Override / tie-break (§6) | Writing a calibration record (schema below) noting the automated output looks wrong, with the Founder's proposed correction and reasoning, used to refine the *rules*, not to hand-fix that user's plan — this is what the Engine Failure Rate measures | Founder-assisted, deeper/white-glove sessions as a possible **future paid** offering — see §14 |
+| Strong Signal selection, including tie-break (§6) | Collecting the qualitative pilot-metrics answers (§15) | Dynamic re-personalization on repeat visits |
 | Do Now / This Payday / This Month / 30-Day Mission text generation | — | Flight Crew scheduling integration |
 | Sending the plan via the existing MailerLite workflow on EMAIL MY FLIGHT PLAN | — | Payment/subscription automation |
 
-**Calibration Override Rate** (repurposed from Revision 2's Founder Override Rate): the % of
-Cohort 1's 10 automated outputs the Founder flags as needing a rule-level correction during
-calibration review. This is a QA signal on the *engine*, evaluated after the fact across a small
-reviewable batch — never a condition of whether any individual user receives their plan.
+### Calibration Record Schema (Revision 4 — resolves P1-2, "Calibration Log Data Model")
+
+Founder Calibration Mode needs enough *derived* evidence to judge why the deterministic engine
+produced a result — without reintroducing any of the raw financial data Revision 3 correctly
+kept client-side (§13). The calibration record is the explicit boundary between those two
+things.
+
+**A calibration record MAY contain** (for the pilot's Batches 1–2 / approved calibration testing only):
+- Score, Stage
+- Strong Signal category (including whether it was resolved by tie-break)
+- Warning Light #1 category, Warning Light #2 category
+- The five normalized relative category scores, as 0–1 derived values only
+- The engine decision path / rule that fired: Hard Override, Flag/Context, Normal Relative
+  Ranking, Stage Suppression, Objective Tie-Break, or the Step 5 deterministic fallback
+- The generated action-library identifier or action label (§8) and the Workbook Connection
+  selected
+- Founder QA judgment: **correct / questionable / incorrect**
+- A brief calibration note (free text, but scoped to *engine reasoning*, not the user's
+  financial situation)
+- Timestamp / test identifier
+
+**A calibration record MUST NOT contain:** monthly income, needs amount, wants amount, savings
+amount, debt balance, extra debt payment amount, emergency-fund dollar amounts, investment dollar
+value, the raw financial-form payload in any form, financial values embedded in analytics or
+URLs, or unrestricted narrative containing financial details. The five relative category scores
+are the only numeric trace of the user's inputs permitted, and they remain normalized (0–1)
+derived values — never the dollar figures or ratios they were computed from.
+
+**Purpose, stated plainly:** the record exists to answer *"did the deterministic engine make the
+correct decision, and which rule produced it?"* — nothing more. It must not become a hidden
+financial profile or a persistent user-history system.
+
+**Retention classification:** calibration records are **temporary pilot QA evidence**, retained
+only for the duration of the Batch 1 / Batch 2 calibration period (§15), and kept entirely
+separate from any user-facing data (§13's email/name/score/stage/source/date table) — there is no
+user account for a calibration record to attach to, and none is created by this mechanism. They
+are deleted at the end of the pilot's calibration window, the same way §13's outcome metadata is
+time-bound.
+
+**Engine Failure Rate** (Revision 4 — renamed from Revision 3's "Calibration Override Rate," per
+the independent reviewer: the old name implied plans were being overridden, which never happens
+in this architecture). Defined exactly as: **the percentage of reviewed generated plans where the
+Founder concludes the deterministic engine selected a materially incorrect priority, action
+sequence, or routing decision.** This is diagnostic only — it measures the engine, not any
+individual user's experience, and **no delivered plan is manually rewritten or overridden as a
+result of this review** (§11's automated-column list above is exhaustive; calibration review is
+never added to it).
+
+**Manual intervention** is not a planned mechanism in this architecture (self-service delivery has
+no per-plan Founder step to intervene in). It is tracked as a **separate, distinct count** —
+"Unexpected Manual Intervention" — only in the event it ever occurs outside the designed flow
+(e.g., a data-corruption edge case requiring a one-off fix). In normal operation this count is
+expected to be zero and is not conflated with the Engine Failure Rate, which is purely diagnostic
+review of automated output.
 
 ---
 
@@ -355,7 +461,7 @@ retained, full stop, not "retained briefly under controls."
 | First name | **MAY RETAIN** — optional, as in the original |
 | Source, completion date | **MUST RETAIN** — needed for funnel measurement and duplicate-enrollment prevention |
 | Consent flag + timestamp | **MUST RETAIN** — evidences that consent was obtained |
-| Calibration log entries (Cohort 1 only) | **MAY RETAIN, pilot-only** — engine output + Founder's calibration note; never the underlying financial inputs, which were never transmitted |
+| Calibration records (pilot Batches 1–2 only — full schema in §11, Revision 4) | **MAY RETAIN, pilot-only, temporary QA evidence** — score/stage/Strong Signal/Warning Lights/decision-path/action-library ID/Founder judgment/note; normalized 0–1 relative scores only; never a dollar figure, never the raw financial-form payload; kept separate from the user-facing table below (no account exists for it to attach to); deleted at the end of the calibration period |
 | Any dollar amount, full budget, or persistent financial profile | **DO NOT RETAIN** |
 | Financial values in URLs, analytics, logs, or email subject lines | **DO NOT RETAIN / NEVER EXPOSE** (restored, broadened from Revision 2's repo-only framing to match the original's explicit URL/analytics/logs/subject-line list) |
 
@@ -371,7 +477,7 @@ retained, full stop, not "retained briefly under controls."
   one line confirming financial inputs are calculated in-browser and never transmitted (already
   true of the Scorecard today; this simply extends the same sentence to the Flight Plan). This
   is a documentation update, not a new retention regime — **no longer a structural launch
-  blocker**, just a copy update to make before Cohort 1 (§15).
+  blocker**, just a copy update to make before Batch 1 (§15).
 
 ---
 
@@ -394,59 +500,76 @@ in ongoing education (§12).
 
 ---
 
-## 15. Pilot Design & Success Metrics (Reconciled — Cohort sizing corrected)
+## 15. Pilot Design & Success Metrics (Revision 4 — checkpoint structure finalized)
 
-### Cohort 1 — 10 users (restored to match the original's approved Definition of Done)
+### Pilot structure: 5 observed independent users → checkpoint → 5 additional independent users
 
-Revision 2's Wave 1 (5) → checkpoint → Wave 2 (≤15) structure was sized around founder
-bandwidth — reviewing and hand-writing every plan doesn't scale past a handful of people at a
-time. That constraint is gone now that delivery is automated (§11), so there is no longer a
-reason to throttle the first cohort below the original's own approved number. **Cohort 1 = 10
-independent testers**, deliberately including profile diversity across:
+The independent Revision 3 Re-Review recommended a stronger validation checkpoint than a flat
+10-user cohort, without reopening the total (still 10, still matching the original's Definition
+of Done, still not expanded to 20). Revision 4 adopts this exactly:
 
+**Batch 1 — first 5 independent users**, deliberately covering:
 1. A crisis-override case (negative or exactly-zero cash).
 2. A non-crisis Turbulence case.
 3. A Cruise Control case.
 4. A close-signal / tie-break case.
 5. A Flight Mode / Flag-Context case.
-6–10. Additional representative profiles, Founder's choice, filling remaining
-   stage/branch combinations.
 
-The Founder reviews all 10 outputs during Cohort 1 in Calibration Mode (§11) — feasible at this
-size without gating delivery to any of the 10 users, since review happens after automated
-delivery, not before it.
+All 5 receive their plan **fully self-service — no Founder gating, no Founder editing of any
+delivered plan.** This is unchanged from Cohort 1's design in Revision 3; only the checkpoint
+timing is new.
+
+**Checkpoint (after Batch 1, before recruiting Batch 2):** the Founder, using Batch 1's five
+calibration records (§11 schema), inspects engine outputs and identifies any *systemic* logic
+failure — not individual imperfect wording, a pattern in the decision path (Hard Override,
+tie-break, stage suppression, etc.) producing a wrong result. **Delivered plans are not
+rewritten** at this or any point; the checkpoint decides only whether it's safe to proceed to
+Batch 2 as-is or pause to fix a rule first.
+
+- **Proceed to Batch 2** if Batch 1's Engine Failure Rate (§11) is **≤ 1/5**.
+- **Pause and fix the flagged rule before Batch 2** if Engine Failure Rate is **≥ 2/5** — revise
+  the specific rule in §6, re-verify against the four personas in §10, then resume with Batch 2.
+
+**Batch 2 — 5 additional independent users**, filling remaining representative profiles
+(Founder's choice), also fully self-service with no gating or editing. Total across both
+batches: **10 independent testers**, matching the original Definition of Done exactly — the
+pilot is not expanded to 20 in V1.
 
 ### Definition of Done (restored, original wording, extended with quantified sub-measures)
 
-Ten independent testers can discover FFM, complete the Scorecard, understand their result,
-receive the resources, and **name their next action without assistance**. All four stages and
-boundary conditions (including the Hard-Override and Flag/Context branches, §6) produce approved
-results; current mobile Safari, mobile Chrome, desktop Chrome, and desktop Safari pass;
-conversion and error events are measurable; existing subscribers do not receive duplicate
-enrollment; no sensitive input leaks (trivially satisfied once financial data is client-side
-only, §13).
+Ten independent testers — across both batches — can discover FFM, complete the Scorecard,
+understand their result, receive the resources, and **name their next action without
+assistance**. All four stages and boundary conditions (including the Hard-Override and
+Flag/Context branches, §6) produce approved results; current mobile Safari, mobile Chrome,
+desktop Chrome, and desktop Safari pass; conversion and error events are measurable; existing
+subscribers do not receive duplicate enrollment; no sensitive input leaks (trivially satisfied
+once financial data is client-side only, §13).
 
-Quantified against Revision 2's decision metrics, applied to the same 10 testers:
+Quantified against Revision 2's decision metrics, evaluated cumulatively across all 10 testers
+at the end of Batch 2:
 
-| Metric | DoD-aligned target (n=10) |
+| Metric | DoD-aligned target (n=10, both batches) |
 |---|---|
 | Clarity — restates Warning Light #1 unprompted | ≥ 8/10 (this is the literal DoD bar) |
 | Action — completes the Do Now action within 7 days | ≥ 5/10 |
 | Trust / Relevance — plan feels specific, not generic | ≥ 7/10 |
 | Product Continuation — takes the next FFM action within 14 days | ≥ 4/10 |
-| Calibration Override Rate | ≤ 2/10 flagged as needing a rule-level fix |
+| **Engine Failure Rate** (renamed, §11) | ≤ 2/10 flagged as materially incorrect |
+| Unexpected Manual Intervention (§11) | 0/10 expected; any non-zero count is investigated on its own, separately from the above |
 
 **Go/No-Go:** meeting the DoD bar (Clarity ≥ 8/10 plus no cross-browser/duplicate-enrollment/data
--leak failures) is the hard gate, carried over unchanged from the original. The other four
-metrics inform whether to proceed to open rollout as-is or revise specific rules first — they do
-not block Cohort 1 from graduating on their own, since the DoD itself is the originally-approved
-ship bar.
+-leak failures) is the hard gate, carried over unchanged from the original. The other metrics
+inform whether to proceed to open rollout as-is or revise specific rules first — they do not
+block the cohort from graduating on their own, since the DoD itself is the originally-approved
+ship bar. The Batch 1→Batch 2 checkpoint above is a separate, earlier gate scoped only to
+*systemic engine* correctness, not the full DoD.
 
-### Beyond Cohort 1
+### Beyond the 10-user pilot
 
-Once delivery is automated, there is no fixed "Wave 2 ceiling" — the system serves the next user
-exactly as easily as the tenth. Continued rollout past Cohort 1 is gated on the DoD result above,
-not on a second founder-bandwidth-limited headcount.
+Once delivery is automated, there is no fixed bandwidth ceiling on serving additional users —
+the system serves the eleventh user exactly as easily as the first. Continued rollout past the
+10-user pilot is gated on the DoD result above, not on a further founder-bandwidth-limited
+headcount, and is out of scope for this V1 SPEC.
 
 ---
 
@@ -468,24 +591,41 @@ not on a second founder-bandwidth-limited headcount.
    categories are tied.
 8. For Pre-Flight and Turbulence users, Wealth Fuel is never surfaced as Warning Light #1 or #2
    ahead of Cash Flow Control, Emergency Runway, or Debt Load.
-9. Every plan includes exactly one Strong Signal and exactly two Warning Lights, unless the
-   Step 5 fallback (Ownership Mindset) applies.
-10. The Workbook Connection names an exact tab and action from §8's restored action library —
+9. Every plan includes exactly one Strong Signal, with no exception and no omission threshold
+   (Revision 4, §6) — including profiles where the mathematically strongest relative score is
+   itself low (Persona 1, §10).
+10. Every plan includes exactly two Warning Lights, **except** when the Step 5 fallback
+    (Ownership Mindset) applies, in which case a single fallback action is shown instead of two
+    ranked Warning Lights (Persona 4, §10) — this exception applies only to Warning Lights, never
+    to Strong Signal.
+11. When multiple signals are tied for strongest (including an all-five tie), Strong Signal
+    resolves via the fixed `getStrongestSignal` tie order — Cash Flow Control > Savings System >
+    Debt Load > Emergency Runway > Wealth Fuel — with no other tie-break input considered.
+12. The Workbook Connection names an exact tab and action from §8's restored action library —
     never a generic "see your Starter Kit" pointer.
-11. Both CTAs render with their exact approved labels: **EMAIL MY FLIGHT PLAN** and **OPEN THE
+13. Both CTAs render with their exact approved labels: **EMAIL MY FLIGHT PLAN** and **OPEN THE
     STARTER KIT**.
-12. The plan never recommends a security, lender, credit product, debt settlement provider, tax
+14. The plan never recommends a security, lender, credit product, debt settlement provider, tax
     position, or legal action.
-13. The education-only disclaimer appears on the plan itself.
-14. No financial input value, score, stage, or plan content is ever sent to analytics, logs, or
+15. The education-only disclaimer appears on the plan itself.
+16. No financial input value, score, stage, or plan content is ever sent to analytics, logs, or
     embedded in a URL or email subject line.
-15. Users already subscribed do not receive duplicate MailerLite enrollment.
-16. The plan and Scorecard pass on current mobile Safari, mobile Chrome, desktop Chrome, and
+17. Users already subscribed do not receive duplicate MailerLite enrollment.
+18. The plan and Scorecard pass on current mobile Safari, mobile Chrome, desktop Chrome, and
     desktop Safari.
-17. Any Calibration Override logged during Cohort 1 records the automated output and the
-    Founder's proposed correction — and does not itself alter what any user already received.
-18. Cohort 1's Definition of Done metrics (§15) are independently measurable per tester without
-    inventing new instrumentation later.
+19. Every calibration record (§11) contains only fields from the MAY-contain list and never a
+    field from the MUST-NOT-contain list — in particular, never a dollar amount, ratio computed
+    directly from a dollar amount, or raw financial-form payload; the five relative category
+    scores, where present, are normalized 0–1 values only.
+20. A calibration record review never alters, rewrites, or overrides a plan already delivered to
+    a user — Engine Failure Rate entries record disagreement with the engine for rule-refinement
+    purposes only.
+21. The Batch 1 → checkpoint → Batch 2 structure (§15) is followed exactly: Batch 2 recruitment
+    does not begin until Batch 1's Engine Failure Rate has been evaluated against the ≤1/5
+    proceed threshold, and no plan delivered in either batch is edited as a result of the
+    checkpoint.
+22. The pilot's Definition of Done metrics (§15) are independently measurable per tester, across
+    both batches, without inventing new instrumentation later.
 
 ---
 
@@ -500,8 +640,8 @@ Excluded from V1 (unchanged core list, with two additions from this reconciliati
   gamification
 - User accounts, persistent profiles, or a queryable financial database
 - **Founder-in-the-loop delivery as the default path for any individual user's plan**
-  *(Revision 3)* — Calibration Mode is sampled/complete QA on Cohort 1 only, never a per-user
-  gate.
+  *(Revision 3)* — Calibration Mode is sampled/complete QA on the pilot's Batches 1–2 only,
+  never a per-user gate.
 - **Server-side transmission or storage of raw financial inputs, in any form** *(Revision 3,
   strengthened from "not in analytics/repo" to "never transmitted at all")*.
 
@@ -519,7 +659,7 @@ Excluded from V1 (unchanged core list, with two additions from this reconciliati
 - **Founder-assisted, hand-reviewed guidance as a future paid/premium offering** *(new,
   Revision 3, §14)* — the inverse of Revision 2's mistake: white-glove founder attention becomes
   a premium upsell once the automated version is the free baseline, not the free default itself.
-- A future paid-pilot cohort testing a specific price point for Customized Flight Plan itself —
+- A future paid-pilot cohort testing a specific price point for Personalized Flight Plan itself —
   still no price committed.
 
 ---
@@ -536,8 +676,9 @@ Excluded from V1 (unchanged core list, with two additions from this reconciliati
 4. **The restored one-page output**: Score + Stage, Strong Signal, Warning Light #1/#2, Do
    Now/This Payday/This Month, 30-Day Mission, exact Workbook Connection, EMAIL MY FLIGHT PLAN,
    OPEN THE STARTER KIT.
-5. **Founder Calibration Mode, pilot-only**: reviews Cohort 1's 10 automated outputs after the
-   fact, logs Calibration Overrides, refines rules — never blocks delivery.
+5. **Founder Calibration Mode, pilot-only**: reviews the pilot's 10 automated outputs across
+   Batch 1 → checkpoint → Batch 2 after the fact, logs calibration records and the Engine Failure
+   Rate, refines rules — never blocks delivery.
 6. **Free, open self-service** — email requested only at the EMAIL MY FLIGHT PLAN step.
 7. **Nothing sensitive retained** — financial data never leaves the browser; only the original's
    minimal outcome metadata (email, optional name, score, stage, source, completion date) is
@@ -548,31 +689,43 @@ Excluded from V1 (unchanged core list, with two additions from this reconciliati
 ## 20. Open Decisions
 
 1. **`privacy.html` copy update** — one line confirming Flight Plan inputs are client-side only,
-   same as the existing Scorecard language; small, but should land before Cohort 1.
+   same as the existing Scorecard language; small, but should land before Batch 1.
 2. **Flight Crew and Membership definitions** — still undocumented anywhere in the repository;
    the EMAIL MY FLIGHT PLAN step's WTP question and §18's future paid-tier idea both depend on at
    least a one-line honest description existing before launch.
 3. **Exact wording/placement of the two new select fields** relative to the existing Scorecard
    form (appended vs. a follow-up screen) — a UI decision, not a product one, but affects
    completion-time expectations in §12.
-4. **Wave/cohort beyond Cohort 1** — this SPEC removes the fixed Wave-2 ceiling on the reasoning
-   that automation removes the founder-bandwidth constraint; confirm the Founder agrees that's
-   the right call before treating Cohort 1's DoD pass as a green light for open rollout.
-5. **Future paid price point** for either a paid Customized Flight Plan cohort or a
+4. **Rollout beyond the 10-user pilot** — this SPEC removes any fixed ceiling beyond Batch 1/
+   Batch 2 on the reasoning that automation removes the founder-bandwidth constraint; confirm the
+   Founder agrees that's the right call before treating the pilot's DoD pass as a green light for
+   open rollout.
+5. **Future paid price point** for either a paid Personalized Flight Plan cohort or a
    founder-assisted premium tier (§14, §18) — intentionally not committed in this SPEC.
 
 ---
 
 ## 21. Final Verdict
 
-**REVISED SPEC READY FOR RE-REVIEW**
+**SPEC CLOSURE COMPLETE — READY FOR FINAL RE-REVIEW**
 
-This revision does not choose between the original approved MVP and Revision 2 wholesale — it
-restores the original's no-founder-assistance architecture, minimal-retention data model, and
-approved output/CTA language and action library, while keeping every Revision 2 improvement that
-strengthens rather than contradicts that architecture (the `<=0` fragility fix, Hard
-Override/Flag-Context, relative ranking, stage-gate suppression, the deterministic tie-break, the
-optional objective field, and the removal of "buy a home"). The one Revision 2 concept that
-didn't survive intact — Founder Override Rate as a per-delivery gate — is repurposed rather than
-discarded, as a Calibration Override Rate measured across Cohort 1's reviewable batch. No
-engineering plan or code is included, per instruction.
+Revision 4 closes both P1 findings from the independent Revision 3 Product Re-Review (`PASS WITH
+CHANGES`) without reopening product strategy or the personalization engine, per instruction:
+
+- **Strong Signal omission ambiguity** is resolved with Option A — always show the mathematically
+  strongest relative signal, framed as relative-strongest rather than overall-financial-health,
+  with a deterministic tie-break reusing the live `getStrongestSignal` stable-sort order for the
+  all-tied case (§6, §8, §10 Personas 1 and 4).
+- **Calibration record data model** is explicitly defined with a MAY-contain / MUST-NOT-contain
+  schema that preserves Revision 3's client-side-only financial data architecture — the record is
+  temporary pilot QA evidence, scoped to the pilot's two batches, never a user account or
+  persistent financial profile (§11, §13).
+
+The reviewer's two non-blocking closures are also complete: the product is named **Personalized
+Flight Plan** throughout current-tense prose (title, §1, §4, §14, §20 — historical quotes in the
+Revision 3 log are left verbatim as a record of what was said at the time; the file path is
+unchanged to avoid Git churn), and the pilot is restructured to **5 observed independent users →
+checkpoint → 5 additional independent users**, still 10 total, still fully self-service with no
+delivered plan edited at the checkpoint (§15). "Calibration Override Rate" is renamed **Engine
+Failure Rate**, defined as purely diagnostic, with unexpected manual intervention tracked as a
+separate, distinct count. No engineering plan or code is included, per instruction.
