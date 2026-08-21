@@ -1,11 +1,25 @@
 # FFM Personalized Flight Plan V1 — Engineering Implementation Plan
 
-Phase: PLAN (Revision 2)
+Phase: PLAN CLOSURE (Revision 3)
 Author role: Senior Product Engineer / Technical Architect
-Status: Revision 2 — responds to the independent Codex PLAN REVIEW verdict **PASS WITH
-CHANGES — REVISE PLAN** on Revision 1. Planning document only. No production code, no
-calculator-formula changes, no redesign of the approved product. The approved product SPEC
-(Revision 4, PR #10) remains controlling authority; nothing in this revision reopens it.
+Status: Revision 3 — closes the three remaining P1 findings and two cleanup items from the
+independent Codex PLAN Re-Review verdict **PASS WITH CHANGES — REVISE PLAN** on Revision 2 (all
+P0 findings already closed). Planning document only. No production code, no calculator-formula
+changes, no redesign of the approved product. The approved product SPEC (Revision 4, PR #10)
+remains controlling authority; nothing in this revision reopens it.
+
+---
+
+## Revision 3 — PLAN Closure
+
+| Finding | Resolution | Status |
+|---|---|---|
+| Warning Light #2 sequencing | Explicit select → remove → repeat process, formalized as one reusable Adjacent-Pair Selection Procedure applied twice (§6.1), plus a fully worked 3-candidate close-tie example | RESOLVED |
+| Strong Signal collision | Independent selection confirmed as SPEC-supported; the prior "optional Founder decision" statement removed (§6.3) | RESOLVED |
+| Fixed action library | Six exact, immutable, implementation-ready entries added with full Do Now/This Payday/This Month/30-Day Mission copy (§7) | RESOLVED |
+| Test command | `node --test src/` (invalid — verified to error) replaced with `node --test`, empirically verified on Node v22.22.2; no Node 18 assumption remains (§14) | RESOLVED |
+| Email error analytics | `personalized_plan_email_error` approved explicitly as a fourth, equal technical observability event, not a lesser add-on (§13) | RESOLVED |
+| Nested serializer validation | Exact nested-shape/range/prototype-pollution tests added for all three serializers (§9) | RESOLVED |
 
 ---
 
@@ -212,12 +226,54 @@ BUILD must follow this order exactly; nothing here is left to be invented during
 6. **If `fallbackApplies`** (step 4): stop here. Output `{ strongSignal, fallback: { actionId: "ownershipMindsetFallback", note: flagContextNote ?? null }, warningLights: null, decisionPath: "Fallback" }`. (This is Persona 4's case: Flag/Context is real but subordinate to the fallback.)
 7. **Else, build the Warning Light candidate set** = all 5 `relativeScores` entries.
 8. **Stage-gate suppression**: if `stageKey` is `preflight` or `turbulence`, remove `investments` (Wealth Fuel) from candidacy entirely — it is never eligible for Warning Light #1 or #2 in these stages (4 candidates remain, only 2 are needed, so this is a hard exclusion, not a soft demotion).
-9. **If Hard Override**: force Warning Light #1 = `cashRemaining` (Cash Flow Control) regardless of its relative rank; remove it from the candidate set; select Warning Light #2 as the weakest remaining eligible candidate using the same ascending-sort + tie-break rule as step 10.
-10. **Else (Flag/Context or no flag)**: sort remaining eligible candidates ascending (weakest first). Compare only **adjacent-ranked** candidates for a given slot. If the gap between an adjacent pair is `<= 0.10`:
-    - if `shortTermObjective` is present and maps to one of the tied pair's categories, that category takes the higher-priority slot;
-    - otherwise (objective omitted, or objective maps to neither tied category) resolve using the **fixed Warning Light safety-sequence order**: `Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel` (§6.2 — note this order is *different* from the Strong Signal tie order).
-11. **Guarantee two distinct Warning Lights** — structurally guaranteed by construction (two distinct entries are always selected from the candidate list; nothing ever selects the same key twice). Verified by an automated invariant test across the full fixture matrix (§14), not a runtime branch.
-12. **Strong Signal / Warning Light collision policy**: Strong Signal (step 3) and Warning Light selection (steps 7–10) are computed **independently** over the same `relativeScores`, using opposite sort directions. Nothing in the SPEC establishes a mutual-exclusion rule between them, and a fully-tied-but-below-0.90 profile can deterministically name the same category for both (a stable ascending sort and a stable descending sort of an all-equal array both put the first-key-order entry at position 0). This plan does **not** invent an exclusion filter, since doing so would be an uninstructed product rule, not an engineering default — flagged as an optional Founder decision (§J), not a blocker.
+9. **If Hard Override**: force Warning Light #1 = `cashRemaining` (Cash Flow Control) regardless of its relative rank; remove it from the candidate set (it is never passed into the procedure below). Warning Light #2 is then selected by running the **Adjacent-Pair Selection Procedure** (§6.1) exactly once against the remaining eligible candidates — the ordinary process, not a special case.
+10. **Else (Flag/Context or no flag)**: run the **Adjacent-Pair Selection Procedure** (§6.1) once against the full eligible (stage-suppressed) candidate list to select Warning Light #1, then run it a **second time, unmodified**, against whatever remains to select Warning Light #2.
+11. **Guarantee two distinct Warning Lights** — structurally guaranteed, not a runtime branch: the Adjacent-Pair Selection Procedure always removes its selected candidate from the list before it is ever run again, so the same category can never be selected twice, whether Warning Light #2 follows a Hard-Override-forced Warning Light #1 or a normally-selected one. Verified by an automated invariant test across the full fixture matrix (§14).
+12. **Strong Signal / Warning Light collision — confirmed independent, no product decision required.** See §6.3.
+
+---
+
+## 6.1 Adjacent-Pair Selection Procedure (exact, executable — used identically for Warning Light #1, Warning Light #2, and Warning Light #2-after-Hard-Override)
+
+This is the **one** procedure steps 9 and 10 above call — it is defined once here and never
+redefined per slot. BUILD needs no additional interpretation to make Warning Light selection
+executable.
+
+**Inputs:** the current eligible candidate list (already stage-suppressed, and already excluding
+any category forced/removed by a Hard Override), and `shortTermObjective`.
+
+1. Sort the current candidate list ascending by relative score (weakest first).
+2. Compare **only** the first two entries — the two weakest remaining candidates.
+3. If their relative-score gap is `<= 0.10`:
+   a. If `shortTermObjective` is present and maps to one of these two candidates' categories, select that candidate.
+   b. Otherwise (objective omitted, or it maps to neither of the two candidates), select whichever of the two appears first in the fixed **Warning Light safety-sequence order**: `Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel` (§6.2 — distinct from the Strong Signal tie order).
+4. Else (gap `> 0.10`): select the first entry (the single weakest candidate) — no tie-break input is consulted; `shortTermObjective` is irrelevant when there is no tie.
+5. **Remove** the selected candidate from the candidate list. Its slot (Warning Light #1 or #2) is now finalized. If this is the first run for the current plan (selecting Warning Light #1), the procedure is called again against the now-shorter list to select Warning Light #2; if this is the second run, selection is complete.
+
+### Worked example — 3-candidate close tie, no Hard Override, objective changes Warning Light #1
+
+Eligible candidate list (post stage-suppression, 3 candidates shown for clarity): **Savings
+System** (relative `0.38`), **Debt Load** (relative `0.44`), **Emergency Runway** (relative
+`0.72`).
+
+**Selecting Warning Light #1:**
+1. Ascending order: `[Savings System (0.38), Debt Load (0.44), Emergency Runway (0.72)]`.
+2. Compare the first two: Savings System vs. Debt Load. Gap = `0.44 − 0.38 = 0.06`, which is `<= 0.10` → tied.
+3. Tie-break:
+   - **If `shortTermObjective` = "Save more consistently"** (maps to Savings System): Savings System is selected as Warning Light #1. This is the case where an objective **changes** the outcome — without it, the fixed safety-sequence order (`Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel`) would have picked **Debt Load** instead, since Debt Load precedes Savings System in that order.
+   - **If the objective is omitted, or maps to neither Savings System nor Debt Load**: Debt Load is selected as Warning Light #1 (the safety-sequence default).
+4. Take the objective-present branch for the rest of this example: Warning Light #1 = **Savings System**. Remove it from the candidate list.
+
+**Selecting Warning Light #2** (procedure run a second time, unmodified):
+1. Remaining candidate list: `[Debt Load (0.44), Emergency Runway (0.72)]`.
+2. Compare the first two (the only two remaining): gap = `0.72 − 0.44 = 0.28`, which is `> 0.10` → no tie.
+3. No objective is consulted (rule 4 above). Select the single weakest remaining candidate: **Debt Load**.
+4. Warning Light #2 = **Debt Load**. Remove it; selection is complete.
+
+This demonstrates the full contract: the identical procedure fills both slots one after another;
+an optional objective can only ever change which candidate wins a *tied* slot, never the
+procedure itself; and nothing here required Warning Light #2's selection to be re-derived from
+first principles — it simply re-runs the same rule against a shorter list.
 
 ---
 
@@ -243,33 +299,57 @@ does today.
 | Order | Used for | Sequence |
 |---|---|---|
 | **Strong Signal tie order** | Resolving an all/multi-way tie at the *top* of `relativeScores` (§6 step 3) | Cash Flow Control > Savings System > Debt Load > Emergency Runway > Wealth Fuel *(= the category object's literal key insertion order: `cashRemaining, savingsRate, debtPressure, emergencyFund, investments`)* |
-| **Warning Light safety-sequence order** | Resolving a `<= 0.10` tie at the *bottom* when the optional objective is omitted or doesn't match either tied category (§6 step 10) | Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel |
+| **Warning Light safety-sequence order** | Resolving a `<= 0.10` tie at the *bottom* when the optional objective is omitted or doesn't match either tied category (§6.1) | Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel |
+
+---
+
+## 6.3 Strong Signal / Warning Light Collision Policy — Confirmed Independent, No Founder Decision Required
+
+Codex determined: **the approved SPEC supports independent selection — no Founder decision is
+required.** This revision removes Revision 2's statement that the Founder must decide whether
+Strong Signal should be excluded from Warning Light candidacy. Stated explicitly, for BUILD:
+
+- Strong Signal (§6 step 3) is computed **independently** from Warning Light selection (§6.1) —
+  both operate over the same `relativeScores` array, using opposite sort directions, but neither
+  selection consults or excludes the other.
+- Strong Signal is **not** automatically excluded from Warning Light candidacy. No filter that
+  removes the Strong Signal category from the Warning Light candidate list exists or is added by
+  this plan.
+- In a fully-tied, below-`0.90` profile (not the §6 step 4 fallback case), the same public
+  category may theoretically be named as **both** Strong Signal and a Warning Light — a direct,
+  deterministic consequence of the approved math (a stable ascending sort and a stable descending
+  sort of an all-equal array both place the first-key-order entry at position `0`), not an
+  engineering-invented exclusion filter.
+- This is consistent with the approved SPEC, which never states or implies a mutual-exclusion
+  rule between Strong Signal and Warning Light selection.
+- **No product amendment or Founder decision is required.** BUILD must not invent an exclusion
+  rule that the SPEC does not contain.
 
 ---
 
 ## 7. Action Library Data Contract
 
-An immutable, deterministic structure — six entries, no runtime LLM generation, no arbitrary
-free-text creation. Each entry:
+An immutable, deterministic structure — exactly **six** fixed entries, no runtime LLM generation,
+no arbitrary free-text creation, no alternative versions per category. Each entry's shape:
 
 ```
 {
-  actionId: string,               // stable, e.g. "cashFlowControl", "savingsSystem",
-                                   // "debtLoad", "emergencyRunway", "wealthFuel", "ownershipMindsetFallback"
-  category: string,                // public label from categoryMap (or "Ownership Mindset")
+  actionId: string,                 // stable identifier
+  categoryKey: string | null,       // the internal flightScoreCalculator.js key, or null for the fallback (not a ranked signal)
+  category: string,                 // public label from categoryMap (or "Ownership Mindset")
   doNow: string,
   thisPayday: string,
   thisMonth: string,
   thirtyDayMission: string,
   workbookTab: string,
   workbookAction: string,
-  allowedPublicCopy: string,       // the exact combined line safe to render AND safe to email — see below
+  emailSafe: true,                  // always true in V1 — see the no-interpolation rule below
 }
 ```
 
-Required entries: Cash Flow Control, Savings System, Debt Load, Emergency Runway, Wealth Fuel,
-Ownership Mindset fallback — mapped 1:1 to the restored action library in SPEC §8, using the
-approved first action/workbook control per row.
+The shared, single `educationGuardrail` constant ("never recommend a security, lender, credit
+product, debt settlement provider, tax position, or legal action") is referenced once by the
+disclaimer rendering and is **not** duplicated per entry.
 
 **Resolved implementation detail — no raw-value interpolation, on-screen or emailed.** SPEC §10's
 worked persona examples illustrate the ranking math with hand-computed dollar/percentage figures
@@ -278,16 +358,73 @@ Required Result row only requires "one measurable mission... carrying its own ex
 self-checkable success condition" — it does not mandate a dollar figure in the rendered text. To
 satisfy the Founder's decision that "any transmitted plan copy... MUST NOT interpolate
 user-specific raw financial values" *and* to keep on-screen and emailed copy identical (simpler,
-lower-risk, no second copy variant to maintain), this plan's `thirtyDayMission` text is
-**behavioral, not numeric** — e.g., "Automate a contribution toward your emergency fund every
-payday until you reach your goal" rather than a specific dollar amount. This is a resolved
-engineering default within the SPEC's own text (§8 never required a number), not a reopening of
-product content — flagged as a one-line copy-review item for the Founder in W1 (§17), not a
-blocker.
+lower-risk, no second copy variant to maintain), every entry's copy below is **behavioral, not
+numeric** and carries `emailSafe: true` unconditionally — the same string renders on screen and
+is the one sent by `createMailerLitePayload` (§9). This is a resolved engineering default within
+the SPEC's own text (§8 never required a number), not a reopening of product content.
 
-The `education-only` advice-boundary guardrail ("never recommend a security, lender, credit
-product, debt settlement provider, tax position, or legal action") is a single shared constant
-referenced by the disclaimer rendering, not duplicated per entry.
+### The Six Fixed V1 Entries
+
+Each entry's `doNow` is drawn directly from SPEC §8's restored action library's "Approved First
+Action"; `workbookTab`/`workbookAction` reproduce SPEC §8's exact workbook control; `thisPayday`,
+`thisMonth`, and `thirtyDayMission` translate that same approved intent into the smallest bounded
+cadence copy consistent with SPEC §9's Do Now/This Payday/This Month framework (Do Now =
+completable today; This Payday = tied to the next paycheck cycle; This Month = the behavior that
+needs to become consistent) — one exact entry per category, no alternates.
+
+**1. Cash Flow Control** (`categoryKey: "cashRemaining"`)
+- `actionId`: `"cashFlowControl"`
+- `doNow`: "Open your budget and confirm every dollar of income, needs, and wants for this month."
+- `thisPayday`: "Before spending anything new, confirm this payday's bills are covered first."
+- `thisMonth`: "Find and close one spending leak so more of your income stays working for you."
+- `thirtyDayMission`: "Keep your monthly cash flow at zero or above for one full pay cycle."
+- `workbookTab` / `workbookAction`: "Monthly Budget + Dashboard" / "Cash Flow Control row"
+
+**2. Savings System** (`categoryKey: "savingsRate"`)
+- `actionId`: `"savingsSystem"`
+- `doNow`: "Set up or confirm one automatic transfer from checking to savings for your next payday."
+- `thisPayday`: "Let that automatic transfer run without touching it."
+- `thisMonth`: "Keep the transfer running every payday this month, even if the amount is small."
+- `thirtyDayMission`: "Complete four consecutive automatic transfers to savings without skipping one."
+- `workbookTab` / `workbookAction`: "Savings Tracker + Monthly Budget" / "Savings System row"
+
+**3. Debt Load** (`categoryKey: "debtPressure"`)
+- `actionId`: `"debtLoad"`
+- `doNow`: "Confirm your minimum payments and choose one balance to prioritize."
+- `thisPayday`: "Send any extra amount you can toward that one priority balance."
+- `thisMonth`: "Track your priority balance going down at least once this month."
+- `thirtyDayMission`: "Make one extra payment toward your priority balance beyond the minimum."
+- `workbookTab` / `workbookAction`: "Debt Snowball + Monthly Budget" / "Debt Load row"
+
+**4. Emergency Runway** (`categoryKey: "emergencyFund"`)
+- `actionId`: `"emergencyRunway"`
+- `doNow`: "Set your next emergency fund target and confirm where that money will sit."
+- `thisPayday`: "Move a repeatable amount toward that target."
+- `thisMonth`: "Keep the contribution going every payday this month."
+- `thirtyDayMission`: "Grow your emergency fund by one repeatable contribution each payday this month."
+- `workbookTab` / `workbookAction`: "Savings Tracker + Dashboard" / "Emergency Runway row"
+
+**5. Wealth Fuel** (`categoryKey: "investments"`)
+- `actionId`: `"wealthFuel"`
+- `doNow`: "Review your current investing or long-term saving contribution."
+- `thisPayday`: "Confirm that contribution processed as expected."
+- `thisMonth`: "Keep the contribution consistent every payday this month."
+- `thirtyDayMission`: "Maintain one repeatable investing or long-term saving contribution for a full month."
+- `workbookTab` / `workbookAction`: "Investment Tracker + Savings Rate" / "Wealth Fuel row"
+
+**6. Ownership Mindset — fallback** (`categoryKey: null` — not a ranked signal; used only when SPEC §6 Step 5 / this plan's §6 step 4 fallback applies)
+- `actionId`: `"ownershipMindsetFallback"`
+- `doNow`: "Complete a Control Tower Review of your full dashboard before your next payday."
+- `thisPayday`: "Choose one area to optimize even though your numbers are already strong."
+- `thisMonth`: "Look for one way to increase income, investing, or ownership capacity."
+- `thirtyDayMission`: "Complete one full Control Tower Review and choose one growth priority for next month."
+- `workbookTab` / `workbookAction`: "Dashboard + Month-End Reset" / "Ownership Mindset review"
+
+None of the six entries names a security, a specific lender, a credit product, a tax position, a
+legal action, or a debt settlement provider, and none contains open-ended AI content or a
+user-specific dollar interpolation — each is a single, fixed, deterministic V1 choice with no
+alternate version. **Founder review of this exact copy happens at the existing W1 authorization
+gate (§17) before production implementation — that review is not a blocker to PLAN approval.**
 
 ---
 
@@ -350,18 +487,45 @@ createAnalyticsPayload(eventName, { stage, strongSignalCategory, warningLight1Ca
 createCalibrationRecord({ score, stage, strongSignalCategory, strongSignalTieBreak,
                            warningLight1Category, warningLight2Category, relativeScores,
                            decisionPath, actionId, workbookTab, workbookAction, testId }) {
+  // relativeScores is reshaped into an explicit, fixed-shape object — never passed through as
+  // whatever shape the caller happened to have — keyed by the five approved public categories:
+  const { cashFlowControl, savingsSystem, debtLoad, emergencyRunway, wealthFuel } = relativeScores;
   return { score, stage, strongSignalCategory, strongSignalTieBreak, warningLight1Category,
-           warningLight2Category, relativeScores, decisionPath, actionId, workbookTab,
-           workbookAction, testId };
+           warningLight2Category,
+           relativeScores: { cashFlowControl, savingsSystem, debtLoad, emergencyRunway, wealthFuel },
+           decisionPath, actionId, workbookTab, workbookAction, testId };
   // `founderJudgment` and `note` are NOT produced here — see §12, they are the Founder's own
   // manual notes, never generated or stored by this function.
 }
 ```
 
-**Required automated tests** (§14): for each serializer, construct a fuzz-input object
-containing every field on the MUST-NOT-send list (§10) *plus* every allowed field, call the
-serializer, and assert the returned object's key set is exactly the documented allowlist — proving
-structurally, not just by code review, that no raw field can leak through.
+**Required automated tests** (§14) — strengthened in this revision beyond a flat key-set check:
+
+For **every** serializer:
+- Construct a fuzz-input object containing every field on the MUST-NOT-send list (§10) *plus*
+  every allowed field, call the serializer, and assert the returned object's key set is **exactly**
+  the documented allowlist — no forbidden top-level key survives.
+- Attempt a prototype-pollution-style input (e.g., a `__proto__`/`constructor.prototype` key, or
+  an input object built via `Object.create()` with polluted inherited properties) and assert the
+  returned object's own prototype is unaffected and no such key appears as an own property —
+  proving construction is safe even against adversarial input shapes, not just missing fields.
+- Assert the returned object contains **no unexpected nested object** — `createMailerLitePayload`
+  and `createAnalyticsPayload` return flat structures by design; a test asserting every value is a
+  primitive (string/number/boolean), except where a nested shape is explicitly documented, catches
+  an accidental object/array leaking through.
+- Attempt passing a forbidden raw value under a different/alias key name (e.g., `rawIncome`,
+  `_income`, `formValues`) and assert it never appears anywhere in the output, proving the
+  allowlist is enforced by explicit destructuring, not by name-matching that an alias could evade.
+
+**Additional required tests specific to `createCalibrationRecord`'s `relativeScores`:**
+- The returned `relativeScores` object contains **exactly** the five approved public-category
+  keys (`cashFlowControl`, `savingsSystem`, `debtLoad`, `emergencyRunway`, `wealthFuel`) — no more,
+  no fewer, and never a raw internal calculator key (`cashRemaining`, etc.) at this boundary.
+- Every one of the five values is a **finite** number (`Number.isFinite`).
+- Every one of the five values is `>= 0`.
+- Every one of the five values is `<= 1`.
+- A fuzz input supplying a sixth key, a missing key, a `NaN`/`Infinity` value, or a value outside
+  `[0, 1]` on `relativeScores` is rejected or stripped, never passed through silently.
 
 ---
 
@@ -372,7 +536,7 @@ structurally, not just by code review, that no raw field can leak through.
 | **Client only — never transmitted** | All 9 raw financial inputs; `immediatePressure`; `shortTermObjective`; `cashRemaining`; `savingsRate`; `debtToIncome`/debt ratio; `emergencyFundLevel`; raw `categoryScores` point values | **Never** |
 | **Email provider (MailerLite)** | Only the Founder-approved allowlist in §9's `createMailerLitePayload`: email, consent version, consent timestamp, score (only if actually required), stage, Strong Signal category, Warning Light #1/#2 categories, action-library id, workbook tab/action, Do Now/This Payday/This Month/30-Day Mission copy | Yes — allowlist only, gated on W3A capability verification (§11) |
 | **Analytics (GA4)** | Event names + the categorical, non-financial parameters in §9's `createAnalyticsPayload` (stage, Strong Signal category, Warning Light #1 category, decision path) | Yes — allowlist only |
-| **Calibration** | The engine-derived fields in §9's `createCalibrationRecord` (score, stage, Strong Signal category + tie flag, Warning Light #1/#2 categories, the 5 *normalized 0–1* relative scores, decision path, action id, workbook route, test id) | **Never transmitted** — console-only, manual Founder capture (§12) |
+| **Calibration** | The engine-derived fields in §9's `createCalibrationRecord` (score, stage, Strong Signal category + tie flag, Warning Light #1/#2 categories, the 5 *normalized 0–1* relative scores keyed by public category — never a raw internal calculator key, §9, decision path, action id, workbook route, test id) | **Never transmitted** — console-only, manual Founder capture (§12) |
 | **URLs / subject lines / logs** | — | **Never**, for any field above except the analytics allowlist through GA4's own standard event pipeline |
 
 ---
@@ -448,21 +612,36 @@ Pilot procedure (unchanged from the approved SPEC §15, restated for BUILD):
 
 ## 13. Analytics
 
-**Keep** (V1-required): `personalized_plan_view`, `personalized_plan_email_start`,
-`personalized_plan_email_success`. **Add** one error event for the actual plan-email path only:
-`personalized_plan_email_error` (mirrors the existing `briefing_submit_error` naming pattern, but
-distinct — it covers the new EMAIL MY FLIGHT PLAN send, not the existing Starter Kit lead-form).
+**The four approved V1 Flight Plan events** — all equal, first-class events, not three "real"
+events plus an afterthought:
 
-**Removed from scope** (per this review): `starter_kit_open`, `plan_action_acknowledged` — not
-introduced unless a later, explicit product requirement calls for them.
+| Event | Purpose |
+|---|---|
+| `personalized_plan_view` | The plan rendered on screen (product interaction) |
+| `personalized_plan_email_start` | The EMAIL MY FLIGHT PLAN send was initiated (product interaction) |
+| `personalized_plan_email_success` | The send completed successfully (product interaction) |
+| `personalized_plan_email_error` | **Technical observability only** — the send failed |
+
+**`personalized_plan_email_error` is explicitly a fourth, equal event in this set, not a lesser
+add-on.** Its purpose is narrow and stated precisely: it exists **only** to detect a
+provider/send failure on the new EMAIL MY FLIGHT PLAN path (mirroring, but distinct from, the
+existing Starter Kit lead-form's own `briefing_submit_error`). It is **not** a new product
+interaction to analyze funnel behavior with — it is diagnostic. It **must carry no email
+address, raw financial data, ratio, plan narrative, or other sensitive payload**; at most it may
+carry a single allowlisted categorical error class (e.g., `"timeout"` / `"provider_error"`, the
+same two classes the existing `briefing_submit_error` already uses) if useful for triage.
+
+**Removed from scope** (per Revision 2's review): `starter_kit_open`, `plan_action_acknowledged`
+— not introduced unless a later, explicit product requirement calls for them.
 
 **Existing funnel events are unchanged**: `scorecard_start`, `scorecard_complete`,
 `briefing_view`, `briefing_submit_start/success/error`, `sign_up` all continue to fire exactly as
 they do today, verified via a GA4 Realtime check (§17 W4) following the existing
-`docs/funnel/ga4-verification-log.md` methodology.
+`docs/funnel/ga4-verification-log.md` methodology. The existing Funnel Activation error/success
+events are not touched, renamed, or repurposed by any of the four events above.
 
-All four new event calls go through the allowlisted `createAnalyticsPayload` serializer (§9) —
-no ad hoc `trackEvent(...)` call site outside that path is permitted for Flight Plan events.
+All four events go through the allowlisted `createAnalyticsPayload` serializer (§9) — no ad hoc
+`trackEvent(...)` call site outside that path is permitted for Flight Plan events.
 
 ---
 
@@ -471,13 +650,14 @@ no ad hoc `trackEvent(...)` call site outside that path is permitted for Flight 
 **Adopt Node's built-in test runner** (`node --test`) — zero external testing dependencies. A
 minimal root `package.json` is added:
 
-```
+```json
 {
   "name": "financialflightmode",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=18" },
-  "scripts": { "test": "node --test src/" }
+  "scripts": {
+    "test": "node --test"
+  }
 }
 ```
 
@@ -492,13 +672,41 @@ behavior. If Netlify's build image auto-detects the file and attempts an `npm in
 that didn't run before, that must be caught here and resolved (e.g., an explicit empty `[build]
 command` in `netlify.toml`) before this package.json merges to `main`.
 
-**Documented runtime finding**: this environment resolves `node` at `/opt/node22/bin/node`
-(v22.22.2) via an explicit `PATH` entry, not a system-default location — plain `node` is **not**
-guaranteed to resolve in every execution context (e.g., a minimal non-interactive shell that
-doesn't source the same profile). BUILD must not assume bare `node` works in every runner; the
-`engines.node` field above states the version requirement explicitly, and CI/local instructions
-must reference the exact invocation (`node --test src/` or `npm test`) plus, if a runner's default
-`node` is unavailable, an explicit path or version-manager step — not a silent assumption.
+**Corrected, empirically-verified test command.** Revision 2's documented command,
+`node --test src/`, **is invalid** — verified in this planning environment: Node treats a bare
+directory argument to `--test` as a module specifier to *execute*, not a search path, and it
+fails immediately with `Error: Cannot find module '.../src'` (`MODULE_NOT_FOUND`), exit code `1`.
+The corrected command is **`node --test`, with no path argument, run from the repository root**.
+This was verified to work correctly: a test file placed at `src/sample.test.js` was
+automatically and recursively discovered by Node's own default test-file glob with zero
+additional configuration, and passed. This plan no longer relies on any unverified assumption
+about `node --test`'s argument handling.
+
+**Test discovery convention.** Test files are named `<subject-module>.test.js` and live directly
+alongside the module they cover inside `src/` (e.g., `src/flightScoreCalculator.test.js`,
+`src/personalizedFlightPlan.test.js`) — this matches Node's built-in default discovery pattern
+for `*.test.js` files anywhere in the project tree, confirmed working by the verification above.
+No test-path configuration, glob, or additional tooling is required.
+
+**Exact commands:**
+- **Local**: `node --test` (run from the repository root), or `npm test` once `package.json` is present — both invoke the identical command.
+- **CI / reviewer**: the same `npm test` (or `node --test`), run from the repository root, with no other setup beyond having Node installed.
+
+**Documented, tested Node runtime — no Node 18 assumption.** This environment resolves `node` at
+`/opt/node22/bin/node` via an explicit `PATH` entry, not a system-default location.
+- **Tested major version**: Node **v22** (exact patch verified: **v22.22.2**). `node --test`
+  was empirically exercised on this exact version, per the verification above.
+- **Minimum supported version**: **not asserted.** Node 18 was never tested in this environment,
+  and this plan does not claim compatibility with it or any version below the tested v22.22.2
+  baseline — Revision 2's `engines.node: ">=18"` assumption is removed rather than carried
+  forward unverified. `package.json` intentionally omits an `engines` field for the same reason:
+  asserting a floor this plan cannot verify would reintroduce the same problem this revision is
+  closing. If a lower bound is verified later (e.g., against whatever Node version a CI runner
+  actually provides), `engines.node` can be added at that point to enforce it.
+- BUILD must confirm `node --test` runs correctly on the exact Node version available in
+  whatever local/CI environment executes W0 (§17) before treating any version as supported —
+  plain `node` is not guaranteed to resolve to the same binary in every shell (e.g., a minimal
+  non-interactive shell that doesn't source the profile that adds `/opt/node22/bin` to `PATH`).
 
 **Required test matrix** (mapped to this repo's actual fixtures):
 
@@ -508,7 +716,7 @@ must reference the exact invocation (`node --test src/` or `npm test`) plus, if 
 | Pressure | Persona 2 (negative cash, `-$300`), Persona 1 (exact-zero cash, `$0`), a corroborated-pressure fixture (`savingsRate < 0.05` or `emergencyFundLevel < 0.25` + non-Stable), Persona 4 (uncorroborated pressure → Flag/Context) |
 | Stage sequencing | Pre-Flight and Turbulence fixtures with Wealth Fuel as the mathematically weakest signal, confirming it never appears as Warning Light #1/#2; Cruise Control and Flight Mode fixtures confirming Wealth Fuel *is* eligible there |
 | Tie logic | Persona 3 (`0.03` gap, `<= 0.10`), a `> 0.10` fixture (no tie-break applied), objective-matches-tied-pair, objective-omitted, objective-maps-to-neither-tied-category (falls back to the same safety-sequence order as omitted) |
-| Strong Signal | Persona 3 (unique max), a new synthetic two-way-tied-but-not-all-five fixture, Persona 4 (all-five tie, resolves to Cash Flow Control), a new synthetic all-five-tied-but-below-0.90 fixture exercising the §6 step 12 collision policy |
+| Strong Signal | Persona 3 (unique max), a new synthetic two-way-tied-but-not-all-five fixture, Persona 4 (all-five tie, resolves to Cash Flow Control), a new synthetic all-five-tied-but-below-0.90 fixture exercising the §6.3 collision policy |
 | Warning Lights | Persona 1/2 (Hard Override forces Cash Flow Control as #1), deterministic #2 selection, an always-distinct assertion run across the full fixture set |
 | Action library | All five signal entries plus the Ownership Mindset fallback present with every required field non-empty |
 | Privacy serializers | `createMailerLitePayload`, `createAnalyticsPayload`, `createCalibrationRecord` fuzz-tests (§9) — no forbidden key ever survives serialization |
@@ -565,7 +773,7 @@ itself, not only on `privacy.html`.
 - **Acceptance criteria**: all four SPEC §10 personas reproduced exactly; every SPEC §16 acceptance criterion in the 5–11 and 19–21 range has a corresponding passing test; the three serializer fuzz-tests pass; the module contains no `document`, `fetch`, `gtag`, or `window` reference (grep-verified).
 - **Test evidence**: full test-suite output; a table mapping each covered SPEC §16 acceptance criterion to its test name.
 - **Rollback**: revert the module and its test file.
-- **Founder authorization gate**: none required for the logic itself (inert until W2); a lightweight Founder copy sign-off on the action-library's Do Now/This Payday/This Month/30-Day Mission wording is recommended before W2 renders it publicly.
+- **Founder authorization gate**: none required for the logic itself (inert until W2). The Founder reviews the six fixed action-library entries' exact copy (§7) at this gate before production implementation proceeds to W2 — that review is not a blocker to PLAN approval itself.
 
 ### W2 — Two-Route UI Integration
 - **Objective**: wire the module into both live routes; add the two new inputs; render the Flight Plan output and disclaimer.
@@ -584,7 +792,7 @@ itself, not only on `privacy.html`.
 - **Acceptance criteria / test evidence / rollback**: see §11.
 
 ### W4 — Analytics
-- **Objective**: add the three approved events plus `personalized_plan_email_error`, all through the allowlisted serializer; leave existing funnel events untouched.
+- **Objective**: add all four approved Flight Plan events (§13) — `personalized_plan_view`, `personalized_plan_email_start`, `personalized_plan_email_success`, and the technical-observability `personalized_plan_email_error` — all through the allowlisted serializer; leave existing funnel events untouched.
 - **Likely files**: `src/main.js`.
 - **Dependencies**: W2 (view event); W3B (email events).
 - **Acceptance criteria**: existing funnel events verified unchanged via a GA4 Realtime check; new events carry only allowlisted categorical parameters (serializer fuzz-test applied at each call site).
