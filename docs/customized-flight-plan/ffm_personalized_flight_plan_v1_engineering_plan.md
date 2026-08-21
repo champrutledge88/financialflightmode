@@ -6,7 +6,11 @@ Status: Revision 3 — closes the three remaining P1 findings and two cleanup it
 independent Codex PLAN Re-Review verdict **PASS WITH CHANGES — REVISE PLAN** on Revision 2 (all
 P0 findings already closed). Planning document only. No production code, no calculator-formula
 changes, no redesign of the approved product. The approved product SPEC (Revision 4, PR #10)
-remains controlling authority; nothing in this revision reopens it.
+remains controlling authority; nothing in this revision reopens it. **Post-Rebase Baseline
+Update**: after this Revision 3 content was approved, PR #10 (the SPEC) merged to `main` and this
+branch was rebased onto the resulting `main` per §2's required sequence — see §1 for the updated
+SHAs. No Revision 3 PLAN content changed as a result; only baseline/SHA/source references were
+updated, as this rebase itself requires.
 
 ---
 
@@ -65,38 +69,47 @@ silently introducing a backend.
 
 ---
 
-## 1. Corrected Baseline State
+## 1. Corrected Baseline State (post-rebase)
 
-Revision 1 incorrectly implied the PLAN branch head shared `main`'s SHA at time of writing. Corrected, with each ref distinguished explicitly:
+Revision 1 incorrectly implied the PLAN branch head shared `main`'s SHA at time of writing;
+Revision 2 corrected that and distinguished the three then-distinct refs. **PR #10 has since
+merged and PR #11 has been rebased onto the resulting `main`, per §2 steps 3–6** — updated here:
 
 | Ref | SHA | Note |
 |---|---|---|
-| `origin/main` (base) | `fc8ba670443b05061bc93bf67acf01995ad8a4a9` | "Repair FFM free funnel reliability and verification" — the pre-SPEC base this plan and PR #10 both branched from |
-| PR #10 head (`claude/ffm-repo-kb-access-tfk9a7`) | `725b62375198511bbda987ef04ca14560117d94b` | The approved SPEC (Revision 4), open/draft, not merged. Base = `fc8ba670...`, `mergeable_state: clean` |
-| PR #11 head (`claude/ffm-flight-plan-engineering-s3hfhp`, this branch) | `dba09aa38301663cd291db03a36f00b1360bd261` (Revision 1 commit) | This Revision 2 adds a new commit on top; the head SHA will change again once pushed. Base = `fc8ba670...`, same as PR #10's base — the two PRs are currently siblings off the same commit, not stacked |
+| `origin/main` (new base, post-SPEC-merge) | `131ba819688485662666c898009774b4cbe28f90` | "Merge Personalized Flight Plan V1 product SPEC" — the SPEC files now live directly on `main`; this is the current authoritative base |
+| `origin/main` (former, pre-SPEC base — historical only) | `fc8ba670443b05061bc93bf67acf01995ad8a4a9` | "Repair FFM free funnel reliability and verification" — retained here only as a historical record of what Revisions 1–3 were originally written against; no longer the current base |
+| PR #10 head (`claude/ffm-repo-kb-access-tfk9a7`) | `725b62375198511bbda987ef04ca14560117d94b` | The approved SPEC (Revision 4) — **merged** into `main` at `131ba81...` (merge commit above), PR closed |
+| PR #11 head (`claude/ffm-flight-plan-engineering-s3hfhp`, this branch), immediately after the rebase, before this baseline-update commit | `fb56578c0ce412f429179da4020d3fbe05bb5c39` | `git rebase origin/main` replayed the three Revision 1–3 commits (unchanged in content) onto the new `main`; this commit adding the present baseline-update note moves the head again once pushed — expected, and reported at push time, not embedded here |
 
-These are three distinct commits. PR #11's branch head is **never** the same value as `origin/main`'s tip once any commit is added to it — Revision 1's phrasing implying otherwise is corrected here. Working tree remains clean; no branch switch or merge was performed to write this revision (SPEC content was read via `git show origin/claude/ffm-repo-kb-access-tfk9a7:<path>`, read-only).
+The rebase was clean — no merge conflicts (the SPEC's two files and this plan's one file live in
+the same directory but are otherwise disjoint). Diffed against the new base, this plan file is
+**846 insertions, 0 deletions, exactly one file changed** — i.e., the full, unmodified Revision 3
+content, now expressed as a diff against a base that already contains the SPEC it was written
+against, rather than against the old pre-SPEC base. No Revision 3 PLAN content changed; only this
+§1/§2 baseline bookkeeping did, which is precisely what the rebase requires (§2 step 6).
 
 ---
 
 ## 2. Required PR #10 / PR #11 Sequence
 
-This exact sequence governs everything after this document is revised:
+This exact sequence governs everything after this document was revised — progress noted inline:
 
-1. Revise PR #11 per this Codex PLAN review (this document).
-2. Independent Codex re-review of the revised PR #11.
-3. Founder authorizes the PR #10 (SPEC) merge.
-4. Merge approved SPEC PR #10 into `main`.
-5. Rebase (or recreate) PR #11 onto the resulting `main` — the SPEC files then exist alongside this plan in the same tree for the first time.
-6. Correct any resulting SHA/source references in this plan (the §1 table above will need a new `origin/main` SHA and a new PR #11 head SHA at that point).
-7. Codex verifies the rebased PR #11 head and confirms plan content did not drift during the rebase.
+1. ~~Revise PR #11 per this Codex PLAN review (this document).~~ **Done** (Revision 2).
+2. ~~Independent Codex re-review of the revised PR #11.~~ **Done** — returned `PASS WITH CHANGES`, closed via Revision 3.
+3. ~~Founder authorizes the PR #10 (SPEC) merge.~~ **Done.**
+4. ~~Merge approved SPEC PR #10 into `main`.~~ **Done** — `131ba81...` (merge commit, above).
+5. ~~Rebase (or recreate) PR #11 onto the resulting `main`.~~ **Done** — clean rebase, no conflicts; the SPEC files now exist alongside this plan in the same tree for the first time.
+6. **Correct any resulting SHA/source references in this plan — this update.** §1's table above reflects the new `origin/main` SHA and the post-rebase PR #11 head.
+7. **Next**: Codex verifies the rebased PR #11 head and confirms plan content did not drift during the rebase (§1's diff-stat above — 846 insertions, 0 deletions against the new base — is the evidence for that check).
 8. Founder separately authorizes the PR #11 (engineering plan) merge.
 9. Merge the approved engineering PLAN into `main`.
 10. Create the implementation branch from the resulting `main`.
 11. BUILD begins only from that authoritative source-of-truth state.
 
-**BUILD must never begin from the current pre-SPEC `main` (`fc8ba670...`).** No step in this
-plan authorizes skipping ahead of this sequence; this document itself only completes step 1.
+**BUILD must never begin from the old pre-SPEC `main` (`fc8ba670...`, now superseded).** No step
+in this plan authorizes skipping ahead of this sequence; this update completes step 6 — steps 7
+onward remain outstanding.
 
 ---
 
@@ -843,4 +856,4 @@ including verification that adding `package.json` does not change Netlify's buil
 - The lead-form/MailerLite path has a recent reliability history — mitigated by keeping EMAIL MY FLIGHT PLAN a fully separate form/handler from the existing `#lead-form` (§11).
 - A required new select field adds friction — an approved, deliberate SPEC requirement, not something to soften.
 - **New in this revision**: introducing a root `package.json` for testing could unintentionally change Netlify's build behavior — mitigated by explicit deploy-preview verification in W0.
-- **New in this revision**: PR #10 is still not merged as of this writing — this plan's sequencing (§2) exists specifically to prevent BUILD from starting on the wrong base.
+- PR #10 has since merged and this branch has been rebased onto the resulting `main` (§1) — this plan's sequencing (§2) existed specifically to prevent BUILD from starting on the wrong base, and that risk is now closed; §2 steps 7–11 remain outstanding before BUILD may begin.
