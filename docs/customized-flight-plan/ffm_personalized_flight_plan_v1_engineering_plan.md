@@ -1,301 +1,638 @@
 # FFM Personalized Flight Plan V1 — Engineering Implementation Plan
 
-Phase: PLAN
+Phase: PLAN (Revision 2)
 Author role: Senior Product Engineer / Technical Architect
-Status: Planning document only. No production code, no calculator-formula changes, no
-redesign of the approved product. This document converts the approved Personalized Flight
-Plan V1 SPEC (Revision 4) into the safest, smallest, testable engineering plan.
-
-**Source of truth read in full before writing this plan:**
-
-- `ffm_customized_flight_plan_v1_spec.md` (Revision 4, PR #10, commit `725b6237`)
-- `ffm_personalized_flight_plan_one_page_spec_approved.md` (approved original MVP one-pager, PR #10, commit `725b6237`)
-- `docs/scorecard/README_START_HERE.md`, `ffm_scorecard_methodology_sop_v1.md`,
-  `ffm_scorecard_public_explanation_copy_v1.md`, `ffm_scorecard_github_methodology_readme_v1.md`,
-  `ffm_scorecard_validation_backlog_v1.md`
-- `src/flightScoreCalculator.js`, `src/main.js`, `src/analytics.js`, `index.html`,
-  `ffm-scorecard.html`, `privacy.html`, `terms.html`, `netlify.toml`
-- `docs/funnel/README.md`, `docs/funnel/ga4-verification-log.md`
-
-Treated as controlling: the live code in `src/flightScoreCalculator.js` and `src/main.js`,
-not model memory or the Scorecard docs' stale "On Approach" label.
+Status: Revision 2 — responds to the independent Codex PLAN REVIEW verdict **PASS WITH
+CHANGES — REVISE PLAN** on Revision 1. Planning document only. No production code, no
+calculator-formula changes, no redesign of the approved product. The approved product SPEC
+(Revision 4, PR #10) remains controlling authority; nothing in this revision reopens it.
 
 ---
 
-## 1. Confirmed Current Repo State
+## Revision 2 — Codex PLAN Review Resolution Log
 
-| Item | Finding |
-|---|---|
-| Current checked-out branch | `claude/ffm-flight-plan-engineering-s3hfhp` (this plan's designated branch) |
-| Branch vs. `origin/main` | Identical — both at `fc8ba670443b05061bc93bf67acf01995ad8a4a9` ("Repair FFM free funnel reliability and verification"). No divergence, working tree clean. |
-| `origin/main` SHA | `fc8ba670443b05061bc93bf67acf01995ad8a4a9` |
-| PR #10 — "Add Customized Flight Plan V1 product SPEC" | **Open, draft, NOT merged.** Head branch `claude/ffm-repo-kb-access-tfk9a7` @ `725b62375198511bbda987ef04ca14560117d94b`. Base `main` @ `fc8ba670...` — i.e. PR #10 is already up to date with the current `main` tip; `mergeable_state: clean`. |
-| Where the approved SPEC files physically live | **Only on PR #10's branch** (`claude/ffm-repo-kb-access-tfk9a7`), not on `main`, not on this engineering-plan branch. They were read via `git show origin/claude/ffm-repo-kb-access-tfk9a7:<path>` for this plan (read-only inspection; no branch switch, no merge performed). |
-| Eventual implementation base | **`main`, after PR #10 merges.** PR #10 is the source-of-truth SPEC and must land first (or this branch must be rebased onto PR #10's head) before an implementation PR is opened, so the code changes below sit next to their own grounding SPEC in the tree. This plan does not merge PR #10 — flagged as a sequencing dependency, not actioned here. |
-| Working tree status | Clean, nothing staged or pending. |
-| Deployment host/config | **Netlify**, static hosting, no serverless/functions directory. `netlify.toml`: `pretty_urls = false`; three redirects — `/thank-you.html → /thank-you-download.html` (200), `/flight-plan-budget-system.html → /#flight-briefing-form` (301), `/docs/* → /404.html` (404, keeps repo docs out of the public site). No CI config (no `.github/workflows`), no build step — plain static files served as-is, ES modules loaded directly via `<script type="module">`. |
-| Current test infrastructure | **None.** No `package.json`, no test framework, no unit tests, no CI. Verification today is manual: Google Tag Assistant + GA4 Realtime, logged in `docs/funnel/ga4-verification-log.md`. This directly shapes §7 below — any new test harness must add zero new tooling/build step. |
-
----
-
-## 2. Architectural Principle — Confirmed Compliant
-
-Approved architecture: `existing Scorecard inputs → client-side deterministic personalization
-engine → self-service Personalized Flight Plan → optional email/resource delivery → minimal
-retained metadata only.`
-
-Repo evidence confirms nothing here needs to change to honor this:
-
-- No backend exists today (`netlify.toml` has no `[functions]` block; no server code in the repo).
-- The live Scorecard already computes everything client-side in `flightScoreCalculator.js`,
-  imported directly into the browser — the new module follows the identical pattern.
-- The only network call in the entire funnel is `submitLeadToMailerLite()` in `main.js`, a
-  direct JSONP-style POST to MailerLite with **only `email`** in the payload today. No Plaid,
-  bank-linking, brokerage, credit-report, or AI-generation dependency exists anywhere in the
-  codebase.
-- Therefore the plan below introduces **zero new infrastructure**: no new endpoint, no new
-  storage, no new subscription/billing code, no accounts. It is additive client-side JS + two
-  new form fields + rendering, exactly as the architecture requires.
-
----
-
-## 3. Reuse vs. New Code
-
-### Reused directly from `src/flightScoreCalculator.js` (no formula changes)
-
-- `calculateFlightScore()` — full output object (`values`, `score`, `stage`, `metrics`,
-  `categoryScores`, `briefing`) is the only source of derived data the new engine consumes.
-- `getStage()` — stage object (name/message/nextAction/starterSection), untouched.
-- `categoryScores` (the 5 raw sub-scores) and `categoryMaximums` (the 5 category caps).
-- The relative-score math currently inside the private `getRelativeCategoryScores` helper
-  (`score / categoryMaximums[key]`) — this is the exact function the SPEC's ranking, tie-break,
-  and Strong Signal logic all depend on (§6). It must be **imported, not re-derived**, so the
-  new module can never drift from the live formula.
-- The **stable-sort tie order** already implicit in `getStrongestSignal`/`getWarningLight`
-  (`Array.prototype.sort` is stable per spec, and `Object.entries(categoryScores)` preserves
-  the object's key insertion order: `cashRemaining, savingsRate, debtPressure, emergencyFund,
-  investments`). Verified this matches the SPEC's required tie-break order exactly (Cash Flow
-  Control > Savings System > Debt Load > Emergency Runway > Wealth Fuel) — nothing to build,
-  only to rely on by reusing the same underlying array rather than reimplementing a tie order.
-- The existing `>= 0.9` "nothing is weak" threshold in `getWarningLight` — conceptually the same
-  boundary as SPEC §6 Step 5's fallback condition; the *threshold value* is reused, but the
-  *output* is new (see below), since the existing function's string output ("Optimization
-  Capacity") still feeds the live `#warningLight` DOM node and must not change.
-
-**Only proposed change to `flightScoreCalculator.js` — two additive exports, no logic
-changed:**
-
-```
-export const categoryMaximums = { ... };            // already exists privately, unchanged
-export const getRelativeCategoryScores = (...) => { ... };  // already exists privately, unchanged
-```
-
-Confirmed via search that both are currently used only inside this file — exporting them is
-fully backward compatible and does not touch `getStage`, `calculateFlightScore`,
-`getStrongestSignal`, or `getWarningLight`, all of which keep computing and returning exactly
-what the live Scorecard result card already renders today.
-
-### New — in a separate bounded module, `src/personalizedFlightPlan.js`
-
-| New logic (per SPEC §6, §8, §9, §11) | Why it can't be reused as-is |
-|---|---|
-| Hard Override vs. Flag/Context (Step 1) | New input (`immediatePressure`) not read by the calculator at all today |
-| Warning Light #1 **and** #2 ranked ordering | `getWarningLight` only ever returns the single lowest signal, as a label string, with no category key exposed |
-| Stage-gate suppression (Wealth Fuel never first/second in Pre-Flight/Turbulence) | No such filter exists in the live code |
-| Optional-objective tie-break (≤0.10 gap) | New input (`shortTermObjective`), new comparison logic |
-| Deterministic Step-5 fallback → Ownership Mindset action | Existing fallback returns a different string for a different purpose (live briefing card), must not be repointed |
-| Strong Signal "always show" + 5-way-tie resolution, exposed with its category identity | Existing `getStrongestSignal` returns a label only, not the category key the action-library mapping needs |
-| Action-library mapping (6 rows: 5 signals + Ownership Mindset fallback) | New static data, not present anywhere in the repo |
-| Do Now / This Payday / This Month copy | New, deterministic templates keyed off resolved Warning Light #1 + stage |
-| 30-Day Mission text | New, one templated line per SPEC §10's worked examples |
-| Workbook Connection routing | New — pulled directly from the action-library table, no separate logic |
-| Calibration record derivation (pilot-only) | New — must be structurally incapable of receiving raw dollar values (see §6 below), not just "trusted" to omit them |
-
-This keeps `flightScoreCalculator.js` as the single source of scoring truth and
-`personalizedFlightPlan.js` as a pure, DOM-free, dependency-only-on-the-calculator module —
-matching the existing module's own style (pure functions, no side effects, imported by
-`main.js`).
-
----
-
-## 4. Input Flow
-
-### Existing (unchanged)
-
-The 9 required financial fields (`income`, `needs`, `wants`, `savings`, `extraDebtPayment`,
-`totalDebtBalance`, `emergencyFundSaved`, `emergencyFundGoal`, `investmentsCurrentValue`) are
-already collected in `#score-form` in both `index.html` and `ffm-scorecard.html`, read via
-`main.js`'s `getInputValues()`/`fields` array pattern, and passed straight into
-`calculateFlightScore()` on submit. **Nothing about this changes.**
-
-### New fields — recommended placement
-
-**Append both new fields to the end of the existing `#score-form`, immediately before its
-submit button — not a separate screen, not a post-Scorecard follow-up page.**
-
-| New field | Type | Required? | Options |
+| # | Finding area | Plan section(s) changed | Status |
 |---|---|---|---|
-| Immediate pressure | `<select>` | Required | Stable / Unexpected bill / Income disruption / Falling behind on a payment |
-| Short-term objective | `<select>` | Optional | Stop the bleeding / Build a cushion / Get out of debt / Save more consistently / Start investing / *(default: no objective selected — maps directly to SPEC §6 Step 4's "omitted" branch)* |
-
-Rationale for this placement over the alternatives:
-
-1. **Same form, same submit, same state.** `main.js` already has one `submit` handler on
-   `#score-form` that reads N fields into one values object. Adding 2 more `scoreForm.elements[...]`
-   reads is a direct extension of an existing, proven pattern — not a rearchitecture, not a
-   second data-collection step to keep in sync with the first.
-2. **Trivially satisfies "never re-enter the 9 fields"** — there is no second form and no
-   navigation away from the first, so nothing is ever re-asked.
-3. **Matches SPEC §12's journey literally**: `Scorecard (existing, no gate) → Instant on-screen
-   Flight Plan (client-side, no gate)`. One submit press produces the score, the stage, *and*
-   the Flight Plan in the same render pass — no intermediate screen for the two new selects to
-   gate.
-4. Visually: a short "Before we personalize your plan" sub-heading inside the existing input
-   panel, using the same `.field-control`/labeled-row styling already in `styles.css`, just with
-   `<select>` instead of `<input type="number">` — no new CSS system, no new visual language.
-
-### Validation impact
-
-`validateInputs()` gains one more required check: immediate pressure must have an explicit
-non-placeholder selection (a neutral "Select current pressure" placeholder option that fails
-validation if left selected forces a conscious choice, matching "REQUIRED"). Short-term
-objective needs **no** required-check — its default option *is* the legitimate "omitted" value
-the SPEC's tie-break logic already has an explicit branch for.
-
-### Both HTML files must move together
-
-`index.html` and `ffm-scorecard.html` are near-duplicate (confirmed via `diff` — only
-canonical-URL/OG-URL/form-action differ). Every field/markup change here must be applied to
-**both** files identically, the same way today's `#score-form` already is kept identical
-between them — this is an existing repo constraint, not a new risk introduced by this plan, but
-worth stating explicitly since there is no templating system to enforce it automatically.
+| 1 | Baseline state conflated the PLAN branch head with `main`'s SHA | §1 | Resolved |
+| 2 | PR #10 / PR #11 sequencing undefined | §2 | Resolved |
+| 3 | Scorecard export mutability / raw `values` leakage into the new module | §4, §5 | Resolved |
+| 4 | New module contract (own/must-not-own, interfaces) undefined | §5 | Resolved |
+| 5 | Personalization algorithm order-of-operations undefined | §6 | Resolved |
+| 6 | Category map not explicit/immutable; two distinct tie orders not distinguished | §6.2 | Resolved |
+| 7 | Action library not a defined data contract | §7 | Resolved |
+| 8 | Input-integration edge cases (placeholder, blank objective, route parity, `scorecard_start`) unaddressed | §8 | Resolved |
+| 9 | Privacy enforcement was descriptive, not structural | §9 | Resolved |
+| 10 | No explicit network boundary matrix | §10 | Resolved |
+| 11 | Email delivery assumed MailerLite could send the actual plan, ungated | §11, Founder decision | Resolved |
+| 12 | Calibration model risked a new backend/URL-carried-diagnostics surface | §12 | Resolved |
+| 13 | Analytics event set unapproved / risked duplicating existing funnel events | §13 | Resolved |
+| 14 | No automated test infrastructure plan; Node PATH assumption undocumented | §14 | Resolved |
+| 15 | Duplicate-route parity not required as an explicit check | §15 | Resolved |
+| 16 | `privacy.html`/`terms.html`/disclaimer scope undefined | §16 | Resolved |
+| 17 | Phases were broad, not work packages with acceptance criteria | §17 (W0–W6) | Resolved |
+| 18 | No explicit scope guards | §18 | Resolved |
 
 ---
 
-## 5. Client-Side Data Model
+## Founder Decision — Email Architecture (binding on this revision)
 
-Five distinct objects, with an explicit line on what may vs. may never cross the network.
+**EMAIL MY FLIGHT PLAN must deliver the actual Personalized Flight Plan** — not a generic
+Starter Kit reminder, not a generic follow-up, not a resource-only email. MailerLite (or another
+approved mechanism) may receive only a strict allowlist of derived, non-raw fields needed to
+render the approved plan: email, consent version, consent timestamp, score (only if actually
+required by the template), stage, Strong Signal category, Warning Light #1/#2 categories, the
+approved action-library id, the approved workbook route, and the approved deterministic Do
+Now/This Payday/This Month/30-Day Mission copy. Transmitted copy must come exclusively from the
+bounded action library (§7) and must never interpolate a raw financial value. This plan
+implements that decision via a **gated, two-part email work package** (§11, W3A/W3B): provider
+capability is verified read-only before any send-path code is written, and if MailerLite cannot
+meet the bar, the plan stops at the email gate rather than substituting a generic reminder or
+silently introducing a backend.
 
-### 5.1 Raw Financial Inputs — **NEVER crosses the network**
+---
+
+## 1. Corrected Baseline State
+
+Revision 1 incorrectly implied the PLAN branch head shared `main`'s SHA at time of writing. Corrected, with each ref distinguished explicitly:
+
+| Ref | SHA | Note |
+|---|---|---|
+| `origin/main` (base) | `fc8ba670443b05061bc93bf67acf01995ad8a4a9` | "Repair FFM free funnel reliability and verification" — the pre-SPEC base this plan and PR #10 both branched from |
+| PR #10 head (`claude/ffm-repo-kb-access-tfk9a7`) | `725b62375198511bbda987ef04ca14560117d94b` | The approved SPEC (Revision 4), open/draft, not merged. Base = `fc8ba670...`, `mergeable_state: clean` |
+| PR #11 head (`claude/ffm-flight-plan-engineering-s3hfhp`, this branch) | `dba09aa38301663cd291db03a36f00b1360bd261` (Revision 1 commit) | This Revision 2 adds a new commit on top; the head SHA will change again once pushed. Base = `fc8ba670...`, same as PR #10's base — the two PRs are currently siblings off the same commit, not stacked |
+
+These are three distinct commits. PR #11's branch head is **never** the same value as `origin/main`'s tip once any commit is added to it — Revision 1's phrasing implying otherwise is corrected here. Working tree remains clean; no branch switch or merge was performed to write this revision (SPEC content was read via `git show origin/claude/ffm-repo-kb-access-tfk9a7:<path>`, read-only).
+
+---
+
+## 2. Required PR #10 / PR #11 Sequence
+
+This exact sequence governs everything after this document is revised:
+
+1. Revise PR #11 per this Codex PLAN review (this document).
+2. Independent Codex re-review of the revised PR #11.
+3. Founder authorizes the PR #10 (SPEC) merge.
+4. Merge approved SPEC PR #10 into `main`.
+5. Rebase (or recreate) PR #11 onto the resulting `main` — the SPEC files then exist alongside this plan in the same tree for the first time.
+6. Correct any resulting SHA/source references in this plan (the §1 table above will need a new `origin/main` SHA and a new PR #11 head SHA at that point).
+7. Codex verifies the rebased PR #11 head and confirms plan content did not drift during the rebase.
+8. Founder separately authorizes the PR #11 (engineering plan) merge.
+9. Merge the approved engineering PLAN into `main`.
+10. Create the implementation branch from the resulting `main`.
+11. BUILD begins only from that authoritative source-of-truth state.
+
+**BUILD must never begin from the current pre-SPEC `main` (`fc8ba670...`).** No step in this
+plan authorizes skipping ahead of this sequence; this document itself only completes step 1.
+
+---
+
+## 3. Architectural Principle — Confirmed Compliant (unchanged from Revision 1)
+
+No backend, functions directory, accounts, Plaid, brokerage, credit-report, or subscription
+infrastructure exists in the repo today (confirmed by inspection of `netlify.toml` and the full
+`src/` tree). The only outbound network call anywhere in the funnel is the existing
+`submitLeadToMailerLite()` POST in `src/main.js`, sending `email` only. This plan adds zero new
+infrastructure — only additive client-side JS, two new form fields, new rendering, and (pending
+the Founder's email decision and W3A verification) a second, separate MailerLite send path.
+
+---
+
+## 4. Scorecard Reuse / Immutability
+
+`src/flightScoreCalculator.js`'s formulas, `getStage`, `calculateFlightScore`, `getStrongestSignal`,
+and `getWarningLight` are **not modified**. The only change is two additive, safe-by-construction exports:
+
+- **`categoryMaximums`** — exported as `Object.freeze({ cashRemaining: 25, savingsRate: 25,
+  debtPressure: 20, emergencyFund: 20, investments: 10 })`. A single frozen reference; freezing
+  at definition makes mutation throw in strict mode / silently no-op otherwise, so no caller can
+  corrupt the shared object.
+- **`getRelativeCategoryScores`** — exported unchanged in logic, but its return value is wrapped
+  so every call returns a **freshly frozen** array of frozen `[key, value]` pairs
+  (`Object.freeze(pairs.map(Object.freeze))`... conceptually: freeze each tuple, then freeze the
+  array). It already constructs a new array per call (no shared-reference risk); the added freeze
+  is defense-in-depth so a consuming module cannot mutate a value in place and affect a later read.
+
+Both are additive exports only — nothing existing is removed, renamed, or changed in behavior.
+Confirmed via search that both are currently used only internally to this file, so exporting them
+is fully backward compatible.
+
+**No raw `values` object crosses into the new module.** `calculateFlightScore()`'s return value
+contains a `values` field holding the 9 raw dollar inputs — that field, and the full result
+object that contains it, is never passed to `personalizedFlightPlan.js`. Instead, `main.js`
+(the integration point) constructs a **narrowed derived context** containing only what the
+algorithm in §6 structurally requires:
+
 ```
-{
-  income, needs, wants, savings, extraDebtPayment, totalDebtBalance,
-  emergencyFundSaved, emergencyFundGoal, investmentsCurrentValue,   // existing 9 fields
-  immediatePressure,      // new required select value
-  shortTermObjective,     // new optional select value (or "omitted")
+DerivedContext = {
+  score: number,                                   // from calculateFlightScore().score
+  stageKey: "preflight" | "turbulence" | "cruise" | "flight",   // from .stage.key
+  stageName: string,                                // from .stage.name, display only
+  relativeScores: [[key, ratio], ...],              // from the exported getRelativeCategoryScores(.categoryScores), frozen
+  pressureMetrics: {                                // the ONLY three metrics fields the algorithm needs — not the full .metrics object
+    cashRemaining: number,
+    savingsRate: number,
+    emergencyFundLevel: number,
+  },
 }
 ```
-Lives only in `scoreForm.elements[...]`/in-memory JS. Identical in kind to how the 9 existing
-fields are already handled today — the two new fields join the same client-side-only category,
-never appended to any fetch/XHR body anywhere in the codebase.
 
-### 5.2 Derived Scorecard Data — **NEVER crosses the network** (unchanged from today)
-The full return value of `calculateFlightScore()`: `score`, `stage`, `metrics`, `categoryScores`,
-`briefing`. Already computed and rendered client-side only; this plan does not add any
-transmission of this object either.
+This excludes `values` entirely, excludes `metrics.debtToIncome` and `metrics.investmentStatus`
+(not needed by the algorithm), and excludes the raw `categoryScores` sub-points (the algorithm
+operates only on `relativeScores`, never on raw 0–25/0–20/0–10 point totals). `cashRemaining`,
+`savingsRate`, and `emergencyFundLevel` are **derived metrics required by SPEC §6 Step 1's
+Hard-Override rule**, not raw form input — they are structurally necessary for the module to run
+its own algorithm and remain 100% client-side; the boundary they must never cross is the
+*network* boundary (enforced in §9's serializers), not the module's own input contract.
 
-### 5.3 Personalized Flight Plan Result — **NEVER crosses the network** (rendered to DOM only)
+---
+
+## 5. New Module Contract — `src/personalizedFlightPlan.js`
+
+A pure, deterministic, DOM-free module — same style as `flightScoreCalculator.js`.
+
+**MAY own:**
+- Building/consuming the narrowed `DerivedContext` (§4)
+- Pressure evaluation (Hard Override / Flag-Context)
+- Relative priority ordering, stage sequencing/suppression, objective tie-break
+- Warning Light selection, Strong Signal mapping
+- Fixed action-library lookup (§7)
+- Do Now / This Payday / This Month / 30-Day Mission copy selection (fixed templates, no interpolation of raw values — see §7)
+- Workbook routing
+- The three allowlisted serializer functions (§9) — pure data-shaping, no I/O
+- Sanitized calibration-record creation (§12)
+
+**MUST NOT own:**
+- Scorecard scoring formulas or stage calculation (owned exclusively by `flightScoreCalculator.js`)
+- MailerLite network calls (the actual `fetch`) — owned by `main.js`
+- Analytics calls (the actual `gtag`/`trackEvent` invocation) — owned by `main.js`/`analytics.js`
+- DOM rendering — owned by `main.js`
+- Open-ended AI generation
+- User persistence of any kind
+
+**Conceptual interface:**
+
+```
+generatePersonalizedFlightPlan({ derivedContext, immediatePressure, shortTermObjective })
+  → PersonalizedFlightPlanResult {
+      strongSignal: { category, actionId, isTieBreak },
+      decisionPath: "HardOverride" | "FlagContext" | "NormalRanking"
+                   | "StageSuppression" | "ObjectiveTieBreak" | "Fallback",
+      warningLights: [ { category, actionId }, { category, actionId } ] | null,
+      fallback: { actionId: "ownershipMindsetFallback", note?: string } | null,   // mutually exclusive with warningLights
+      flagContextNote: string | null,      // present when pressure was Flag/Context, independent of fallback/warningLights
+      doNow, thisPayday, thisMonth, thirtyDayMission,   // strings, from the action-library entry for Warning Light #1 (or the fallback entry)
+      workbookConnection: { tab, action },
+    }
+
+createMailerLitePayload({ email, consentVersion, consentTimestamp, planSummary }) → allowlisted object   // §9
+createAnalyticsPayload(eventName, categoricalParams) → allowlisted object                                // §9
+createCalibrationRecord({ ...engine-derived fields only... }) → allowlisted object                       // §9, §12
+```
+
+No file outside `personalizedFlightPlan.js` computes Warning Lights, Strong Signal, tie-breaks,
+stage suppression, or action-library lookups — `main.js` only calls the module and renders/sends
+its output.
+
+---
+
+## 6. Exact Personalization Algorithm (order-of-operations contract)
+
+BUILD must follow this order exactly; nothing here is left to be invented during implementation.
+
+1. **Build `DerivedContext`** (§4) from `calculateFlightScore()`'s output — score, stage key/name, `relativeScores` via the exported `getRelativeCategoryScores`, and the three pressure metrics.
+2. **Compute relative scores** — already done in step 1 via the calculator-authoritative helper; no re-derivation.
+3. **Select Strong Signal independently**, before anything else and unaffected by pressure/fallback/stage: sort `relativeScores` descending using the same stable-sort behavior as the existing `getStrongestSignal` (`Array.prototype.sort` is stable; ties preserve `Object.entries` insertion order). Take index `[0]`; map its key to a public category via the §6.2 map. Set `isTieBreak = true` if more than one entry shares the top value. **This selection is never revisited by any later step** — SPEC's own Persona 2 and Persona 4 show Strong Signal surfacing independently of Warning Light/fallback outcomes.
+4. **Fallback check**: if all five `relativeScores` are `>= 0.90`, set `fallbackApplies = true` (Ownership Mindset). Strong Signal from step 3 is retained regardless.
+   - *Structural note for BUILD*: under the current scoring formula, `cashRemaining <= 0` always yields a `cashRemaining` relative score of `0.4` or lower (`scoreCashRemaining` returns `0` or `10`, never enough for `>= 0.90`), so `fallbackApplies` and a Hard Override on `cashRemaining` cannot co-occur today. If a future formula change ever made this possible, **Hard Override must take precedence over the fallback** — safety before optimization. This precedence rule must be implemented even though it is currently unreachable.
+5. **Determine pressure state**:
+   - `cashRemaining <= 0` → **Hard Override**.
+   - else if `immediatePressure !== "Stable"` and (`savingsRate < 0.05` or `emergencyFundLevel < 0.25`) → **Hard Override**.
+   - else if `immediatePressure !== "Stable"` (uncorroborated) → **Flag/Context** (sets `flagContextNote`, changes no ranking).
+   - else → no flag.
+6. **If `fallbackApplies`** (step 4): stop here. Output `{ strongSignal, fallback: { actionId: "ownershipMindsetFallback", note: flagContextNote ?? null }, warningLights: null, decisionPath: "Fallback" }`. (This is Persona 4's case: Flag/Context is real but subordinate to the fallback.)
+7. **Else, build the Warning Light candidate set** = all 5 `relativeScores` entries.
+8. **Stage-gate suppression**: if `stageKey` is `preflight` or `turbulence`, remove `investments` (Wealth Fuel) from candidacy entirely — it is never eligible for Warning Light #1 or #2 in these stages (4 candidates remain, only 2 are needed, so this is a hard exclusion, not a soft demotion).
+9. **If Hard Override**: force Warning Light #1 = `cashRemaining` (Cash Flow Control) regardless of its relative rank; remove it from the candidate set; select Warning Light #2 as the weakest remaining eligible candidate using the same ascending-sort + tie-break rule as step 10.
+10. **Else (Flag/Context or no flag)**: sort remaining eligible candidates ascending (weakest first). Compare only **adjacent-ranked** candidates for a given slot. If the gap between an adjacent pair is `<= 0.10`:
+    - if `shortTermObjective` is present and maps to one of the tied pair's categories, that category takes the higher-priority slot;
+    - otherwise (objective omitted, or objective maps to neither tied category) resolve using the **fixed Warning Light safety-sequence order**: `Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel` (§6.2 — note this order is *different* from the Strong Signal tie order).
+11. **Guarantee two distinct Warning Lights** — structurally guaranteed by construction (two distinct entries are always selected from the candidate list; nothing ever selects the same key twice). Verified by an automated invariant test across the full fixture matrix (§14), not a runtime branch.
+12. **Strong Signal / Warning Light collision policy**: Strong Signal (step 3) and Warning Light selection (steps 7–10) are computed **independently** over the same `relativeScores`, using opposite sort directions. Nothing in the SPEC establishes a mutual-exclusion rule between them, and a fully-tied-but-below-0.90 profile can deterministically name the same category for both (a stable ascending sort and a stable descending sort of an all-equal array both put the first-key-order entry at position 0). This plan does **not** invent an exclusion filter, since doing so would be an uninstructed product rule, not an engineering default — flagged as an optional Founder decision (§J), not a blocker.
+
+---
+
+## 6.2 Category Map (immutable, exact current calculator keys)
+
+```
+export const categoryMap = Object.freeze({
+  cashRemaining:  "Cash Flow Control",
+  savingsRate:    "Savings System",
+  debtPressure:   "Debt Load",
+  emergencyFund:  "Emergency Runway",
+  investments:    "Wealth Fuel",
+});
+```
+
+This is a **new, separate map local to `personalizedFlightPlan.js`** — it does not touch or
+replace the existing private `signalLabels` map inside `flightScoreCalculator.js`, which still
+feeds the live Scorecard result card's own `#strongestSignal`/`#warningLight` text exactly as it
+does today.
+
+**Two distinct fixed orders exist — BUILD must not conflate them:**
+
+| Order | Used for | Sequence |
+|---|---|---|
+| **Strong Signal tie order** | Resolving an all/multi-way tie at the *top* of `relativeScores` (§6 step 3) | Cash Flow Control > Savings System > Debt Load > Emergency Runway > Wealth Fuel *(= the category object's literal key insertion order: `cashRemaining, savingsRate, debtPressure, emergencyFund, investments`)* |
+| **Warning Light safety-sequence order** | Resolving a `<= 0.10` tie at the *bottom* when the optional objective is omitted or doesn't match either tied category (§6 step 10) | Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel |
+
+---
+
+## 7. Action Library Data Contract
+
+An immutable, deterministic structure — six entries, no runtime LLM generation, no arbitrary
+free-text creation. Each entry:
+
 ```
 {
-  strongSignal: { category, label, isTieBreak },
-  warningLights: [ { category, label, action, decisionPath }, { ... } ] | null,
-  fallback: { action, note } | null,           // Step-5 case only, mutually exclusive with warningLights
-  doNow, thisPayday, thisMonth,
-  thirtyDayMission,
-  workbookConnection: { tab, action },
-  decisionPath: "HardOverride" | "FlagContext" | "NormalRanking" | "StageSuppression" | "ObjectiveTieBreak" | "Fallback",
+  actionId: string,               // stable, e.g. "cashFlowControl", "savingsSystem",
+                                   // "debtLoad", "emergencyRunway", "wealthFuel", "ownershipMindsetFallback"
+  category: string,                // public label from categoryMap (or "Ownership Mindset")
+  doNow: string,
+  thisPayday: string,
+  thisMonth: string,
+  thirtyDayMission: string,
+  workbookTab: string,
+  workbookAction: string,
+  allowedPublicCopy: string,       // the exact combined line safe to render AND safe to email — see below
 }
 ```
-This is generated by `personalizedFlightPlan.js`, held in a local JS variable, and rendered
-directly into new/extended DOM nodes — the same pattern `renderResults()` already uses for the
-Scorecard's own output. No part of this object is sent anywhere by default.
 
-### 5.4 Retained Metadata — **email only crosses today; the rest is a permission ceiling, not a requirement**
-Per SPEC §13's MAY/MUST-RETAIN table, score/stage/Warning-Light-#1-category labels *may* be
-retained. But the live `submitLeadToMailerLite()` call today sends **only `email`** — no other
-field. Recommendation (flagged as an explicit scope decision, not silently assumed): **V1 keeps
-the MailerLite payload exactly as it is today (email only)** plus a new locally-recorded consent
-flag/timestamp captured in the UI at the EMAIL MY FLIGHT PLAN step. Sending score/stage/Warning
-Light labels to MailerLite as custom fields is *allowed* by the SPEC but is **not required by any
-Acceptance Criterion in §16** — treating it as a smallest-footprint default keeps this
-implementation from adding a new outbound data field that doesn't yet have an approved MailerLite
-custom-field mapping, and can be added as a clearly-scoped follow-on if the Founder wants it.
+Required entries: Cash Flow Control, Savings System, Debt Load, Emergency Runway, Wealth Fuel,
+Ownership Mindset fallback — mapped 1:1 to the restored action library in SPEC §8, using the
+approved first action/workbook control per row.
 
-| Datum | Crosses the network? |
+**Resolved implementation detail — no raw-value interpolation, on-screen or emailed.** SPEC §10's
+worked persona examples illustrate the ranking math with hand-computed dollar/percentage figures
+in the prose (e.g., "~$1,000 to reach 100% of your emergency fund goal"), but SPEC §8's actual
+Required Result row only requires "one measurable mission... carrying its own explicit,
+self-checkable success condition" — it does not mandate a dollar figure in the rendered text. To
+satisfy the Founder's decision that "any transmitted plan copy... MUST NOT interpolate
+user-specific raw financial values" *and* to keep on-screen and emailed copy identical (simpler,
+lower-risk, no second copy variant to maintain), this plan's `thirtyDayMission` text is
+**behavioral, not numeric** — e.g., "Automate a contribution toward your emergency fund every
+payday until you reach your goal" rather than a specific dollar amount. This is a resolved
+engineering default within the SPEC's own text (§8 never required a number), not a reopening of
+product content — flagged as a one-line copy-review item for the Founder in W1 (§17), not a
+blocker.
+
+The `education-only` advice-boundary guardrail ("never recommend a security, lender, credit
+product, debt settlement provider, tax position, or legal action") is a single shared constant
+referenced by the disclaimer rendering, not duplicated per entry.
+
+---
+
+## 8. Input Integration
+
+Unchanged from Revision 1's recommendation — append both new fields to the end of the existing
+`#score-form`, before its submit button, on **both** `index.html` and `ffm-scorecard.html`. No
+site-wide form refactor.
+
+Explicit requirements added in this revision:
+
+- **Immediate pressure placeholder cannot submit.** The `<select>` defaults to a neutral,
+  non-selectable-as-final placeholder (e.g. "Select current pressure"); `validateInputs()` in
+  `main.js` gains a check rejecting the placeholder value, exactly like the existing income
+  check already rejects `<= 0`.
+- **Short-term objective may be genuinely blank.** Its default option represents "no objective
+  selected" and maps directly to SPEC §6 Step 4's "omitted" branch — no separate null-handling
+  path is needed.
+- **Scorecard inputs are never re-entered** — both new fields live inside the same `#score-form`
+  and are read via the same single submit handler that already reads the 9 existing fields.
+- **`scorecard_start` behavior is explicitly unchanged**: the existing listener fires
+  `trackScorecardStart()` only on `event.target.matches("input")` — the two new fields are
+  `<select>` elements, which this selector does not match. A user who only touches the two new
+  selects (without touching any number field) will not trigger `scorecard_start` before
+  submitting. This is documented here as an accepted, minor edge case rather than a silent
+  behavior change; extending the listener to also match `select` is explicitly **out of scope**
+  for V1 unless the Founder asks for it separately, since it would alter the existing funnel's
+  definition of "start."
+- **Both production routes receive equivalent fields and behavior.** `/` (`index.html`) and
+  `/ffm-scorecard.html` must be edited identically for every new field, section, and script
+  change — verified per §15.
+
+---
+
+## 9. Structural Privacy Enforcement (allowlisted serializers)
+
+Enforcement is structural, not just documented: each serializer builds a **new object literal**
+from **explicitly named parameters**, never spreads an unsafe parent object, and is covered by an
+automated fuzz test asserting no forbidden key can survive serialization even if one is
+(accidentally or maliciously) passed in.
+
+```
+createMailerLitePayload({ email, consentVersion, consentTimestamp, planSummary }) {
+  // planSummary is itself already a pre-reduced object — never the full
+  // DerivedContext or PersonalizedFlightPlanResult. Destructure explicitly:
+  const { score, stage, strongSignalCategory, warningLight1Category, warningLight2Category,
+          actionId, workbookTab, workbookAction, doNow, thisPayday, thisMonth, thirtyDayMission }
+        = planSummary;
+  return { email, consentVersion, consentTimestamp, score /* only if template requires it */,
+           stage, strongSignalCategory, warningLight1Category, warningLight2Category,
+           actionId, workbookTab, workbookAction, doNow, thisPayday, thisMonth, thirtyDayMission };
+  // Never: `{ ...planSummary }`, never `{ ...formValues }`, never the raw metrics object.
+}
+
+createAnalyticsPayload(eventName, { stage, strongSignalCategory, warningLight1Category, decisionPath }) {
+  return { eventName, parameters: { stage, strongSignalCategory, warningLight1Category, decisionPath } };
+  // Never: email, never a dollar amount, never a ratio.
+}
+
+createCalibrationRecord({ score, stage, strongSignalCategory, strongSignalTieBreak,
+                           warningLight1Category, warningLight2Category, relativeScores,
+                           decisionPath, actionId, workbookTab, workbookAction, testId }) {
+  return { score, stage, strongSignalCategory, strongSignalTieBreak, warningLight1Category,
+           warningLight2Category, relativeScores, decisionPath, actionId, workbookTab,
+           workbookAction, testId };
+  // `founderJudgment` and `note` are NOT produced here — see §12, they are the Founder's own
+  // manual notes, never generated or stored by this function.
+}
+```
+
+**Required automated tests** (§14): for each serializer, construct a fuzz-input object
+containing every field on the MUST-NOT-send list (§10) *plus* every allowed field, call the
+serializer, and assert the returned object's key set is exactly the documented allowlist — proving
+structurally, not just by code review, that no raw field can leak through.
+
+---
+
+## 10. Network Boundary Matrix
+
+| Class | Fields | Crosses network? |
+|---|---|---|
+| **Client only — never transmitted** | All 9 raw financial inputs; `immediatePressure`; `shortTermObjective`; `cashRemaining`; `savingsRate`; `debtToIncome`/debt ratio; `emergencyFundLevel`; raw `categoryScores` point values | **Never** |
+| **Email provider (MailerLite)** | Only the Founder-approved allowlist in §9's `createMailerLitePayload`: email, consent version, consent timestamp, score (only if actually required), stage, Strong Signal category, Warning Light #1/#2 categories, action-library id, workbook tab/action, Do Now/This Payday/This Month/30-Day Mission copy | Yes — allowlist only, gated on W3A capability verification (§11) |
+| **Analytics (GA4)** | Event names + the categorical, non-financial parameters in §9's `createAnalyticsPayload` (stage, Strong Signal category, Warning Light #1 category, decision path) | Yes — allowlist only |
+| **Calibration** | The engine-derived fields in §9's `createCalibrationRecord` (score, stage, Strong Signal category + tie flag, Warning Light #1/#2 categories, the 5 *normalized 0–1* relative scores, decision path, action id, workbook route, test id) | **Never transmitted** — console-only, manual Founder capture (§12) |
+| **URLs / subject lines / logs** | — | **Never**, for any field above except the analytics allowlist through GA4's own standard event pipeline |
+
+---
+
+## 11. Email Delivery Work Package (replaces the Revision 1 email-only assumption)
+
+**W3A — MailerLite Capability Verification** (read-only / controlled-configuration verification;
+no code merged to a production send path; no configuration mutation without Founder
+authorization):
+
+Determine, and record a PASS/FAIL/BLOCKED verdict for each:
+1. Can existing MailerLite support actual Personalized Flight Plan delivery using approved custom fields?
+2. Can deterministic plan copy or approved identifiers be merged into the email template?
+3. What exact custom fields would be required?
+4. How long are those fields retained by the provider?
+5. Can they be cleared/overwritten if required?
+6. How are existing subscribers handled (avoiding the duplicate-enrollment issue the existing Starter Kit flow already guards against)?
+7. What triggers the automation?
+8. Does updating an existing subscriber's custom fields retrigger an unwanted automation?
+9. How is duplicate enrollment prevented for this new send path specifically?
+10. How is unsubscribe respected?
+11. Can consent version/timestamp be retained as required by SPEC §13?
+12. How does a provider failure surface to the user and to analytics?
+
+Per `docs/funnel/README.md`'s evidence classification, MailerLite workflow/automation internals
+are **Private Information Only** — the detailed findings belong in the approved private record
+(`docs/projects/core-funnel-reliability-gate/`), not committed verbatim to this repo. Only a
+sanitized PASS/FAIL/BLOCKED summary, using the existing `FFM-EV-YYYY-MM-DD-NN` convention already
+established in `docs/funnel/ga4-verification-log.md`, belongs in the public repo.
+
+**W3B — Email Architecture Implementation** — only proceeds if W3A returns sufficient
+capability. Defines exact fields/payload (§9's allowlist), the email template, subject line
+(no financial data), trigger, automation, consent storage, duplicate-enrollment behavior,
+unsubscribe behavior, provider-failure error state, and a tested rollback procedure. **EMAIL MY
+FLIGHT PLAN is a new, separate form and (very likely) a separate MailerLite group/automation from
+the existing `#lead-form`/"Send Me The Starter Kit" flow** — the existing flow's 5-message
+Pre-Flight sequence is about the Starter Kit generically and must not be conflated with, or
+repurposed for, sending an individual's plan content. The existing lead-form is a protected scope
+guard (§18) and is not touched by W3B.
+
+**If W3A is insufficient:** **STOP AT EMAIL GATE.** Output `EMAIL DELIVERY ARCHITECTURE BLOCKED`.
+Do not relabel the existing generic Starter Kit reminder as EMAIL MY FLIGHT PLAN. Do not
+introduce a backend without a separate, explicit Founder architecture decision. Return the
+conflict to the Founder.
+
+---
+
+## 12. Calibration Model — Manual Founder Capture, No New Infrastructure
+
+No production debug endpoint, hidden server endpoint, database, persistent calibration service,
+or public URL parameter carrying diagnostics is introduced.
+
+Because `createCalibrationRecord` (§9) already produces a fully sanitized object (no dollar
+figures, no raw form payload — only the SPEC §11 MAY-contain fields), the **entire calibration
+mechanism is a single `console.info`/`console.table` emission** of that object, made by `main.js`
+immediately after a plan renders — visible only in a browser's own DevTools console during a
+pilot test session (e.g., the Founder present or screen-sharing with the tester), never rendered
+to the page DOM, never gated by a URL parameter or feature flag, and requiring no server. Because
+the emitted object is already stripped of anything sensitive, there is no privacy cost to it
+firing unconditionally rather than being gated to a "pilot mode" — gating would itself require a
+new flag/config surface this plan is trying to avoid. This is deleted (the single `console.info`
+call site removed) in a follow-up cleanup commit once Batch 2 concludes, per SPEC §11's retention
+rule that calibration evidence is temporary and scoped to the pilot's calibration window.
+
+Pilot procedure (unchanged from the approved SPEC §15, restated for BUILD):
+1. User receives the untouched, fully self-service plan — nothing about the delivered plan is ever edited.
+2. Founder reads the sanitized derived output from the console during/after the session.
+3. Founder manually records, in their own private notes (not in this codebase): stage, Strong Signal, Warning Light #1/#2, the five normalized relative scores, decision path, action id, workbook route, QA judgment (correct/questionable/incorrect), and an optional brief engine-reasoning note.
+4. No raw input is ever recorded, because none is ever produced by `createCalibrationRecord` in the first place.
+5. Engine Failure Rate is calculated after Batch 1: `<= 1/5` → proceed to Batch 2; `>= 2/5` → stop, fix the flagged rule, re-verify against the four SPEC §10 personas, then resume.
+
+---
+
+## 13. Analytics
+
+**Keep** (V1-required): `personalized_plan_view`, `personalized_plan_email_start`,
+`personalized_plan_email_success`. **Add** one error event for the actual plan-email path only:
+`personalized_plan_email_error` (mirrors the existing `briefing_submit_error` naming pattern, but
+distinct — it covers the new EMAIL MY FLIGHT PLAN send, not the existing Starter Kit lead-form).
+
+**Removed from scope** (per this review): `starter_kit_open`, `plan_action_acknowledged` — not
+introduced unless a later, explicit product requirement calls for them.
+
+**Existing funnel events are unchanged**: `scorecard_start`, `scorecard_complete`,
+`briefing_view`, `briefing_submit_start/success/error`, `sign_up` all continue to fire exactly as
+they do today, verified via a GA4 Realtime check (§17 W4) following the existing
+`docs/funnel/ga4-verification-log.md` methodology.
+
+All four new event calls go through the allowlisted `createAnalyticsPayload` serializer (§9) —
+no ad hoc `trackEvent(...)` call site outside that path is permitted for Flight Plan events.
+
+---
+
+## 14. Minimal Automated Test Infrastructure
+
+**Adopt Node's built-in test runner** (`node --test`) — zero external testing dependencies. A
+minimal root `package.json` is added:
+
+```
+{
+  "name": "financialflightmode",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node --test src/" }
+}
+```
+
+`"type": "module"` is required because the existing `src/` files already use ESM
+`import`/`export` syntax; Node's test runner needs this (or `.mjs` files) to parse them directly.
+No `"build"` script is defined, and this package.json intentionally declares nothing that would
+give Netlify's build image a reason to run anything beyond serving the static tree — **this must
+be verified, not assumed**: W0's acceptance criteria (§17) require confirming, via the same
+Netlify PR deploy-preview check-runs already visible on this repo's PRs ("Redirect rules",
+"Header rules", "Pages changed"), that introducing `package.json` does not change the deploy
+behavior. If Netlify's build image auto-detects the file and attempts an `npm install`/build step
+that didn't run before, that must be caught here and resolved (e.g., an explicit empty `[build]
+command` in `netlify.toml`) before this package.json merges to `main`.
+
+**Documented runtime finding**: this environment resolves `node` at `/opt/node22/bin/node`
+(v22.22.2) via an explicit `PATH` entry, not a system-default location — plain `node` is **not**
+guaranteed to resolve in every execution context (e.g., a minimal non-interactive shell that
+doesn't source the same profile). BUILD must not assume bare `node` works in every runner; the
+`engines.node` field above states the version requirement explicitly, and CI/local instructions
+must reference the exact invocation (`node --test src/` or `npm test`) plus, if a runner's default
+`node` is unavailable, an explicit path or version-manager step — not a silent assumption.
+
+**Required test matrix** (mapped to this repo's actual fixtures):
+
+| Category | Fixtures |
 |---|---|
-| Email | **Yes** — to MailerLite, exactly as today |
-| First name | Not currently collected; if added later, optional, same call |
-| Consent flag + timestamp | Recorded client-side at minimum; MUST RETAIN per SPEC, but recommend this ride along with the existing MailerLite submission only if/when a custom-field mapping is explicitly approved — otherwise it is evidenced by the UI requiring an affirmative check before the existing submit path runs, satisfying Acceptance Criterion #4 without a payload change |
-| Score, stage, Warning Light #1 category | **No, in V1 default** — permitted, not sent, per the scope decision above |
-| The 9 financial fields, immediate pressure, short-term objective | **Never** — structurally excluded, see §5.1 |
-
-### 5.5 Calibration Evidence — **NEVER transmitted; pilot-only, manual retrieval**
-Per §11's MAY-contain schema (score, stage, Strong Signal category + tie-break flag, Warning
-Light #1/#2 categories, the 5 normalized 0–1 relative scores, the decision-path enum, the
-action-library id, Founder QA judgment, a scoped note, timestamp/test id) and MUST-NOT-contain
-list (any dollar amount, ratio derived from a dollar amount, or raw financial-form payload).
-
-Because §3 forbids new server-side storage, this record must not be transmitted anywhere —
-recommend the calibration-record function is **structurally incapable** of receiving raw dollar
-values as parameters at all (it takes only the already-reduced `PersonalizedFlightPlanResult`
-plus the 5 relative scores, never `values`/`metrics`), so MUST-NOT-contain is enforced by
-function signature, not by developer discipline alone. Retrieval for Founder QA during Batch
-1/Batch 2 should be a manual, non-production-visible mechanism (e.g., a hidden debug affordance
-gated behind a URL param or `localStorage` flag, never shown to a general pilot) — not a new
-analytics event, not a new endpoint, deleted from scope entirely once the pilot's calibration
-window ends per §11's retention rule.
+| Existing Scorecard regression | Score boundaries 39/40, 69/70, 89/90; SPEC §10's four persona score/stage pairs (35/Pre-Flight, 25/Turbulence, 82/Cruise Control, 100/Flight Mode) unchanged pre/post the new exports |
+| Pressure | Persona 2 (negative cash, `-$300`), Persona 1 (exact-zero cash, `$0`), a corroborated-pressure fixture (`savingsRate < 0.05` or `emergencyFundLevel < 0.25` + non-Stable), Persona 4 (uncorroborated pressure → Flag/Context) |
+| Stage sequencing | Pre-Flight and Turbulence fixtures with Wealth Fuel as the mathematically weakest signal, confirming it never appears as Warning Light #1/#2; Cruise Control and Flight Mode fixtures confirming Wealth Fuel *is* eligible there |
+| Tie logic | Persona 3 (`0.03` gap, `<= 0.10`), a `> 0.10` fixture (no tie-break applied), objective-matches-tied-pair, objective-omitted, objective-maps-to-neither-tied-category (falls back to the same safety-sequence order as omitted) |
+| Strong Signal | Persona 3 (unique max), a new synthetic two-way-tied-but-not-all-five fixture, Persona 4 (all-five tie, resolves to Cash Flow Control), a new synthetic all-five-tied-but-below-0.90 fixture exercising the §6 step 12 collision policy |
+| Warning Lights | Persona 1/2 (Hard Override forces Cash Flow Control as #1), deterministic #2 selection, an always-distinct assertion run across the full fixture set |
+| Action library | All five signal entries plus the Ownership Mindset fallback present with every required field non-empty |
+| Privacy serializers | `createMailerLitePayload`, `createAnalyticsPayload`, `createCalibrationRecord` fuzz-tests (§9) — no forbidden key ever survives serialization |
 
 ---
 
-## 6. Proposed File-Level Changes (summary)
+## 15. Duplicate Route Parity
 
-| File | Change |
-|---|---|
-| `src/flightScoreCalculator.js` | Add two exports (`categoryMaximums`, `getRelativeCategoryScores`) — no logic changes |
-| `src/personalizedFlightPlan.js` (new) | Pure, DOM-free module implementing §6 of the SPEC — Hard Override/Flag-Context, ranking, stage suppression, tie-break, fallback, Strong Signal, action library, cadence copy, 30-Day Mission, workbook routing, calibration-record derivation |
-| `src/personalizedFlightPlan.test.js` (new) | Node built-in test runner (`node --test`) — zero new dependencies. Golden-value regression tests for all 4 SPEC §10 personas plus discrete tests for each boundary Acceptance Criterion (§16 items 5–11, 19–21) |
-| `index.html`, `ffm-scorecard.html` | Add the 2 new select fields to `#score-form`; add the Flight Plan output section; add the distinct EMAIL MY FLIGHT PLAN consent checkbox — identical edits to both files |
-| `src/main.js` | Extend field-reading/validation for the 2 new selects; call `personalizedFlightPlan.js` after `calculateFlightScore()` on submit; render its output; gate the existing MailerLite submit on the new consent checkbox |
-| `src/analytics.js` | No required change for V1's minimal event set (optional follow-on: a `flight_plan_view` event, not required by any Acceptance Criterion) |
-| `privacy.html` | One-line addition confirming Flight Plan inputs are calculated in-browser and never transmitted (SPEC §13/§20 Open Decision #1) |
+`index.html` and `ffm-scorecard.html` both remain in scope; **V1 does not refactor this
+duplication**. Every Personalized Flight Plan markup/script change must be applied identically to
+both files. Parity is verified with the same `diff` check already used to confirm today's baseline
+duplication (Revision 1 confirmed the only current differences are canonical URL, Open Graph URL,
+structured-data `@id`/URL, and the `#score-form` `action` attribute) — any *new* difference found
+in a post-change diff, beyond those four pre-existing, intentional ones, is a failure that blocks
+the relevant W-package (§17).
 
 ---
 
-## 7. Phased Implementation Order (safest → most visible)
+## 16. Privacy / Terms / Disclaimer
 
-1. **Phase 0 — additive exports only.** Export `categoryMaximums`/`getRelativeCategoryScores`
-   from the existing calculator. Zero behavior change; verify the live site is unaffected.
-2. **Phase 1 — pure logic, unwired.** Build `personalizedFlightPlan.js` complete, with its test
-   file covering all 4 personas and all relevant Acceptance Criteria. Not imported by `main.js`
-   yet — zero production risk, fully reviewable/testable in isolation.
-3. **Phase 2 — input capture only.** Add the 2 new fields to both HTML files and extend
-   `main.js`'s reading/validation. No new rendering yet.
-4. **Phase 3 — render.** Wire the submit handler to call the new module and render its output
-   (Score+Stage already renders today; add Strong Signal, both Warning Lights or the fallback,
-   Do Now/This Payday/This Month, 30-Day Mission, Workbook Connection, both CTAs).
-5. **Phase 4 — consent.** Add the distinct, unchecked-by-default consent statement at EMAIL MY
-   FLIGHT PLAN; keep the MailerLite payload unchanged (email only) per §5.4's scope decision.
-6. **Phase 5 — calibration (pilot-only).** Add the calibration-record function and a
-   Founder-only, non-production-visible retrieval affordance, scoped to Batch 1/Batch 2.
-7. **Phase 6 — docs.** Land the `privacy.html` one-line update.
+**`privacy.html`** — BUILD + pilot-launch requirement. Must explicitly state: raw financial
+inputs remain client-side; the Personalized Flight Plan calculation remains client-side; exactly
+what derived, non-raw information may be sent by email (cross-referencing §10's allowlist) and to
+whom; consent behavior and consent-metadata retention; calibration evidence handling (temporary,
+pilot-only, deleted at the end of the calibration window, never a persistent profile); and the
+existing analytics boundary language, extended to cover the new events (§13). **Must not**
+reintroduce Revision-2-era (of the SPEC's own revision history) temporary raw-financial-data
+retention language — the current, simpler "never transmitted" model stands.
 
-Each phase is independently small, revertable, and testable before the next begins.
+**`terms.html`** — no change required unless BUILD introduces a materially different service or
+new defined term; not anticipated by this plan.
+
+**Flight Plan disclaimer** — BUILD requirement. The existing education-only disclaimer language
+(already used by the Scorecard) must also appear on the rendered Personalized Flight Plan output
+itself, not only on `privacy.html`.
 
 ---
 
-## 8. Risks
+## 17. Work Packages (W0–W6)
 
-- **Two near-duplicate HTML files must move together** for every markup change (pre-existing
-  repo constraint, no templating system) — mitigate by diffing before each commit, as verified
-  in §1.
-- **The lead-form/MailerLite path has a recent reliability history** ("Repair FFM free funnel
-  reliability," "Fix safe lead form error message") — mitigate by keeping the new consent
-  checkbox fully independent of the existing validated-email/`submitLeadToMailerLite` path in
-  Phase 4; do not touch the MailerLite payload itself unless a future, separately-scoped change
-  explicitly adds custom fields.
-- **A required new select field adds friction to the Scorecard** — this is an approved,
-  deliberate SPEC requirement (§5), not something engineering should silently soften; the
-  neutral-placeholder pattern in §4 is the minimum friction consistent with "required."
-- **PR #10 (the SPEC itself) is not yet merged** — this plan's file paths and section
-  references assume PR #10 lands on `main` first; if it doesn't, the implementation PR will need
-  to either wait or be based on PR #10's branch directly.
+### W0 — Baseline / Test Runtime
+- **Objective**: reproducible automated testing, zero behavior change to the live site.
+- **Likely files**: `package.json` (new), `src/flightScoreCalculator.js` (two additive exports only), `src/flightScoreCalculator.test.js` (new).
+- **Dependencies**: none.
+- **Acceptance criteria**: `npm test`/`node --test` passes locally with the documented Node version; Netlify PR deploy-preview check-runs (Redirect rules / Header rules / Pages changed) remain successful and unchanged after adding `package.json`; existing Scorecard regression fixtures (§14) match exactly before and after the export change.
+- **Test evidence**: `node --test` output attached to the PR; linked Netlify check-run results.
+- **Rollback**: revert the single commit; no production surface exists yet.
+- **Founder authorization gate**: none required (no behavior change).
+
+### W1 — Pure Personalized Flight Plan Engine
+- **Objective**: implement `src/personalizedFlightPlan.js` fully per §5–§9, unimported by any production file, fully covered by §14's test matrix.
+- **Likely files**: `src/personalizedFlightPlan.js` (new), `src/personalizedFlightPlan.test.js` (new).
+- **Dependencies**: W0.
+- **Acceptance criteria**: all four SPEC §10 personas reproduced exactly; every SPEC §16 acceptance criterion in the 5–11 and 19–21 range has a corresponding passing test; the three serializer fuzz-tests pass; the module contains no `document`, `fetch`, `gtag`, or `window` reference (grep-verified).
+- **Test evidence**: full test-suite output; a table mapping each covered SPEC §16 acceptance criterion to its test name.
+- **Rollback**: revert the module and its test file.
+- **Founder authorization gate**: none required for the logic itself (inert until W2); a lightweight Founder copy sign-off on the action-library's Do Now/This Payday/This Month/30-Day Mission wording is recommended before W2 renders it publicly.
+
+### W2 — Two-Route UI Integration
+- **Objective**: wire the module into both live routes; add the two new inputs; render the Flight Plan output and disclaimer.
+- **Likely files**: `index.html`, `ffm-scorecard.html`, `src/main.js`, `styles.css` (only if new elements need styling beyond existing patterns).
+- **Dependencies**: W1.
+- **Acceptance criteria**: routes are byte-equivalent in new markup/behavior except the four pre-existing intentional differences (§15); immediate-pressure placeholder cannot submit; short-term objective may be blank; `scorecard_start` firing behavior is unchanged and documented (§8); passes on current mobile Safari, mobile Chrome, desktop Chrome, desktop Safari; the rendered plan shows Score+Stage, Strong Signal, Warning Light #1/#2 (or the fallback), Do Now/This Payday/This Month, 30-Day Mission, Workbook Connection, both CTAs, and the education-only disclaimer.
+- **Test evidence**: route diff showing only the four pre-approved differences; 4-browser manual QA checklist.
+- **Rollback**: revert the file diffs; W1's module is unaffected.
+- **Founder authorization gate**: **yes** — first Founder-visible render of the on-screen plan; sign-off required before W3.
+
+### W3 — Email Delivery + Consent (§11)
+- **W3A — MailerLite Capability Verification**: read-only/controlled-config investigation, sanitized public `FFM-EV-YYYY-MM-DD-NN` summary + full private-record detail. **Founder authorization gate: mandatory** before any configuration mutation.
+- **W3B — Implementation** (only if W3A sufficient): new, separate EMAIL MY FLIGHT PLAN form/handler using the §9 allowlist; existing `#lead-form` untouched. **Founder authorization gate: mandatory** before general pilot use.
+- **If W3A insufficient**: STOP AT EMAIL GATE — output `EMAIL DELIVERY ARCHITECTURE BLOCKED`, return to Founder.
+- **Dependencies**: W2 (W3A), W3A PASS (W3B).
+- **Acceptance criteria / test evidence / rollback**: see §11.
+
+### W4 — Analytics
+- **Objective**: add the three approved events plus `personalized_plan_email_error`, all through the allowlisted serializer; leave existing funnel events untouched.
+- **Likely files**: `src/main.js`.
+- **Dependencies**: W2 (view event); W3B (email events).
+- **Acceptance criteria**: existing funnel events verified unchanged via a GA4 Realtime check; new events carry only allowlisted categorical parameters (serializer fuzz-test applied at each call site).
+- **Test evidence**: new `FFM-EV-YYYY-MM-DD-NN` entry in `docs/funnel/ga4-verification-log.md`.
+- **Rollback**: revert new `trackEvent(...)` call sites.
+- **Founder authorization gate**: none beyond the standing privacy-copy rule.
+
+### W5 — Calibration + Privacy
+- **Objective**: wire the console-only calibration emission (§12); update `privacy.html` (§16).
+- **Likely files**: `src/main.js`, `privacy.html`.
+- **Dependencies**: W2.
+- **Acceptance criteria**: calibration record fields match SPEC §11's MAY-contain list exactly (re-verified fuzz-test at the call site); `privacy.html` covers every item in §16; no Revision-2-style persistent retention language reintroduced.
+- **Test evidence**: manual read-through checklist against SPEC §13/§16 items 15–16, 19–20.
+- **Rollback**: revert the `privacy.html` copy and the single console-emission call site.
+- **Founder authorization gate**: **yes** — before Batch 1 begins.
+
+### W6 — Full QA / Regression
+- **Objective**: end-to-end verification gate before Batch 1 pilot recruitment.
+- **Likely files**: none (verification only).
+- **Dependencies**: W0–W5 complete.
+- **Acceptance criteria**: both routes on all 4 required browsers; existing Starter Kit path unaffected; new EMAIL MY FLIGHT PLAN path verified end-to-end with real content (not a generic reminder); duplicate-subscriber and unsubscribe checks pass; existing funnel GA4 events unchanged; `privacy.html` reviewed; a manual raw-value-leak inspection of every outbound network request (MailerLite body, GA4 payloads) during a full test run, layered on top of the automated serializer fuzz-tests.
+- **Test evidence**: consolidated `FFM-EV-YYYY-MM-DD-NN` QA record (public summary + private detail).
+- **Rollback**: n/a — failures route back to the relevant W-package.
+- **Founder authorization gate**: **yes, mandatory** — final go/no-go before Batch 1.
+
+---
+
+## 18. Scope Guards
+
+**Protect unchanged, unless a documented blocker requires Founder approval:**
+Scorecard formulas; Scorecard stage thresholds; the recent Funnel Activation reliability fixes;
+the existing 5-email MailerLite Starter Kit sequence; existing unsubscribe behavior; Starter Kit
+download; existing funnel GA4 events; `netlify.toml`'s existing redirects; all unrelated public
+pages (`terms.html`, `404.html`, `thank-you-download.html`, `thank-you.html`).
+
+**Heightened review:**
+`src/flightScoreCalculator.js` (additive-only exports); new `src/personalizedFlightPlan.js`;
+`src/main.js`; `src/analytics.js`; `index.html`; `ffm-scorecard.html`; `privacy.html`; `styles.css`
+(only if the new UI requires it); the new minimal test/`package.json` files — specifically
+including verification that adding `package.json` does not change Netlify's build behavior
+(§14/W0), which Revision 1 did not flag as a risk.
+
+---
+
+## 19. Risks (carried over / updated from Revision 1)
+
+- Two near-duplicate HTML files must move together for every change — mitigated by the explicit parity check in §15.
+- The lead-form/MailerLite path has a recent reliability history — mitigated by keeping EMAIL MY FLIGHT PLAN a fully separate form/handler from the existing `#lead-form` (§11).
+- A required new select field adds friction — an approved, deliberate SPEC requirement, not something to soften.
+- **New in this revision**: introducing a root `package.json` for testing could unintentionally change Netlify's build behavior — mitigated by explicit deploy-preview verification in W0.
+- **New in this revision**: PR #10 is still not merged as of this writing — this plan's sequencing (§2) exists specifically to prevent BUILD from starting on the wrong base.
