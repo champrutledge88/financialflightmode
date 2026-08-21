@@ -115,27 +115,28 @@ const signalLabels = {
   investments: "Investment Status",
 };
 
-const categoryMaximums = {
+export const categoryMaximums = Object.freeze({
   cashRemaining: 25,
   savingsRate: 25,
   debtPressure: 20,
   emergencyFund: 20,
   investments: 10,
-};
+});
 
-const getRelativeCategoryScores = (categoryScores) =>
-  Object.entries(categoryScores).map(([key, value]) => [
-    key,
-    value / categoryMaximums[key],
-  ]);
+export const getRelativeCategoryScores = (categoryScores) =>
+  Object.freeze(
+    Object.entries(categoryScores).map(([key, value]) =>
+      Object.freeze([key, value / categoryMaximums[key]]),
+    ),
+  );
 
 const getStrongestSignal = (categoryScores) =>
   signalLabels[
-    getRelativeCategoryScores(categoryScores).sort((a, b) => b[1] - a[1])[0][0]
+    getRelativeCategoryScores(categoryScores).slice().sort((a, b) => b[1] - a[1])[0][0]
   ];
 
 const getWarningLight = (categoryScores) => {
-  const relativeScores = getRelativeCategoryScores(categoryScores);
+  const relativeScores = getRelativeCategoryScores(categoryScores).slice();
   const lowestScore = relativeScores.sort((a, b) => a[1] - b[1])[0];
 
   if (lowestScore[1] >= 0.9) return "Optimization Capacity";
