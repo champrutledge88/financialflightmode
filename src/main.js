@@ -1,5 +1,6 @@
-import { calculateFlightScore } from "./flightScoreCalculator.js?v=stage-order-1";
+import { calculateFlightScore, getRelativeCategoryScores } from "./flightScoreCalculator.js?v=stage-order-1";
 import { getScoreBand, trackEvent } from "./analytics.js?v=ga4-1";
+import { generatePersonalizedFlightPlan } from "./personalizedFlightPlan.js?v=w1-1";
 
 const MAILERLITE_ACCOUNT_ID = "2411474";
 const MAILERLITE_FORM_ID = "189897889621738735";
@@ -55,6 +56,19 @@ const getInputValues = () =>
     values[field] = scoreForm.elements[field].value;
     return values;
   }, {});
+
+const createDerivedContext = (result) =>
+  Object.freeze({
+    score: result.score,
+    stageKey: result.stage.key,
+    stageName: result.stage.name,
+    relativeScores: getRelativeCategoryScores(result.categoryScores),
+    pressureMetrics: Object.freeze({
+      cashRemaining: result.metrics.cashRemaining,
+      savingsRate: result.metrics.savingsRate,
+      emergencyFundLevel: result.metrics.emergencyFundLevel,
+    }),
+  });
 
 const setMetricTone = (node, tone) => {
   node.style.color =
@@ -116,6 +130,39 @@ const renderResults = (result, shouldScroll = false) => {
   }
 };
 
+const renderPersonalizedFlightPlan = (result) => {
+  const plan = generatePersonalizedFlightPlan({
+    derivedContext: createDerivedContext(result),
+    immediatePressure: scoreForm.elements.immediatePressure.value,
+    shortTermObjective: scoreForm.elements.shortTermObjective.value,
+  });
+  const planNode = document.querySelector("#personalized-flight-plan");
+  const hasFallback = Boolean(plan.fallback);
+
+  document.querySelector("#planScore").textContent = result.score;
+  document.querySelector("#planStage").textContent = result.stage.name;
+  document.querySelector("#planStrongSignal").textContent = plan.strongSignal.category;
+  document.querySelector("#planWarningLightOne").textContent = hasFallback
+    ? "Ownership Mindset"
+    : plan.warningLights[0].category;
+  document.querySelector("#planWarningLightTwo").textContent = hasFallback
+    ? ""
+    : plan.warningLights[1].category;
+  document.querySelector("#planWarningLightTwoCard").hidden = hasFallback;
+  document.querySelector("#planFallbackCard").hidden = !hasFallback;
+  document.querySelector("#planFallback").textContent = hasFallback ? "Ownership Mindset" : "";
+  document.querySelector("#planFallbackNote").textContent = hasFallback ? plan.fallback.note || "" : "";
+  document.querySelector("#planDoNow").textContent = plan.doNow;
+  document.querySelector("#planThisPayday").textContent = plan.thisPayday;
+  document.querySelector("#planThisMonth").textContent = plan.thisMonth;
+  document.querySelector("#planThirtyDayMission").textContent = plan.thirtyDayMission;
+  document.querySelector("#planWorkbookTab").textContent = plan.workbookConnection.tab;
+  document.querySelector("#planWorkbookAction").textContent = plan.workbookConnection.action;
+
+  planNode.hidden = false;
+  planNode.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
 const validateInputs = () => {
   const invalid = fields.find((field) => Number(scoreForm.elements[field].value) < 0);
   if (invalid) {
@@ -125,6 +172,11 @@ const validateInputs = () => {
 
   if (Number(scoreForm.elements.income.value) <= 0) {
     errorNode.textContent = "Enter monthly take home income to calculate your score.";
+    return false;
+  }
+
+  if (!scoreForm.elements.immediatePressure.value) {
+    errorNode.textContent = "Select your current pressure to calculate your Flight Plan.";
     return false;
   }
 
@@ -193,6 +245,7 @@ scoreForm.addEventListener("submit", (event) => {
     trackEvent("scorecard_complete");
   }
   renderResults(result, true);
+  renderPersonalizedFlightPlan(result);
   if (!hasTrackedBriefingView) {
     hasTrackedBriefingView = true;
     trackEvent("briefing_view");
