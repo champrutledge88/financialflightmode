@@ -391,7 +391,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `actionId`: `"cashFlowControl"`
 - `doNow`: "Open your budget and confirm every dollar of income, needs, and wants for this month."
 - `thisPayday`: "Before spending anything new, confirm this payday's bills are covered first."
-- `thisMonth`: "Find and close one spending leak so more of your income stays working for you."
+- `thisMonth`: "Find and close one spending leak so more of your income stays available for your goals."
 - `thirtyDayMission`: "Keep your monthly cash flow at zero or above for one full pay cycle."
 - `workbookTab` / `workbookAction`: "Monthly Budget + Dashboard" / "Cash Flow Control row"
 
