@@ -173,6 +173,27 @@
                 <span>Money Already Invested <em>Retirement accounts and other investments</em></span>
                 <span class="field-control"><b>$</b><input id="investmentsCurrentValue" name="investmentsCurrentValue" type="number" inputmode="decimal" min="0" step="1" value="3500" /></span>
               </label>
+              <label class="money-field select-field" for="immediatePressure">
+                <span>Immediate Pressure <em>Choose the pressure you are facing right now</em></span>
+                <select id="immediatePressure" name="immediatePressure" required>
+                  <option value="" selected>Select current pressure</option>
+                  <option value="Stable">Stable</option>
+                  <option value="Unexpected bill">Unexpected bill</option>
+                  <option value="Income disruption">Income disruption</option>
+                  <option value="Falling behind on a payment">Falling behind on a payment</option>
+                </select>
+              </label>
+              <label class="money-field select-field" for="shortTermObjective">
+                <span>Short Term Objective <em>Optional</em></span>
+                <select id="shortTermObjective" name="shortTermObjective">
+                  <option value="" selected>No objective selected</option>
+                  <option value="Stop the bleeding">Stop the bleeding</option>
+                  <option value="Build a cushion">Build a cushion</option>
+                  <option value="Get out of debt">Get out of debt</option>
+                  <option value="Save more consistently">Save more consistently</option>
+                  <option value="Start investing">Start investing</option>
+                </select>
+              </label>
             </div>
 
             <p class="example-note example-note-bottom">Your numbers will look different, and that's okay. Find your current stage and get your next move.</p>
@@ -352,6 +373,73 @@
             <span>Your Pre Flight Finish Line</span>
             <strong>Complete one Weekly Money Reset after your five setup messages.</strong>
           </article>
+        </div>
+      </section>
+
+      <section class="personalized-flight-plan" id="personalized-flight-plan" aria-labelledby="personalized-flight-plan-title" hidden>
+        <div class="flight-plan-heading">
+          <p class="eyebrow">Your Personalized Flight Plan</p>
+          <h2 id="personalized-flight-plan-title">Your next right actions</h2>
+          <p>Your score shows where you are. Your Personalized Flight Plan shows what to do next.</p>
+        </div>
+        <div class="flight-plan-score" aria-label="Personalized Flight Plan score and stage">
+          <span>Score and Stage</span>
+          <strong><span id="planScore">0</span> <span id="planStage">Pre Flight</span></strong>
+        </div>
+        <div class="flight-plan-grid">
+          <article>
+            <span>Strong Signal</span>
+            <strong id="planStrongSignal"></strong>
+            <p>Among your current signals, this is your strongest one.</p>
+          </article>
+          <article>
+            <span>Warning Light 1</span>
+            <strong id="planWarningLightOne"></strong>
+          </article>
+          <article id="planWarningLightTwoCard">
+            <span>Warning Light 2</span>
+            <strong id="planWarningLightTwo"></strong>
+          </article>
+          <article id="planFallbackCard" hidden>
+            <span>Ownership Mindset</span>
+            <strong id="planFallback"></strong>
+            <p id="planFallbackNote"></p>
+          </article>
+          <article>
+            <span>Do Now</span>
+            <strong id="planDoNow"></strong>
+          </article>
+          <article>
+            <span>This Payday</span>
+            <strong id="planThisPayday"></strong>
+          </article>
+          <article>
+            <span>This Month</span>
+            <strong id="planThisMonth"></strong>
+          </article>
+          <article>
+            <span>30 Day Mission</span>
+            <strong id="planThirtyDayMission"></strong>
+          </article>
+          <article class="flight-plan-workbook">
+            <span>Workbook Connection</span>
+            <strong id="planWorkbookTab"></strong>
+            <p id="planWorkbookAction"></p>
+          </article>
+        </div>
+        <div class="flight-plan-actions">
+          <div>
+            <button class="primary-button" type="button" disabled aria-describedby="planEmailStatus">Email My Flight Plan</button>
+            <p id="planEmailStatus">Email delivery is not available yet. Your Flight Plan remains visible here.</p>
+          </div>
+          <a class="secondary-button" href="#flight-briefing-form">Open the Starter Kit</a>
+        </div>
+        <div class="disclaimer flight-plan-disclaimer" aria-label="Education only disclaimer">
+          <strong>Education Only</strong>
+          <p>
+            This scorecard is for financial education and planning support only. It is not personal financial,
+            investment, tax, legal, or credit advice. You are responsible for your own decisions.
+          </p>
         </div>
       </section>
 

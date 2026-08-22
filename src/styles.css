@@ -655,6 +655,25 @@ h1 span {
   text-align: right;
 }
 
+.select-field select {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(5, 5, 5, 0.14);
+  border-radius: 8px;
+  color: var(--black);
+  font: inherit;
+  font-size: 0.96rem;
+  font-weight: 800;
+  min-height: 48px;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.select-field select:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255, 90, 0, 0.18);
+  outline: 0;
+}
+
 .field-control:focus-within {
   border-color: var(--orange);
   box-shadow: 0 0 0 3px rgba(255, 90, 0, 0.18);
@@ -1033,6 +1052,127 @@ h1 span {
   display: block;
   font-size: clamp(1.05rem, 2vw, 1.45rem);
   line-height: 1.35;
+}
+
+.personalized-flight-plan {
+  background:
+    radial-gradient(circle at 95% 0%, rgba(255, 90, 0, 0.18), transparent 26rem),
+    rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  margin: 34px auto 0;
+  max-width: 1500px;
+  padding: clamp(24px, 4vw, 42px);
+}
+
+.flight-plan-heading {
+  max-width: 720px;
+}
+
+.flight-plan-heading h2 {
+  margin: 0 0 12px;
+}
+
+.flight-plan-heading > p:last-child,
+.flight-plan-grid p,
+.flight-plan-actions p {
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.55;
+}
+
+.flight-plan-score {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  justify-content: space-between;
+  margin: 28px 0;
+  padding: 18px 0;
+}
+
+.flight-plan-score > span,
+.flight-plan-grid > article > span {
+  color: var(--orange);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.flight-plan-score strong {
+  color: var(--white);
+  font-family: Impact, Oswald, "Arial Narrow", sans-serif;
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
+  text-transform: uppercase;
+}
+
+.flight-plan-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.flight-plan-grid article {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 22px;
+}
+
+.flight-plan-grid strong {
+  color: var(--white);
+  display: block;
+  font-size: clamp(1.05rem, 2vw, 1.32rem);
+  line-height: 1.42;
+  margin-top: 10px;
+}
+
+.flight-plan-grid p {
+  margin: 10px 0 0;
+}
+
+.flight-plan-workbook {
+  grid-column: span 2;
+}
+
+.flight-plan-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 22px;
+  margin: 28px 0;
+}
+
+.flight-plan-actions > div {
+  max-width: 430px;
+}
+
+.flight-plan-actions p {
+  font-size: 0.88rem;
+  margin: 8px 0 0;
+}
+
+.secondary-button {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  color: var(--white);
+  font-size: 0.88rem;
+  font-weight: 900;
+  padding: 15px 18px;
+  text-transform: uppercase;
+}
+
+.secondary-button:hover,
+.secondary-button:focus-visible {
+  border-color: var(--orange);
+  outline: 2px solid rgba(255, 90, 0, 0.64);
+  outline-offset: 3px;
+}
+
+.flight-plan-disclaimer {
+  margin-bottom: 0;
 }
 
 .score-legend article {
@@ -1680,6 +1820,14 @@ h1 span {
 
   .briefing-grid {
     grid-template-columns: 1fr;
+  }
+
+  .flight-plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flight-plan-workbook {
+    grid-column: auto;
   }
 
   .briefing-grid article:nth-child(n + 4) {
