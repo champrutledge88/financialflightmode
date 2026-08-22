@@ -153,23 +153,30 @@ optional field are added, both non-financial selects, both client-side only.
 
 ## 6. Personalization Framework
 
-Unchanged in mechanism from Revision 2 — these were validated logic improvements, not points of
-conflict with the original, and are kept in full:
+These are the validated logic improvements from Revision 2, with the founder-approved Hard
+Override Warning Light #2 exception below resolving the Jordan Persona 2 source conflict:
 
 - **Step 1 — Hard Override vs. Flag/Context.** `cashRemaining <= 0` is always a Hard Override.
   A non-"Stable" pressure selection only becomes a Hard Override when corroborated by an
   Objective Fragility Signal already used by the live calculator (`savingsRate < 0.05` or
   `emergencyFundLevel < 0.25`); otherwise it is Flag/Context — noted, not acted on. `<= 0`
   (not `< 0`) because a household at exactly zero remaining cash has no margin for the next
-  dollar of variance.
+  dollar of variance. When Hard Override is active, Cash Flow Control is Warning Light #1,
+  removed from the eligible candidate set, and stage suppression still applies normally.
+  Warning Light #2 is then the single mathematically weakest remaining eligible category by
+  relative score. Only an exact tie for that weakest score uses the fixed safety-sequence order
+  to make the result deterministic; the optional objective and the adjacent-pair tie-break do
+  not apply to Hard Override Warning Light #2 selection.
 - **Step 2 — Rank the five signals by relative weakness** (score ÷ category max — the existing
   `getRelativeCategoryScores` math).
 - **Step 3 — Stage-gate sequencing.** For Pre-Flight and Turbulence, Wealth Fuel is never
   promoted ahead of Cash Flow Control, Emergency Runway, or Debt Load.
-- **Step 4 — Deterministic tie-break.** Two candidates are tied when their relative-score gap is
-  ≤ 0.10 (adjacent-ranked candidates only). A matching optional objective breaks the tie toward
-  that category; if omitted, the tie resolves to the fixed safety-sequence order (Cash Flow
-  Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel).
+- **Step 4 — Deterministic tie-break for Flag/Context and no-flag cases.** Two adjacent-ranked
+  candidates are tied when their relative-score gap is ≤ 0.10. A matching optional objective
+  breaks the tie toward that category; if omitted, the tie resolves to the fixed safety-sequence
+  order (Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel). This
+  adjacent-pair procedure applies to both Warning Light slots only when Hard Override is not
+  active; Step 1's Hard Override Warning Light #2 rule is the deliberate exception.
 - **Step 5 — Fallback when nothing is weak.** If every signal's relative score is ≥ 0.90, the
   fallback action is the original's **Ownership Mindset** pillar (§8) — a Control Tower Review
   — rather than a manufactured weakness.
@@ -305,8 +312,9 @@ payment.
   though everything else is under pressure) — proof Strong Signal isn't reserved for strong
   overall profiles; it's the one thing genuinely working for *this* person.
 - **Warning Light #1:** Cash Flow Control — stop the $300/month shortfall.
-- **Warning Light #2:** Savings System (relative 0.20 — weakest remaining non-suppressed signal;
-  corrected in Revision 2 from an earlier mislabeling as Emergency Runway).
+- **Warning Light #2:** Savings System (relative 0.20 — the single mathematically weakest
+  remaining non-suppressed signal after the Hard Override; corrected in Revision 2 from an
+  earlier mislabeling as Emergency Runway).
 - Do Now: cut one recurring expense today. This Payday: confirm which bill is driving the
   shortfall. This Month: get cash remaining to ≥ $0, then start a $25/week savings habit.
 - **30-Day Mission:** "Get cash remaining to $0 or above and confirm it on the next payday

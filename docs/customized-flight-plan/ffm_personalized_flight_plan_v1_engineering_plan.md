@@ -18,7 +18,7 @@ updated, as this rebase itself requires.
 
 | Finding | Resolution | Status |
 |---|---|---|
-| Warning Light #2 sequencing | Explicit select → remove → repeat process, formalized as one reusable Adjacent-Pair Selection Procedure applied twice (§6.1), plus a fully worked 3-candidate close-tie example | RESOLVED |
+| Warning Light #2 sequencing | Adjacent-Pair Selection Procedure applied twice for Flag/Context and no-flag cases; Hard Override instead forces Cash Flow Control as #1 and selects the single mathematically weakest remaining eligible category as #2, with the safety sequence used only for an exact weakest-score tie (§6.1) | RESOLVED |
 | Strong Signal collision | Independent selection confirmed as SPEC-supported; the prior "optional Founder decision" statement removed (§6.3) | RESOLVED |
 | Fixed action library | Six exact, immutable, implementation-ready entries added with full Do Now/This Payday/This Month/30-Day Mission copy (§7) | RESOLVED |
 | Test command | `node --test src/` (invalid — verified to error) replaced with `node --test`, empirically verified on Node v22.22.2; no Node 18 assumption remains (§14) | RESOLVED |
@@ -238,22 +238,24 @@ BUILD must follow this order exactly; nothing here is left to be invented during
    - else → no flag.
 6. **If `fallbackApplies`** (step 4): stop here. Output `{ strongSignal, fallback: { actionId: "ownershipMindsetFallback", note: flagContextNote ?? null }, warningLights: null, decisionPath: "Fallback" }`. (This is Persona 4's case: Flag/Context is real but subordinate to the fallback.)
 7. **Else, build the Warning Light candidate set** = all 5 `relativeScores` entries.
-8. **Stage-gate suppression**: if `stageKey` is `preflight` or `turbulence`, remove `investments` (Wealth Fuel) from candidacy entirely — it is never eligible for Warning Light #1 or #2 in these stages (4 candidates remain, only 2 are needed, so this is a hard exclusion, not a soft demotion).
-9. **If Hard Override**: force Warning Light #1 = `cashRemaining` (Cash Flow Control) regardless of its relative rank; remove it from the candidate set (it is never passed into the procedure below). Warning Light #2 is then selected by running the **Adjacent-Pair Selection Procedure** (§6.1) exactly once against the remaining eligible candidates — the ordinary process, not a special case.
-10. **Else (Flag/Context or no flag)**: run the **Adjacent-Pair Selection Procedure** (§6.1) once against the full eligible (stage-suppressed) candidate list to select Warning Light #1, then run it a **second time, unmodified**, against whatever remains to select Warning Light #2.
-11. **Guarantee two distinct Warning Lights** — structurally guaranteed, not a runtime branch: the Adjacent-Pair Selection Procedure always removes its selected candidate from the list before it is ever run again, so the same category can never be selected twice, whether Warning Light #2 follows a Hard-Override-forced Warning Light #1 or a normally-selected one. Verified by an automated invariant test across the full fixture matrix (§14).
-12. **Strong Signal / Warning Light collision — confirmed independent, no product decision required.** See §6.3.
+8. **If Hard Override**: force Warning Light #1 = `cashRemaining` (Cash Flow Control) regardless of its relative rank and remove it from the candidate set. Do not run the Adjacent-Pair Selection Procedure for this forced slot.
+9. **Stage-gate suppression**: after the Hard Override removal when it applies, if `stageKey` is `preflight` or `turbulence`, remove `investments` (Wealth Fuel) from candidacy entirely — it is never eligible for Warning Light #1 or #2 in these stages (4 candidates remain before a Hard Override removal, only 2 are needed, so this is a hard exclusion, not a soft demotion).
+10. **If Hard Override**: Warning Light #2 is the single mathematically weakest remaining eligible category by relative score. Do not run the Adjacent-Pair Selection Procedure or consult `shortTermObjective` for this slot. If more than one remaining candidate is tied at that exact weakest relative score, select the candidate that appears first in the fixed Warning Light safety-sequence order (§6.2); this exact-tie rule is the only Hard Override Warning Light #2 tie-break.
+11. **Else (Flag/Context or no flag)**: run the **Adjacent-Pair Selection Procedure** (§6.1) once against the full eligible (stage-suppressed) candidate list to select Warning Light #1, then run it a second time, unmodified, against whatever remains to select Warning Light #2.
+12. **Guarantee two distinct Warning Lights** — structurally guaranteed, not a runtime branch: Hard Override removes its forced Cash Flow Control candidate before selecting Warning Light #2, and the Adjacent-Pair Selection Procedure removes each selected candidate before a second no-override selection. The same category can therefore never be selected twice. Verified by an automated invariant test across the full fixture matrix (§14).
+13. **Strong Signal / Warning Light collision — confirmed independent, no product decision required.** See §6.3.
 
 ---
 
-## 6.1 Adjacent-Pair Selection Procedure (exact, executable — used identically for Warning Light #1, Warning Light #2, and Warning Light #2-after-Hard-Override)
+## 6.1 Adjacent-Pair Selection Procedure (exact, executable — used identically for Warning Light #1 and Warning Light #2 only when Hard Override is not active)
 
-This is the **one** procedure steps 9 and 10 above call — it is defined once here and never
-redefined per slot. BUILD needs no additional interpretation to make Warning Light selection
+This is the **one** procedure step 11 calls — it is defined once here and never redefined per
+slot. It is not used for Warning Light #2 after a Hard Override; step 10's single-weakest rule
+governs that case. BUILD needs no additional interpretation to make Warning Light selection
 executable.
 
-**Inputs:** the current eligible candidate list (already stage-suppressed, and already excluding
-any category forced/removed by a Hard Override), and `shortTermObjective`.
+**Inputs:** the current eligible candidate list (already stage-suppressed) and
+`shortTermObjective`, only when Hard Override is not active.
 
 1. Sort the current candidate list ascending by relative score (weakest first).
 2. Compare **only** the first two entries — the two weakest remaining candidates.
@@ -261,7 +263,7 @@ any category forced/removed by a Hard Override), and `shortTermObjective`.
    a. If `shortTermObjective` is present and maps to one of these two candidates' categories, select that candidate.
    b. Otherwise (objective omitted, or it maps to neither of the two candidates), select whichever of the two appears first in the fixed **Warning Light safety-sequence order**: `Cash Flow Control > Emergency Runway > Debt Load > Savings System > Wealth Fuel` (§6.2 — distinct from the Strong Signal tie order).
 4. Else (gap `> 0.10`): select the first entry (the single weakest candidate) — no tie-break input is consulted; `shortTermObjective` is irrelevant when there is no tie.
-5. **Remove** the selected candidate from the candidate list. Its slot (Warning Light #1 or #2) is now finalized. If this is the first run for the current plan (selecting Warning Light #1), the procedure is called again against the now-shorter list to select Warning Light #2; if this is the second run, selection is complete.
+5. **Remove** the selected candidate from the candidate list. Its slot (Warning Light #1 or #2) is now finalized. If this is the first run for the current no-override plan (selecting Warning Light #1), the procedure is called again against the now-shorter list to select Warning Light #2; if this is the second run, selection is complete.
 
 ### Worked example — 3-candidate close tie, no Hard Override, objective changes Warning Light #1
 
@@ -730,7 +732,7 @@ No test-path configuration, glob, or additional tooling is required.
 | Stage sequencing | Pre-Flight and Turbulence fixtures with Wealth Fuel as the mathematically weakest signal, confirming it never appears as Warning Light #1/#2; Cruise Control and Flight Mode fixtures confirming Wealth Fuel *is* eligible there |
 | Tie logic | Persona 3 (`0.03` gap, `<= 0.10`), a `> 0.10` fixture (no tie-break applied), objective-matches-tied-pair, objective-omitted, objective-maps-to-neither-tied-category (falls back to the same safety-sequence order as omitted) |
 | Strong Signal | Persona 3 (unique max), a new synthetic two-way-tied-but-not-all-five fixture, Persona 4 (all-five tie, resolves to Cash Flow Control), a new synthetic all-five-tied-but-below-0.90 fixture exercising the §6.3 collision policy |
-| Warning Lights | Persona 1/2 (Hard Override forces Cash Flow Control as #1), deterministic #2 selection, an always-distinct assertion run across the full fixture set |
+| Warning Lights | Persona 1/2 (Hard Override forces Cash Flow Control as #1; #2 is the single mathematically weakest remaining eligible category, with a safety-sequence break only for an exact weakest-score tie), deterministic no-override #2 selection, an always-distinct assertion run across the full fixture set |
 | Action library | All five signal entries plus the Ownership Mindset fallback present with every required field non-empty |
 | Privacy serializers | `createMailerLitePayload`, `createAnalyticsPayload`, `createCalibrationRecord` fuzz-tests (§9) — no forbidden key ever survives serialization |
 
