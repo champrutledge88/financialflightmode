@@ -299,3 +299,30 @@ leadForm.addEventListener("submit", (event) => {
 });
 
 renderResults(calculateFlightScore(getInputValues()));
+
+const aboutSection = document.querySelector("#about");
+if (aboutSection && typeof IntersectionObserver === "function") {
+  let hasTrackedAboutView = false;
+  const aboutObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting || hasTrackedAboutView) return;
+        hasTrackedAboutView = true;
+        trackEvent("about_section_view");
+        aboutObserver.disconnect();
+      });
+    },
+    { threshold: 0.4 },
+  );
+  aboutObserver.observe(aboutSection);
+}
+
+document.querySelector("[data-about-scorecard-cta]")?.addEventListener("click", () => {
+  trackEvent("about_scorecard_cta_click", { link_location: "about" });
+});
+
+document.querySelectorAll("[data-x-link]").forEach((link) => {
+  link.addEventListener("click", () => {
+    trackEvent("x_profile_click", { link_location: link.dataset.xLink });
+  });
+});

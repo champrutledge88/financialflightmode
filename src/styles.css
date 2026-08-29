@@ -1495,6 +1495,133 @@ h1 span {
   padding-top: 24px;
 }
 
+/* About Financial Flight Mode */
+.about-section {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+    var(--black);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 54px auto 0;
+  max-width: 1500px;
+  padding: 82px 32px 76px;
+}
+
+.about-intro {
+  margin: 0 auto;
+  max-width: 780px;
+  text-align: center;
+}
+
+.about-intro h2 {
+  font-size: clamp(3rem, 5.6vw, 4.8rem);
+  margin: 16px 0 28px;
+}
+
+.about-intro > p:not(.eyebrow) {
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 1.08rem;
+  line-height: 1.7;
+  margin: 0 auto 14px;
+  max-width: 62ch;
+}
+
+.about-intro > p.about-lead {
+  color: var(--white);
+  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.about-story {
+  display: grid;
+  gap: 40px 48px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 48px auto 0;
+  max-width: 1080px;
+}
+
+.about-story article {
+  border-top: 2px solid #e95c03;
+  padding-top: 18px;
+}
+
+.about-story h3 {
+  font-size: clamp(1.4rem, 2.1vw, 1.8rem);
+  margin: 0 0 16px;
+}
+
+.about-story p {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.about-story p + p {
+  margin-top: 16px;
+}
+
+.about-story .about-values {
+  color: var(--white);
+  font-weight: 800;
+}
+
+.about-close {
+  margin: 58px auto 0;
+  max-width: 720px;
+  text-align: center;
+}
+
+.about-movement {
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.65;
+  margin: 0 auto 24px;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.about-scorecard-link {
+  color: #e95c03;
+  display: inline-flex;
+  font-family: Impact, Oswald, "Arial Narrow", sans-serif;
+  font-size: 1.15rem;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  min-height: 44px;
+  padding: 11px 8px;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-transform: uppercase;
+  text-underline-offset: 6px;
+}
+
+.about-scorecard-link:hover,
+.about-scorecard-link:focus-visible,
+.about-social a:hover,
+.about-social a:focus-visible {
+  color: var(--white);
+  outline: 2px solid #e95c03;
+  outline-offset: 4px;
+}
+
+.about-social {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin: 20px 0 0;
+}
+
+.about-social a {
+  color: rgba(255, 255, 255, 0.88);
+  display: inline-flex;
+  font-weight: 900;
+  min-height: 44px;
+  padding: 11px 4px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .trust-section strong {
   color: var(--orange);
   display: block;
@@ -1849,6 +1976,21 @@ h1 span {
     margin-left: 18px;
     margin-right: 18px;
     padding: 28px 20px;
+  }
+
+  .about-section {
+    margin-top: 38px;
+    padding: 64px 18px 60px;
+  }
+
+  .about-story {
+    gap: 28px;
+    grid-template-columns: 1fr;
+    margin-top: 48px;
+  }
+
+  .about-close {
+    margin-top: 46px;
   }
 
   .site-footer {
