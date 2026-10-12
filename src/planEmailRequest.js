@@ -1,6 +1,6 @@
 import { createMailerLitePayload } from "./personalizedFlightPlan.js?v=launch-funnel-2";
 
-export const planConsentVersion = "ffm-plan-email-2026-10-11";
+export const planConsentVersion = "ffm-plan-email-2026-10-12";
 
 export function createPlanEmailRequest({ email, consentTimestamp, requestId, planSummary }) {
   const safe = createMailerLitePayload({ email, consentVersion: planConsentVersion, consentTimestamp, planSummary });

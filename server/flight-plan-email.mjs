@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { actionLibrary, categoryMap } from "../src/personalizedFlightPlan.js";
 
-export const PLAN_CONSENT_VERSION = "ffm-plan-email-2026-10-11";
+export const PLAN_CONSENT_VERSION = "ffm-plan-email-2026-10-12";
 const keys = ["requestId", "email", "consentVersion", "consentTimestamp", "consented", "score", "stage", "strongSignalCategory", "warningLight1Category", "warningLight2Category", "actionId"];
 const categories = Object.values(categoryMap);
 const stageNames = { preflight: "Pre-Flight", turbulence: "Turbulence", cruise: "Cruise Control", flight: "Flight Mode" };
