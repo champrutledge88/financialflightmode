@@ -393,7 +393,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Before spending anything new, confirm this payday's bills are covered first."
 - `thisMonth`: "Find and close one spending leak so more of your income stays available for your goals."
 - `thirtyDayMission`: "Keep your monthly cash flow at zero or above for one full pay cycle."
-- `workbookTab` / `workbookAction`: "Monthly Budget + Dashboard" / "Cash Flow Control row"
+- `workbookTab` / `workbookAction`: "MONTHLY BUDGET + KNOW YOUR NUMBERS" / "Update income in rows 8-9 and spending in rows 11-24 of MONTHLY BUDGET; review TRUE NET REMAINING in row 30 of KNOW YOUR NUMBERS."
 
 **2. Savings System** (`categoryKey: "savingsRate"`)
 - `actionId`: `"savingsSystem"`
@@ -401,7 +401,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Let that automatic transfer run without touching it."
 - `thisMonth`: "Keep the transfer running every payday this month, even if the amount is small."
 - `thirtyDayMission`: "Complete four consecutive automatic transfers to savings without skipping one."
-- `workbookTab` / `workbookAction`: "Savings Tracker + Monthly Budget" / "Savings System row"
+- `workbookTab` / `workbookAction`: "DEBT & RUNWAY + MONTHLY BUDGET" / "Set a repeatable monthly contribution in column F of the Savings Goals Tracker, rows 31-34, in DEBT & RUNWAY; record actual savings in row 26 of MONTHLY BUDGET."
 
 **3. Debt Load** (`categoryKey: "debtPressure"`)
 - `actionId`: `"debtLoad"`
@@ -409,7 +409,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Send any extra amount you can toward that one priority balance."
 - `thisMonth`: "Track your priority balance going down at least once this month."
 - `thirtyDayMission`: "Make one extra payment toward your priority balance beyond the minimum."
-- `workbookTab` / `workbookAction`: "Debt Snowball + Monthly Budget" / "Debt Load row"
+- `workbookTab` / `workbookAction`: "DEBT & RUNWAY + MONTHLY BUDGET" / "Confirm balances, minimums, extra payments and the TARGET priority in rows 8-15 of DEBT & RUNWAY; record actual total debt paid in row 32 of MONTHLY BUDGET."
 
 **4. Emergency Runway** (`categoryKey: "emergencyFund"`)
 - `actionId`: `"emergencyRunway"`
@@ -417,7 +417,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Move a repeatable amount toward that target."
 - `thisMonth`: "Keep the contribution going every payday this month."
 - `thirtyDayMission`: "Grow your emergency fund by one repeatable contribution each payday this month."
-- `workbookTab` / `workbookAction`: "Savings Tracker + Dashboard" / "Emergency Runway row"
+- `workbookTab` / `workbookAction`: "DEBT & RUNWAY + KNOW YOUR NUMBERS" / "Update target, saved and monthly contribution in columns D-F of the Savings Goals Tracker, rows 31-34, in DEBT & RUNWAY; review EMERGENCY FUND % in KNOW YOUR NUMBERS."
 
 **5. Wealth Fuel** (`categoryKey: "investments"`)
 - `actionId`: `"wealthFuel"`
@@ -425,15 +425,15 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Confirm that contribution processed as expected."
 - `thisMonth`: "Keep the contribution consistent every payday this month."
 - `thirtyDayMission`: "Maintain one repeatable investing or long-term saving contribution for a full month."
-- `workbookTab` / `workbookAction`: "Investment Tracker + Savings Rate" / "Wealth Fuel row"
+- `workbookTab` / `workbookAction`: "MONTHLY BUDGET + WEEKLY REVIEW" / "Review planned and actual investing in rows 29-30 of MONTHLY BUDGET; check the investing or savings contribution in row 13 of WEEKLY REVIEW."
 
 **6. Ownership Mindset — fallback** (`categoryKey: null` — not a ranked signal; used only when SPEC §6 Step 5 / this plan's §6 step 4 fallback applies)
 - `actionId`: `"ownershipMindsetFallback"`
-- `doNow`: "Complete a Control Tower Review of your full dashboard before your next payday."
+- `doNow`: "Complete the Weekly Control Tower Review in WEEKLY REVIEW before your next payday."
 - `thisPayday`: "Choose one area to optimize even though your numbers are already strong."
 - `thisMonth`: "Look for one way to increase income, investing, or ownership capacity."
 - `thirtyDayMission`: "Complete one full Control Tower Review and choose one growth priority for next month."
-- `workbookTab` / `workbookAction`: "Dashboard + Month-End Reset" / "Ownership Mindset review"
+- `workbookTab` / `workbookAction`: "WEEKLY REVIEW + FLIGHT PLAN SUMMARY" / "Complete the 10 MINUTE WEEKLY CONTROL TOWER REVIEW in rows 22-28 of WEEKLY REVIEW; write your next action under THIS WEEK'S ONE ACTION in FLIGHT PLAN SUMMARY."
 
 None of the six entries names a security, a specific lender, a credit product, a tax position, a
 legal action, or a debt settlement provider, and none contains open-ended AI content or a
@@ -859,3 +859,13 @@ including verification that adding `package.json` does not change Netlify's buil
 - A required new select field adds friction — an approved, deliberate SPEC requirement, not something to soften.
 - **New in this revision**: introducing a root `package.json` for testing could unintentionally change Netlify's build behavior — mitigated by explicit deploy-preview verification in W0.
 - PR #10 has since merged and this branch has been rebased onto the resulting `main` (§1) — this plan's sequencing (§2) existed specifically to prevent BUILD from starting on the wrong base, and that risk is now closed; §2 steps 7–11 remain outstanding before BUILD may begin.
+
+
+## Launch correction — October 11, 2026
+
+The Founder authorized completion of the audited funnel. Workbook routes in the six action entries now use the exact tabs and row labels in the shipped seven-tab workbook. This corrects the execution handoff without changing scoring, priority selection or the action cadence. Both scorecard routes use explicit example results, blank-start controls, required amounts and cents. The Personalized Flight Plan is the single action view after calculation. The separate email capability gate remains required.
+
+
+## Founder architecture decision — October 11, 2026
+
+The Founder explicitly approved a small server-side delivery service on the existing Netlify deployment after reviewing the current-plan delivery proposal. This supersedes the no-backend constraint for plan email only. The service uses Resend for individual plan requests and MailerLite for read-only email-status checks; the existing Starter Kit sequence remains separate. No raw financial inputs or metrics cross the network. Canonical action copy is rendered server-side from approved identifiers. Resend provides atomic duplicate protection for 24 hours; requests expire after 23 hours. No website plan database is introduced. Private credentials, verified sender setup, controlled live receipt, native-browser checks and the independent pilot remain release gates. No paid subscription purchase was authorized.

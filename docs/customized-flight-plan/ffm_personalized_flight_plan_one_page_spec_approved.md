@@ -35,11 +35,11 @@ Version one is deterministic, not open-ended AI advice. Use current inputs and c
 
 | FFM pillar | Approved first action | Workbook control |
 |---|---|---|
-| Cash Flow Control | Complete income/expense entries, update actuals, or audit 1-3 spending leaks | Monthly Budget + Dashboard |
-| Debt Discipline | Confirm minimums and choose one priority balance | Debt Snowball + Monthly Budget |
-| Emergency Runway | Set the next $500, $1,000, or one-month target and a repeatable contribution | Savings Tracker + Dashboard |
-| Wealth Systems | Establish or review one repeatable saving/investing contribution after the base is stable | Investment Tracker + Savings Rate |
-| Ownership Mindset | Complete a Control Tower Review before payday and choose one priority | Dashboard + Month-End Reset |
+| Cash Flow Control | Complete income/expense entries, update actuals, or audit 1-3 spending leaks | MONTHLY BUDGET + KNOW YOUR NUMBERS |
+| Debt Discipline | Confirm minimums and choose one priority balance | DEBT & RUNWAY + MONTHLY BUDGET |
+| Emergency Runway | Set the next $500, $1,000, or one-month target and a repeatable contribution | DEBT & RUNWAY + KNOW YOUR NUMBERS |
+| Wealth Systems | Establish or review one repeatable saving/investing contribution after the base is stable | MONTHLY BUDGET + WEEKLY REVIEW |
+| Ownership Mindset | Complete a Control Tower Review before payday and choose one priority | WEEKLY REVIEW + FLIGHT PLAN SUMMARY |
 
 If the data does not support a conclusion, show a neutral next step. Never recommend a security, lender, credit product, debt settlement provider, tax position, or legal action.
 
