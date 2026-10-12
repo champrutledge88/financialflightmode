@@ -77,8 +77,8 @@ const standardPlanSummary = {
   warningLight1Category: "Savings System",
   warningLight2Category: "Emergency Runway",
   actionId: "savingsSystem",
-  workbookTab: "Savings Tracker + Monthly Budget",
-  workbookAction: "Savings System row",
+  workbookTab: "DEBT & RUNWAY + MONTHLY BUDGET",
+  workbookAction: "Set a repeatable monthly contribution in column F of the Savings Goals Tracker, rows 31-34, in DEBT & RUNWAY; record actual savings in row 26 of MONTHLY BUDGET.",
   doNow: "Set up or confirm one automatic transfer from checking to savings for your next payday.",
   thisPayday: "Let that automatic transfer run without touching it.",
   thisMonth: "Keep the transfer running every payday this month, even if the amount is small.",
@@ -101,8 +101,8 @@ const calibrationInput = {
   },
   decisionPath: "ObjectiveTieBreak",
   actionId: "savingsSystem",
-  workbookTab: "Savings Tracker + Monthly Budget",
-  workbookAction: "Savings System row",
+  workbookTab: "DEBT & RUNWAY + MONTHLY BUDGET",
+  workbookAction: "Set a repeatable monthly contribution in column F of the Savings Goals Tracker, rows 31-34, in DEBT & RUNWAY; record actual savings in row 26 of MONTHLY BUDGET.",
   testId: "W1-PRIYA",
 };
 
@@ -127,8 +127,8 @@ test("reproduces SPEC Persona 1 Maya: Strong Signal, Hard Override, and ordered 
   assert.deepEqual(warningCategories(plan), ["Cash Flow Control", "Debt Load"]);
   assert.equal(plan.doNow, actionLibrary[0].doNow);
   assert.deepEqual(plan.workbookConnection, {
-    tab: "Monthly Budget + Dashboard",
-    action: "Cash Flow Control row",
+    tab: "MONTHLY BUDGET + KNOW YOUR NUMBERS",
+    action: "Update income in rows 8-9 and spending in rows 11-24 of MONTHLY BUDGET; review TRUE NET REMAINING in row 30 of KNOW YOUR NUMBERS.",
   });
 });
 
@@ -185,8 +185,8 @@ test("reproduces SPEC Persona 4 Alex: all-tied Strong Signal with Flag Context s
     note: "You flagged an unexpected bill — your reserves look strong enough to absorb it. If this reflects a bigger recent change, retake this with updated numbers.",
   });
   assert.deepEqual(plan.workbookConnection, {
-    tab: "Dashboard + Month-End Reset",
-    action: "Ownership Mindset review",
+    tab: "WEEKLY REVIEW + FLIGHT PLAN SUMMARY",
+    action: "Complete the 10 MINUTE WEEKLY CONTROL TOWER REVIEW in rows 22-28 of WEEKLY REVIEW; write your next action under THIS WEEK'S ONE ACTION in FLIGHT PLAN SUMMARY.",
   });
 });
 
@@ -506,12 +506,12 @@ test("SPEC AC10: every non-fallback plan has two distinct Warning Lights and fal
 
 test("SPEC AC12 and AC14: the six immutable action entries have exact workbook routes and safe fixed copy", () => {
   const expectedRoutes = [
-    ["cashFlowControl", "Monthly Budget + Dashboard", "Cash Flow Control row"],
-    ["savingsSystem", "Savings Tracker + Monthly Budget", "Savings System row"],
-    ["debtLoad", "Debt Snowball + Monthly Budget", "Debt Load row"],
-    ["emergencyRunway", "Savings Tracker + Dashboard", "Emergency Runway row"],
-    ["wealthFuel", "Investment Tracker + Savings Rate", "Wealth Fuel row"],
-    ["ownershipMindsetFallback", "Dashboard + Month-End Reset", "Ownership Mindset review"],
+    ["cashFlowControl", "MONTHLY BUDGET + KNOW YOUR NUMBERS", "Update income in rows 8-9 and spending in rows 11-24 of MONTHLY BUDGET; review TRUE NET REMAINING in row 30 of KNOW YOUR NUMBERS."],
+    ["savingsSystem", "DEBT & RUNWAY + MONTHLY BUDGET", "Set a repeatable monthly contribution in column F of the Savings Goals Tracker, rows 31-34, in DEBT & RUNWAY; record actual savings in row 26 of MONTHLY BUDGET."],
+    ["debtLoad", "DEBT & RUNWAY + MONTHLY BUDGET", "Confirm balances, minimums, extra payments and the TARGET priority in rows 8-15 of DEBT & RUNWAY; record actual total debt paid in row 32 of MONTHLY BUDGET."],
+    ["emergencyRunway", "DEBT & RUNWAY + KNOW YOUR NUMBERS", "Update target, saved and monthly contribution in columns D-F of the Savings Goals Tracker, rows 31-34, in DEBT & RUNWAY; review EMERGENCY FUND % in KNOW YOUR NUMBERS."],
+    ["wealthFuel", "MONTHLY BUDGET + WEEKLY REVIEW", "Review planned and actual investing in rows 29-30 of MONTHLY BUDGET; check the investing or savings contribution in row 13 of WEEKLY REVIEW."],
+    ["ownershipMindsetFallback", "WEEKLY REVIEW + FLIGHT PLAN SUMMARY", "Complete the 10 MINUTE WEEKLY CONTROL TOWER REVIEW in rows 22-28 of WEEKLY REVIEW; write your next action under THIS WEEK'S ONE ACTION in FLIGHT PLAN SUMMARY."],
   ];
 
   assert.equal(actionLibrary.length, 6);

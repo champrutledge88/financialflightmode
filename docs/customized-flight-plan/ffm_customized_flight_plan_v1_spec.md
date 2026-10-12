@@ -250,12 +250,12 @@ Both gaps are resolved explicitly rather than left implicit:
 
 | Signal / Pillar | Approved First Action | Workbook Control |
 |---|---|---|
-| Cash Flow Control | Complete income/expense entries, update actuals, or audit 1–3 spending leaks | Monthly Budget + Dashboard |
-| **Savings System** *(added — no original row existed)* | Set or confirm one automatic transfer from checking to savings each payday | Savings Tracker + Monthly Budget |
-| Emergency Runway | Set the next $500, $1,000, or one-month target and a repeatable contribution | Savings Tracker + Dashboard |
-| Debt Load (original: "Debt Discipline") | Confirm minimums and choose one priority balance | Debt Snowball + Monthly Budget |
-| Wealth Fuel (original: "Wealth Systems") | Establish or review one repeatable saving/investing contribution after the base is stable | Investment Tracker + Savings Rate |
-| **Ownership Mindset** *(fallback only — used when §6 Step 5 applies, all signals ≥ 0.90, never as a ranked Warning Light)* | Complete a Control Tower Review before payday and choose one priority | Dashboard + Month-End Reset |
+| Cash Flow Control | Complete income/expense entries, update actuals, or audit 1–3 spending leaks | MONTHLY BUDGET + KNOW YOUR NUMBERS |
+| **Savings System** *(added — no original row existed)* | Set or confirm one automatic transfer from checking to savings each payday | DEBT & RUNWAY + MONTHLY BUDGET |
+| Emergency Runway | Set the next $500, $1,000, or one-month target and a repeatable contribution | DEBT & RUNWAY + KNOW YOUR NUMBERS |
+| Debt Load (original: "Debt Discipline") | Confirm minimums and choose one priority balance | DEBT & RUNWAY + MONTHLY BUDGET |
+| Wealth Fuel (original: "Wealth Systems") | Establish or review one repeatable saving/investing contribution after the base is stable | MONTHLY BUDGET + WEEKLY REVIEW |
+| **Ownership Mindset** *(fallback only — used when §6 Step 5 applies, all signals ≥ 0.90, never as a ranked Warning Light)* | Complete a Control Tower Review before payday and choose one priority | WEEKLY REVIEW + FLIGHT PLAN SUMMARY |
 
 If the data does not support a conclusion for a category, show a neutral next step rather than
 forcing a ranking — carried over verbatim from the original.
@@ -301,7 +301,7 @@ $14,000 · Emergency fund $500 / $2,000 goal · Investments $0. Pressure: Stable
   bill against Needs. This Month: pick one debt to target once cash flow holds ≥ $0.
 - **30-Day Mission:** "Keep cash remaining at $0 or above for one full pay cycle" (self-checkable
   via the next Scorecard retake).
-- Workbook Connection: Monthly Budget + Dashboard (Cash Flow Control row).
+- Workbook Connection: MONTHLY BUDGET + KNOW YOUR NUMBERS (update budget rows and review TRUE NET REMAINING).
 
 ### Persona 2 — Turbulence, negative remaining cash: "Jordan"
 Income $4,200 · Needs $3,200 · Wants $1,200 · Savings $0 · Extra debt payment $100 · Total debt
@@ -319,7 +319,7 @@ payment.
   shortfall. This Month: get cash remaining to ≥ $0, then start a $25/week savings habit.
 - **30-Day Mission:** "Get cash remaining to $0 or above and confirm it on the next payday
   check-in."
-- Workbook Connection: Monthly Budget + Dashboard.
+- Workbook Connection: MONTHLY BUDGET + KNOW YOUR NUMBERS.
 
 ### Persona 3 — Cruise Control, close-signal tie-break: "Priya"
 Income $6,000 · Needs $2,800 · Wants $1,200 · Savings $600 · Extra debt payment $200 · Total
@@ -332,7 +332,7 @@ debt $9,000 · Emergency fund $6,000 / $9,000 goal · Investments $8,000. Pressu
   back to the fixed sequence → Warning Light #1 = Emergency Runway, #2 = Savings System.
 - 30-Day Mission (objective-omitted branch): "Automate the remaining ~$1,000 to reach 100% of
   your emergency fund goal this month."
-- Workbook Connection: Savings Tracker + Dashboard.
+- Workbook Connection: DEBT & RUNWAY + KNOW YOUR NUMBERS.
 
 ### Persona 4 — Flight Mode, strong profile + uncorroborated pressure: "Alex"
 Income $8,000 · Needs $2,600 · Wants $1,000 · Savings $1,600 · Extra debt payment $0 · Total
@@ -351,7 +351,7 @@ debt $0 · Emergency fund $15,000 / $15,000 goal · Investments $40,000. Pressur
   Review before payday, with a short contextual note: "You flagged an unexpected bill — your
   reserves look strong enough to absorb it. If this reflects a bigger recent change, retake this
   with updated numbers."
-- Workbook Connection: Dashboard + Month-End Reset.
+- Workbook Connection: WEEKLY REVIEW + FLIGHT PLAN SUMMARY.
 
 ---
 
