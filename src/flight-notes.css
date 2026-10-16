@@ -1,0 +1,50 @@
+/* Isolated preview: editorial discovery, with existing conversion paths preserved. */
+.notes-eyebrow { color: #ff9458; font-size: 11px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; margin: 0 0 22px; }
+.flight-notes-feature { max-width: 1372px; margin: 0 auto 54px; padding: 44px 32px 0; display: grid; grid-template-columns: .8fr 1.35fr; gap: 78px; align-items: center; }
+.notes-intro h2 { font-size: clamp(28px,3vw,40px); line-height: 1.12; letter-spacing: -.045em; margin: 0 0 18px; }
+.notes-intro > p:not(.notes-eyebrow) { max-width: 330px; color: #a9a9a9; font-size: 15px; line-height: 1.7; }
+.notes-hub-link, .notes-read-link { display: inline-flex; align-items: center; gap: 26px; font-size: 13px; font-weight: 750; min-height: 44px; }
+.notes-hub-link { color: #e5e5e5; border-bottom: 1px solid #555; margin-top: 10px; }
+.notes-hub-link span, .notes-read-link span { font-size: 22px; color: #ff9458; }
+.notes-card { position: relative; overflow: hidden; border: 1px solid #3a3a3a; border-radius: 4px; background: linear-gradient(120deg,#191919,#101010); padding: 32px 38px 26px; }
+.notes-card::before { content: ''; position: absolute; top: 0; left: 0; width: 68px; height: 3px; background: #ff5a00; }
+.notes-card-meta { display: flex; gap: 18px; justify-content: space-between; color: #999; font-size: 11px; line-height: 1.5; }
+.notes-card-meta > span { color: #ff9458; text-transform: uppercase; font-weight: 750; letter-spacing: .1em; }
+.notes-card h3 { position: relative; z-index: 1; font-size: clamp(26px,2.6vw,37px); letter-spacing: -.04em; line-height: 1.2; font-weight: 650; max-width: 610px; margin: 24px 0 18px; }
+.notes-card h3 a:hover { color: #ffb58b; }
+.notes-card > p { position: relative; z-index: 1; max-width: 530px; color: #aaa; line-height: 1.75; font-size: 14px; }
+.notes-read-link { position: relative; z-index: 1; margin-top: 10px; color: #fff; }
+.notes-index { position: absolute; font-size: 145px; font-weight: 800; color: #ffffff04; right: 10px; bottom: -35px; letter-spacing: -.08em; pointer-events: none; }
+a.notes-hub-link:hover, a.notes-read-link:hover { color: #ffb58b; }
+.notes-hub-link:focus-visible, .notes-read-link:focus-visible, .notes-card h3 a:focus-visible { outline: 2px solid #ff9458; outline-offset: 6px; border-radius: 2px; }
+.notes-hub-page { background: radial-gradient(ellipse at 90% 0, #ff5a0010, transparent 50%), #080808; }
+.notes-hub-main { max-width: 1184px; margin: auto; padding: 170px 32px 70px; }
+.notes-hub-hero { padding-bottom: 66px; border-bottom: 1px solid #333; }
+.notes-hub-hero h1 { font-size: clamp(64px,8vw,110px); letter-spacing: -.065em; line-height: .98; margin: 0; font-weight: 700; }
+.notes-hub-hero h1 span { display: block; color: #9a9a9a; font-size: clamp(30px,4vw,46px); letter-spacing: -.045em; line-height: 1.15; margin-top: 26px; }
+.notes-hub-hero > p:last-child { font-size: 17px; color: #b5b5b5; line-height: 1.7; margin: 28px 0 0; }
+.notes-library { padding-top: 32px; }
+.notes-library-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.notes-library-heading h2 { font-size: 14px; margin: 0; font-weight: 650; }
+.notes-library-heading > span { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; }
+.notes-library .notes-card { max-width: 100%; padding: 38px 42px; }
+.notes-library .notes-card h3 { font-size: clamp(30px,4vw,46px); max-width: 780px; }
+.notes-library .notes-card > p { max-width: 700px; font-size: 16px; }
+.notes-hub-end { display: flex; justify-content: space-between; gap: 24px; align-items: center; padding-top: 32px; color: #999; font-size: 13px; }
+.notes-footer { max-width: 1184px; margin: auto; padding: 30px 32px; border-top: 1px solid #2a2a2a; display: flex; gap: 24px; justify-content: space-between; color: #888; font-size: 12px; }
+@media (max-width: 1000px) { .flight-notes-feature { gap: 32px; grid-template-columns: .8fr 1.3fr; } .header-actions { gap: 1px; } .header-actions a { padding: 10px 9px; font-size: 12px; } }
+@media (max-width: 760px) {
+  .landing-header .header-actions { grid-template-columns: repeat(6,minmax(0,1fr)); gap: 3px; }
+  .landing-header .header-actions a { grid-column: span 2; font-size: 11px; padding: 9px 3px; }
+  .landing-header .header-actions a:nth-last-child(2), .landing-header .header-actions .header-cta { grid-column: span 3; }
+  .flight-notes-feature { padding: 32px 18px 0; margin-bottom: 36px; grid-template-columns: 1fr; gap: 28px; }
+  .notes-intro h2 { font-size: 34px; } .notes-intro > p:not(.notes-eyebrow) { max-width: 100%; }
+  .notes-eyebrow { margin-bottom: 18px; } .notes-card { padding: 26px 23px 20px; }
+  .notes-card-meta { font-size: 10px; gap: 12px; } .notes-card h3 { font-size: 29px; }
+  .notes-hub-main { padding: 240px 18px 40px; } .notes-hub-hero { padding-bottom: 38px; }
+  .notes-hub-hero h1 { font-size: 67px; } .notes-hub-hero h1 span { font-size: 34px; }
+  .notes-hub-hero > p:last-child { font-size: 15px; } .notes-library .notes-card { padding: 26px 23px; }
+  .notes-library .notes-card h3 { font-size: 31px; } .notes-library .notes-card > p { font-size: 14px; }
+  .notes-hub-end { align-items: flex-start; flex-direction: column; gap: 0; }
+  .notes-footer { padding: 24px 18px; flex-wrap: wrap; font-size: 11px; } .notes-footer span { margin-left: auto; }
+}
