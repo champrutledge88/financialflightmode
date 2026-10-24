@@ -393,7 +393,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Before spending anything new, confirm this payday's bills are covered first."
 - `thisMonth`: "Find and close one spending leak so more of your income stays available for your goals."
 - `thirtyDayMission`: "Keep your monthly cash flow at zero or above for one full pay cycle."
-- `workbookTab` / `workbookAction`: "Monthly Budget + Dashboard" / "Cash Flow Control row"
+- `workbookTab` / `workbookAction`: "Monthly Budget + Know Your Numbers" / "Net Remaining row"
 
 **2. Savings System** (`categoryKey: "savingsRate"`)
 - `actionId`: `"savingsSystem"`
@@ -401,7 +401,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Let that automatic transfer run without touching it."
 - `thisMonth`: "Keep the transfer running every payday this month, even if the amount is small."
 - `thirtyDayMission`: "Complete four consecutive automatic transfers to savings without skipping one."
-- `workbookTab` / `workbookAction`: "Savings Tracker + Monthly Budget" / "Savings System row"
+- `workbookTab` / `workbookAction`: "Monthly Budget + Know Your Numbers" / "Savings Rate row"
 
 **3. Debt Load** (`categoryKey: "debtPressure"`)
 - `actionId`: `"debtLoad"`
@@ -409,7 +409,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Send any extra amount you can toward that one priority balance."
 - `thisMonth`: "Track your priority balance going down at least once this month."
 - `thirtyDayMission`: "Make one extra payment toward your priority balance beyond the minimum."
-- `workbookTab` / `workbookAction`: "Debt Snowball + Monthly Budget" / "Debt Load row"
+- `workbookTab` / `workbookAction`: "Debt & Runway + Monthly Budget" / "Priority TARGET debt row"
 
 **4. Emergency Runway** (`categoryKey: "emergencyFund"`)
 - `actionId`: `"emergencyRunway"`
@@ -417,7 +417,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Move a repeatable amount toward that target."
 - `thisMonth`: "Keep the contribution going every payday this month."
 - `thirtyDayMission`: "Grow your emergency fund by one repeatable contribution each payday this month."
-- `workbookTab` / `workbookAction`: "Savings Tracker + Dashboard" / "Emergency Runway row"
+- `workbookTab` / `workbookAction`: "Debt & Runway + Weekly Review" / "Runway goal and payday contribution"
 
 **5. Wealth Fuel** (`categoryKey: "investments"`)
 - `actionId`: `"wealthFuel"`
@@ -425,7 +425,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Confirm that contribution processed as expected."
 - `thisMonth`: "Keep the contribution consistent every payday this month."
 - `thirtyDayMission`: "Maintain one repeatable investing or long-term saving contribution for a full month."
-- `workbookTab` / `workbookAction`: "Investment Tracker + Savings Rate" / "Wealth Fuel row"
+- `workbookTab` / `workbookAction`: "Monthly Budget + Know Your Numbers" / "Investing rows and Savings Rate"
 
 **6. Ownership Mindset — fallback** (`categoryKey: null` — not a ranked signal; used only when SPEC §6 Step 5 / this plan's §6 step 4 fallback applies)
 - `actionId`: `"ownershipMindsetFallback"`
@@ -433,7 +433,7 @@ needs to become consistent) — one exact entry per category, no alternates.
 - `thisPayday`: "Choose one area to optimize even though your numbers are already strong."
 - `thisMonth`: "Look for one way to increase income, investing, or ownership capacity."
 - `thirtyDayMission`: "Complete one full Control Tower Review and choose one growth priority for next month."
-- `workbookTab` / `workbookAction`: "Dashboard + Month-End Reset" / "Ownership Mindset review"
+- `workbookTab` / `workbookAction`: "Weekly Review + Flight Plan Summary" / "This Week's One Action"
 
 None of the six entries names a security, a specific lender, a credit product, a tax position, a
 legal action, or a debt settlement provider, and none contains open-ended AI content or a

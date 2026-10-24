@@ -260,6 +260,24 @@ Both gaps are resolved explicitly rather than left implicit:
 If the data does not support a conclusion for a category, show a neutral next step rather than
 forcing a ranking — carried over verbatim from the original.
 
+**Workbook route correction (Founder approved, 24 October 2026).** The Workbook Control column
+above named tabs (Dashboard, Savings Tracker, Debt Snowball, Investment Tracker, Savings Rate,
+Month-End Reset) that do not exist in the shipped Starter Kit workbook, whose tabs are START HERE,
+KNOW YOUR NUMBERS, MONTHLY BUDGET, DEBT & RUNWAY, WEEKLY REVIEW, FLIGHT PLAN SUMMARY, and
+DISCLAIMER. The workbook itself labels KNOW YOUR NUMBERS as its dashboard. The table is kept
+as a historical record; the live routes that satisfy AC12 are:
+
+| Signal / Pillar | Workbook Tab | Workbook Action |
+|---|---|---|
+| Cash Flow Control | Monthly Budget + Know Your Numbers | Net Remaining row |
+| Savings System | Monthly Budget + Know Your Numbers | Savings Rate row |
+| Emergency Runway | Debt & Runway + Weekly Review | Runway goal and payday contribution |
+| Debt Load | Debt & Runway + Monthly Budget | Priority TARGET debt row |
+| Wealth Fuel | Monthly Budget + Know Your Numbers | Investing rows and Savings Rate |
+| Ownership Mindset (fallback) | Weekly Review + Flight Plan Summary | This Week's One Action |
+
+Persona examples in §10 still show the original routes; their ranking math is unchanged.
+
 ---
 
 ## 9. 30-Day Action Framework
