@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Cockpit by Financial Flight Mode turns your bank CSV into a payday plan, clear analytics, and medals for the habits that put you in command. Your data stays on your device." />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Cockpit" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/assets/app/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/app/favicon-32.png" />
+    <title>Cockpit | Financial Flight Mode</title>
+    <link rel="stylesheet" href="/src/cockpit/cockpit.css?v=1" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="nav-bar" id="nav-bar">
+        <span class="nav-title" id="nav-title">Today</span>
+        <button class="nav-action" type="button" id="import-button" aria-label="Import a bank CSV"></button>
+      </header>
+
+      <main class="screens" id="screens" tabindex="-1">
+        <section class="screen" data-screen="today" aria-labelledby="title-today">
+          <p class="screen-kicker" id="today-date"></p>
+          <h1 class="large-title" id="title-today">Today</h1>
+          <div id="today-body"></div>
+        </section>
+
+        <section class="screen" data-screen="insights" aria-labelledby="title-insights" hidden>
+          <p class="screen-kicker">Know your numbers</p>
+          <h1 class="large-title" id="title-insights">Insights</h1>
+          <div id="insights-body"></div>
+        </section>
+
+        <section class="screen" data-screen="activity" aria-labelledby="title-activity" hidden>
+          <p class="screen-kicker">Every transaction you imported</p>
+          <h1 class="large-title" id="title-activity">Activity</h1>
+          <div id="activity-body"></div>
+        </section>
+
+        <section class="screen" data-screen="medals" aria-labelledby="title-medals" hidden>
+          <p class="screen-kicker">Habits that put you in command</p>
+          <h1 class="large-title" id="title-medals">Medals</h1>
+          <div id="medals-body"></div>
+        </section>
+
+        <section class="screen" data-screen="settings" aria-labelledby="title-settings" hidden>
+          <p class="screen-kicker">Your data stays on this device</p>
+          <h1 class="large-title" id="title-settings">Settings</h1>
+          <div id="settings-body"></div>
+        </section>
+      </main>
+
+      <nav class="tab-bar" aria-label="Cockpit sections">
+        <button type="button" class="tab" data-tab="today" aria-label="Today"><span class="tab-icon" data-icon="today"></span><span>Today</span></button>
+        <button type="button" class="tab" data-tab="insights" aria-label="Insights"><span class="tab-icon" data-icon="insights"></span><span>Insights</span></button>
+        <button type="button" class="tab" data-tab="activity" aria-label="Activity"><span class="tab-icon" data-icon="activity"></span><span>Activity</span></button>
+        <button type="button" class="tab" data-tab="medals" aria-label="Medals"><span class="tab-icon" data-icon="medals"></span><span>Medals</span></button>
+        <button type="button" class="tab" data-tab="settings" aria-label="Settings"><span class="tab-icon" data-icon="settings"></span><span>Settings</span></button>
+      </nav>
+    </div>
+
+    <div class="sheet-layer" id="sheet-layer" hidden>
+      <div class="sheet-backdrop" data-close-sheet></div>
+      <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <div class="sheet-grabber" aria-hidden="true"></div>
+        <div class="sheet-content" id="sheet-content"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <input type="file" id="csv-input" accept=".csv,text/csv,text/comma-separated-values,application/vnd.ms-excel" hidden />
+    <input type="file" id="backup-input" accept=".json,application/json" hidden />
+
+    <noscript><p class="noscript">Cockpit needs JavaScript to read your statement on this device.</p></noscript>
+    <script type="module" src="/src/cockpit/app.js?v=1"></script>
+  </body>
+</html>
