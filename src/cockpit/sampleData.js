@@ -73,3 +73,15 @@ export const buildSampleStatement = (today) => {
     return { ...row, balance, bankCategory: "" };
   });
 };
+
+// The same fictional pilot written as a Chase checking export, so the real import
+// path (file picker, format detection, review, duplicates) can be tested end to end.
+export const buildTestCsv = (today) => {
+  const lines = ["Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #"];
+  for (const row of [...buildSampleStatement(today)].reverse()) {
+    const [year, month, day] = row.date.split("-");
+    const type = row.amount < 0 ? "DEBIT" : "CREDIT";
+    lines.push(`${type},${month}/${day}/${year},"${row.description}",${(row.amount / 100).toFixed(2)},${type === "DEBIT" ? "DEBIT_CARD" : "ACH_CREDIT"},${(row.balance / 100).toFixed(2)},`);
+  }
+  return `${lines.join("\n")}\n`;
+};

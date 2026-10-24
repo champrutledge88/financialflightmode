@@ -1,7 +1,9 @@
 import { readStatement } from "./bankFormats.js";
 import { BANK_HINTS, EXPORT_STEPS, SUPPORTED_BANKS } from "./banks.js";
 import { CATEGORIES, CATEGORY_NAMES, GROUPS, displayMerchant, groupOf, isSpending, merchantKey } from "./categorize.js";
-import { columnBars, divergingBars, donut, pairedBars, ring, stackedBar } from "./charts.js";
+import { columnBars, divergingBars, foldSlices, glassDonut, lineChart, pairedBars, ring, stackedBar } from "./charts.js";
+import { PERIODS, categoryBreakdown, categoryChanges, categoryDetail, dailyStats, keepRateTrend, outlook, spendingPace } from "./deepInsights.js";
+import { confetti, haptic, prefersReducedMotion } from "./effects.js";
 import { addDays, daysBetween, todayIso } from "./dates.js";
 import {
   compactMoney,
@@ -20,7 +22,7 @@ import {
 import { ICONS, medalBadge } from "./icons.js";
 import { buildInsights } from "./insights.js";
 import { evaluateMedals, medalCount, newlyEarned, reviewStreak, weekIndex } from "./medals.js";
-import { buildSampleStatement } from "./sampleData.js";
+import { buildSampleStatement, buildTestCsv } from "./sampleData.js";
 import { createStore, emptyState, exportBackup, importBackup, mergeImport, removeAccount, withCategories } from "./store.js";
 
 const EDUCATION_NOTE =
@@ -41,7 +43,7 @@ const store = createStore(safeStorage());
 let state = store.load();
 let derived = null;
 let pendingImport = null;
-const view = { tab: "today", query: "", filter: "all", limit: 120 };
+const view = { tab: "today", query: "", filter: "all", limit: 120, period: "90", slices: [], selectedSlice: null };
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -123,6 +125,58 @@ const stat = (label, value, note = "", tone = "") => `
 const isStandalone = () => window.matchMedia?.("(display-mode: standalone)").matches || navigator.standalone === true;
 const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
+// ---------- Financial Flight Mode content ----------
+
+const FLIGHT_MODE_LINKS = [
+  { title: "Flight Scorecard", copy: "Find your Flight Score in a few minutes.", href: "/#scorecard", icon: "today" },
+  { title: "The Weekly Briefing", copy: "One useful money move every week.", href: "https://briefing.financialflightmode.com", icon: "mail" },
+  { title: "Flight Notes", copy: "Plain guides for real money decisions.", href: "/flight-notes.html", icon: "book" },
+  { title: "Starter Kit", copy: "The Flight Plan workbook and Pre Flight setup.", href: "/#starter-kit", icon: "kit" },
+  { title: "Join the Conversation", copy: "Follow Financial Flight Mode on X.", href: "https://x.com/MarkFlightmode", icon: "people" },
+];
+
+const flightModeHub = () => `
+  <section class="group">
+    <div class="group-header"><h2>From Financial Flight Mode</h2></div>
+    <div class="hub">${FLIGHT_MODE_LINKS.map(
+      (link) => `<a class="hub-tile glass" href="${link.href}" target="_blank" rel="noopener">
+        <span class="hub-icon">${ICONS[link.icon]}</span>
+        <strong>${link.title}</strong>
+        <span>${link.copy}</span>
+      </a>`,
+    ).join("")}</div>
+  </section>`;
+
+const flightModeList = () =>
+  section(
+    "Financial Flight Mode",
+    list(
+      FLIGHT_MODE_LINKS.map(
+        (link) => `<a class="row row-button" href="${link.href}" target="_blank" rel="noopener">
+          <span class="row-icon accent">${ICONS[link.icon]}</span>
+          <span class="row-text"><span class="row-title">${link.title}</span><span class="row-subtitle">${link.copy}</span></span>
+          <span class="row-chevron">${ICONS.external}</span>
+        </a>`,
+      ),
+    ),
+  );
+
+// ---------- Appearance ----------
+
+const THEMES = [
+  ["auto", "Automatic"],
+  ["light", "Light"],
+  ["dark", "Dark"],
+];
+
+const applyTheme = () => {
+  const theme = state.settings.theme ?? "auto";
+  if (theme === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme;
+  const dark = theme === "dark" || (theme === "auto" && !window.matchMedia?.("(prefers-color-scheme: light)").matches);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#050505" : "#F2F2F7");
+};
+
 // ---------- Today ----------
 
 const renderWelcome = () => `
@@ -134,6 +188,7 @@ const renderWelcome = () => `
       <button type="button" class="button button-primary" data-action="import">${ICONS.upload}<span>Import Bank CSV</span></button>
       <button type="button" class="button button-secondary" data-action="sample">Explore With Sample Data</button>
       <button type="button" class="button button-plain" data-action="bank-guide">How do I get a CSV from my bank?</button>
+      <button type="button" class="button button-plain" data-action="test-csv">${ICONS.file}<span>Download a test CSV</span></button>
     </div>
   </div>
   ${section(
@@ -143,7 +198,8 @@ const renderWelcome = () => `
       row({ leading: `<span class="row-icon">${ICONS.bank}</span>`, title: `${SUPPORTED_BANKS.length} bank formats recognized`, subtitle: "Plus most other banks and credit unions." }),
       row({ leading: `<span class="row-icon">${ICONS.spark}</span>`, title: "Gets smarter as you import", subtitle: "More history means sharper payday plans and trends." }),
     ]),
-  )}`;
+  )}
+  ${flightModeHub()}`;
 
 const installCard = () => {
   if (isStandalone() || !isIos() || state.settings.installHintDismissed) return "";
@@ -156,7 +212,7 @@ const installCard = () => {
 
 const sampleBanner = () =>
   state.sample
-    ? `<div class="card card-sample"><div><strong>You are exploring sample data.</strong><p>Import your own CSV and the sample disappears.</p></div>
+    ? `<div class="card card-sample"><div><strong>You are exploring sample data.</strong><p>Import your own CSV and the sample disappears. Want to test importing? <button type="button" class="inline-link" data-action="test-csv">Download a test CSV</button></p></div>
         <button type="button" class="button button-small" data-action="import">Import</button></div>`
     : "";
 
@@ -275,6 +331,7 @@ const renderToday = () => {
     ${beforePayday(insights)}
     ${signalCards(insights)}
     ${reviewCard(insights)}
+    ${flightModeHub()}
     <p class="fine-print">${escapeHtml(EDUCATION_NOTE)}</p>`;
   animateCounts($("#today-body"));
 };
@@ -296,6 +353,7 @@ const stageCard = (insights) => {
     <div class="stage-track">${STAGES.map((stage, position) => `<span class="${position <= index ? "on" : ""}${position === index ? " current" : ""}" title="${stage.name}"></span>`).join("")}</div>
     <div class="stage-labels">${STAGES.map((stage) => `<span>${stage.name}</span>`).join("")}</div>
     <p>${escapeHtml(insights.stage.reason)}</p>
+    <a class="stage-link" href="/#scorecard" target="_blank" rel="noopener">Take the Flight Scorecard ${ICONS.chevron}</a>
   </div>`;
 };
 
@@ -310,7 +368,9 @@ const numbersGrid = (insights) => {
       ${stat("Monthly spending", wholeMoney(averages.spending))}
       ${stat(net >= 0 ? "Monthly margin" : "Monthly shortfall", wholeMoney(net), "", net >= 0 ? "tone-in" : "tone-out")}
       ${stat("Keep rate", percent(averages.savingsRate), "of income not spent")}
-    </div>`,
+    </div>
+    <div class="spacer"></div>
+    ${dailySection()}`,
     { footer: `${basis}. History covers ${dateRange(range.first, range.last)}.` },
   );
 };
@@ -329,42 +389,173 @@ const cashFlowChart = (insights) => {
   );
 };
 
-const categoriesSection = (insights) => {
-  if (!insights.categories.length) return "";
-  const top = insights.categories.slice(0, 7);
-  const rest = insights.categories.slice(7).reduce((sum, item) => sum + item.total, 0);
-  const slices = [...top.map((item) => ({ value: item.total, color: item.color })), ...(rest ? [{ value: rest, color: "#48484A" }] : [])];
-  const total = insights.categories.reduce((sum, item) => sum + item.total, 0);
-  const max = top[0].total;
-  const groups = ["essentials", "lifestyle", "financial", "future"].map((key) => ({
+const categoriesSection = () => {
+  const breakdown = categoryBreakdown(derived.transactions, today(), PERIODS.find((period) => period.key === view.period).days);
+  if (!breakdown.categories.length) return "";
+  const slices = foldSlices(breakdown.categories.map((item) => ({ name: item.name, value: item.total, color: item.color, monthly: item.monthly })));
+  view.slices = slices;
+  const [first, second] = breakdown.categories;
+  const groups = ["essentials", "lifestyle", "financial"].map((key) => ({
     key,
     label: GROUPS[key],
-    value: key === "future" ? insights.averages.saved * 3 : insights.groupTotals[key] ?? 0,
-    color: { essentials: "#E95C03", lifestyle: "#BF5AF2", financial: "#FF453A", future: "#64D2FF" }[key],
+    value: breakdown.categories.filter((item) => item.group === key).reduce((sum, item) => sum + item.total, 0),
+    color: { essentials: "#E95C03", lifestyle: "#BF5AF2", financial: "#FF453A" }[key],
   }));
-  const groupTotal = groups.reduce((sum, group) => sum + group.value, 0) || 1;
   return section(
     "Where It Goes",
-    `<div class="card chart-card">
-      <div class="donut-wrap">${donut({ slices, label: compactMoney(total / 3), sublabel: "a month" })}</div>
-      <div class="bar-list">${top
+    `<div class="segmented segmented-3">${PERIODS.map(
+      (period) => `<button type="button" class="${view.period === period.key ? "selected" : ""}" data-action="period" data-period="${period.key}">${period.label}</button>`,
+    ).join("")}</div>
+    <div class="glass glass-donut-card" style="--blob-a:${first.color};--blob-b:${second?.color ?? first.color}">
+      <div class="donut-stage">
+        ${glassDonut({ slices })}
+        <div class="donut-center" id="donut-center" aria-live="polite">
+          <span class="donut-center-value">${compactMoney(breakdown.monthly)}</span>
+          <span class="donut-center-label">a month</span>
+        </div>
+      </div>
+      <p class="glass-hint">Tap the ring or a category for more.</p>
+      <div class="bar-list">${breakdown.categories
+        .slice(0, 8)
         .map(
-          (item) => `<div class="bar-row">
+          (item) => `<button type="button" class="bar-row" data-action="category" data-name="${escapeHtml(item.name)}">
             <span class="bar-row-label">${categoryDot(item.name)}${escapeHtml(item.name)}</span>
-            <span class="bar-row-value">${wholeMoney(item.monthly)}<small>/mo</small></span>
-            <span class="bar-track"><span style="width:${(item.total / max) * 100}%;background:${item.color}"></span></span>
-          </div>`,
+            <span class="bar-row-value">${wholeMoney(item.monthly)}<small>/mo</small><span class="row-chevron">${ICONS.chevron}</span></span>
+            <span class="bar-track"><span style="width:${(item.total / breakdown.categories[0].total) * 100}%;background:linear-gradient(90deg, ${item.color}99, ${item.color})"></span></span>
+          </button>`,
         )
         .join("")}</div>
     </div>
     <div class="card chart-card">
       ${stackedBar(groups)}
       <div class="group-legend">${groups
-        .map((group) => `<span><i style="background:${group.color}"></i>${group.label} <b>${percent(group.value / groupTotal)}</b></span>`)
+        .map((group) => `<span><i style="background:${group.color}"></i>${group.label} <b>${percent(group.value / (breakdown.total || 1))}</b></span>`)
         .join("")}</div>
     </div>`,
-    { footer: "Last 90 days. Transfers and card payments are left out so nothing is counted twice." },
+    { footer: "Transfers, card payments, and savings are left out so nothing is counted twice." },
   );
+};
+
+const selectSlice = (index) => {
+  const slice = view.slices?.[index];
+  const center = $("#donut-center");
+  if (!slice || !center) return;
+  const same = view.selectedSlice === index;
+  view.selectedSlice = same ? null : index;
+  for (const element of $$(".glass-donut .slice, .glass-donut .slice-glow")) {
+    element.classList.toggle("dim", !same && Number(element.dataset.index ?? [...element.parentNode.children].indexOf(element)) !== index);
+  }
+  const total = view.slices.reduce((sum, item) => sum + item.value, 0) || 1;
+  center.innerHTML = same
+    ? `<span class="donut-center-value">${compactMoney(total * (30.4 / PERIODS.find((period) => period.key === view.period).days))}</span><span class="donut-center-label">a month</span>`
+    : `<span class="donut-center-name" style="color:${slice.color}">${escapeHtml(slice.name)}</span>
+       <span class="donut-center-value">${percent(slice.value / total)}</span>
+       <span class="donut-center-label">${compactMoney(slice.monthly ?? 0)} a month</span>`;
+  center.classList.remove("pop");
+  void center.offsetWidth;
+  center.classList.add("pop");
+  tap();
+};
+
+const dailySection = () => {
+  const stats = dailyStats(derived.transactions, today());
+  return `<div class="stat-grid">
+    ${stat("Average day", wholeMoney(stats.averageDay), "last 90 days")}
+    ${stat("No spend days", `${stats.noSpendDays}<small> of ${stats.daysThisMonth}</small>`, "this month", stats.noSpendDays ? "tone-in" : "")}
+    ${stats.biggestDay ? stat("Biggest day", wholeMoney(stats.biggestDay.amount), shortDate(stats.biggestDay.date)) : ""}
+    ${stat("Purchases", stats.perMonth.toLocaleString("en-US"), "per month")}
+  </div>`;
+};
+
+const paceSection = (insights) => {
+  const pace = spendingPace(derived.transactions, insights, today());
+  if (!pace.typical.length || pace.day < 2) return "";
+  const labels = pace.typical.map((_, index) => ([0, 9, 19].includes(index) || index === pace.typical.length - 1 ? String(index + 1) : ""));
+  const ahead = pace.ahead > 0;
+  return section(
+    "Spending Pace",
+    `<div class="card chart-card">
+      <p class="chart-headline">${Math.abs(pace.ahead) < 2500 ? "Right on your usual pace this month." : `<strong class="${ahead ? "text-danger" : "amount-in"}">${wholeMoney(pace.ahead)} ${ahead ? "ahead of" : "behind"}</strong> your usual pace.`}</p>
+      <div class="legend"><span><i style="background:var(--accent)"></i>This month</span><span><i style="background:var(--label-3)"></i>Typical month</span></div>
+      ${lineChart({ series: [{ values: pace.typical, color: "var(--label-3)", dashed: true }, { values: pace.thisMonth, color: "#E95C03", fill: true, dot: true }], labels })}
+    </div>`,
+    { footer: "Cumulative spending by day of the month against the average of your last three months." },
+  );
+};
+
+const changesSection = (insights) => {
+  const changes = categoryChanges(insights, today());
+  if (!changes.length) return "";
+  return section(
+    "What Changed",
+    list(
+      changes.map((entry) => {
+        const up = entry.projected > entry.average;
+        return row({
+          leading: categoryDot(entry.name),
+          title: escapeHtml(entry.name),
+          subtitle: `On pace for ${wholeMoney(entry.projected)} vs usual ${wholeMoney(entry.average)}`,
+          trailing: `<span class="change ${up ? "change-up" : "change-down"}">${up ? ICONS.arrowUp : ICONS.arrowDown}${percent(Math.abs(entry.change))}</span>`,
+          action: "category",
+          data: `data-name="${escapeHtml(entry.name)}"`,
+        });
+      }),
+    ),
+    { footer: "This month's pace against your three month average." },
+  );
+};
+
+const keepTrendSection = (insights) => {
+  const trend = keepRateTrend(insights);
+  if (trend.length < 2) return "";
+  const latest = trend.at(-1);
+  return section(
+    "Keep Rate Trend",
+    `<div class="card chart-card">
+      <p class="chart-headline">You kept <strong>${percent(Math.max(latest.rate, 0))}</strong> of income in ${monthLabel(latest.key)}.</p>
+      ${lineChart({ series: [{ values: trend.map((item) => Math.round(item.rate * 100)), color: "#30D158", fill: true, dot: true }], labels: trend.map((item) => monthLabel(item.key)), format: (value) => `${Math.round(value)}%`, height: 130 })}
+    </div>`,
+    { footer: "Share of each month's income that was not spent. Flight Mode starts at 10%." },
+  );
+};
+
+const outlookSection = (insights) => {
+  const ahead = outlook(insights, today());
+  if (!ahead.events.length) return "";
+  return section(
+    "Next 30 Days",
+    `<div class="stat-grid">
+      ${stat("Expected in", wholeMoney(ahead.income), plural(ahead.events.filter((event) => event.kind === "income").length, "paycheck"), "tone-in")}
+      ${stat("Bills scheduled", wholeMoney(ahead.bills), plural(ahead.events.filter((event) => event.kind === "bill").length, "bill"))}
+      ${stat("Usual flexible", wholeMoney(ahead.flexible), "at your daily pace")}
+      ${stat(ahead.net >= 0 ? "Left over" : "Shortfall", wholeMoney(ahead.net), "if the month goes as usual", ahead.net >= 0 ? "tone-in" : "tone-out")}
+    </div>
+    ${list(
+      ahead.events.slice(0, 8).map((event) =>
+        row({
+          leading: categoryDot(event.category),
+          title: escapeHtml(event.name),
+          subtitle: relativeDay(event.date, today(), daysBetween(today(), event.date)),
+          trailing: `<span class="${event.amount > 0 ? "amount-in" : "amount-out"}">${signedMoney(event.amount)}</span>`,
+        }),
+      ),
+    )}`,
+    { footer: `Built from the paychecks and bills Cockpit has seen repeat${ahead.saving ? `, after ${wholeMoney(ahead.saving)} of planned saving` : ""}. Plan before payday.` },
+  );
+};
+
+const openCategory = (name) => {
+  const detail = categoryDetail(derived.transactions, name, today());
+  const thisMonth = detail.months.at(-1).total;
+  openSheet(`${sheetHeader(escapeHtml(name))}
+    <div class="glass category-hero" style="--blob-a:${detail.color};--blob-b:${detail.color}">
+      ${categoryDot(name)}
+      <span class="txn-amount">${wholeMoney(detail.average)}</span>
+      <span class="muted-line">average month · ${wholeMoney(thisMonth)} so far this month</span>
+    </div>
+    ${section("Last 6 Months", `<div class="card chart-card">${columnBars({ items: detail.months.map((month) => ({ label: monthLabel(month.key), value: month.total })), highlight: detail.months.length - 1, height: 130 })}</div>`)}
+    ${detail.merchants.length ? section("Where", list(detail.merchants.map((merchant) => row({ title: escapeHtml(merchant.name), subtitle: plural(merchant.count, "visit"), trailing: money(merchant.total) }))), { footer: "Last 90 days." }) : ""}
+    ${section("Recent", list(detail.recent.map((item) => row({ title: escapeHtml(displayMerchant(item.description)), subtitle: shortDate(item.date), trailing: money(item.amount), action: "transaction", data: `data-id="${item.id}"` }))))}`);
 };
 
 const cyclesSection = (insights) => {
@@ -457,8 +648,12 @@ const renderInsights = () => {
     ? [
         stageCard(insights),
         numbersGrid(insights),
+        categoriesSection(),
+        changesSection(insights),
+        paceSection(insights),
+        outlookSection(insights),
         cashFlowChart(insights),
-        categoriesSection(insights),
+        keepTrendSection(insights),
         cyclesSection(insights),
         recurringSection(insights),
         incomeSection(insights),
@@ -561,8 +756,8 @@ const renderMedals = () => {
     </div>
     <div class="medal-grid">${medals
       .map(
-        (medal) => `<button type="button" class="medal" data-action="medal" data-id="${medal.id}">
-          ${medalBadge(medal)}
+        (medal) => `<button type="button" class="medal${medal.tier ? " earned" : ""}" data-action="medal" data-id="${medal.id}">
+          <span class="medal-3d">${medalBadge(medal)}</span>
           <span class="medal-name">${escapeHtml(medal.name)}</span>
           <span class="medal-tier">${medal.tier ? medal.tier.charAt(0).toUpperCase() + medal.tier.slice(1) : `Next: ${escapeHtml(medal.nextGoal)}`}</span>
         </button>`,
@@ -592,7 +787,15 @@ const renderSettings = () => {
     }),
   );
 
+  const theme = settings.theme ?? "auto";
   $("#settings-body").innerHTML = `
+    ${section(
+      "Appearance",
+      `<div class="segmented segmented-3 appearance">${THEMES.map(
+        ([key, label]) => `<button type="button" class="${theme === key ? "selected" : ""}" data-action="theme" data-theme-choice="${key}">${label}</button>`,
+      ).join("")}</div>`,
+      { footer: "Automatic follows your iPhone's Light and Dark setting." },
+    )}
     ${section("Accounts", list(accounts.length ? [...accounts, row({ leading: `<span class="row-icon accent">${ICONS.plus}</span>`, title: "Import another CSV", action: "import" })] : [row({ leading: `<span class="row-icon accent">${ICONS.plus}</span>`, title: "Import your first CSV", action: "import" })]), {
       footer: "Importing the same statement twice is safe. Cockpit skips transactions it already has.",
     })}
@@ -610,9 +813,11 @@ const renderSettings = () => {
       list([
         row({ leading: `<span class="row-icon">${ICONS.download}</span>`, title: "Get a CSV from your bank", action: "bank-guide", chevron: true }),
         row({ leading: `<span class="row-icon">${ICONS.share}</span>`, title: "Add Cockpit to your Home Screen", action: "install-help", chevron: true }),
+        row({ leading: `<span class="row-icon">${ICONS.file}</span>`, title: "Download a test CSV", subtitle: "A fictional Chase checking export to try the import", action: "test-csv", chevron: true }),
         row({ leading: `<span class="row-icon">${ICONS.spark}</span>`, title: "Explore with sample data", action: "sample", chevron: true }),
       ]),
     )}
+    ${flightModeList()}
     ${section(
       "Your Data",
       list([
@@ -686,6 +891,7 @@ let lastFocus = null;
 const openSheet = (html, { onOpen } = {}) => {
   lastFocus = document.activeElement;
   $("#sheet-content").innerHTML = html;
+  $("#sheet-content").scrollTop = 0;
   const layer = $("#sheet-layer");
   layer.hidden = false;
   document.body.classList.add("sheet-open");
@@ -819,7 +1025,7 @@ const confirmImport = () => {
     transactions: pendingTransactions(),
     importedAt: today(),
   });
-  if (state.sample) next.settings = { ...next.settings, installHintDismissed: state.settings.installHintDismissed };
+  if (state.sample) next.settings = { ...next.settings, installHintDismissed: state.settings.installHintDismissed, theme: state.settings.theme };
   state = next;
   pendingImport = null;
   navigator.storage?.persist?.().catch(() => {});
@@ -842,7 +1048,7 @@ const loadSample = () => {
     transactions: buildSampleStatement(today()),
     importedAt: today(),
   });
-  state = { ...next, sample: true, settings: { ...next.settings, installHintDismissed: state.settings.installHintDismissed } };
+  state = { ...next, sample: true, settings: { ...next.settings, installHintDismissed: state.settings.installHintDismissed, theme: state.settings.theme } };
   closeSheet();
   commit({ celebrate: false });
   showTab("today");
@@ -858,7 +1064,10 @@ const openBankGuide = () =>
       footer: "Other banks and credit unions usually work too. Cockpit finds the date, description, and amount columns on its own.",
     })}
     ${section("Good to Know", list(Object.entries(BANK_HINTS).map(([bank, hint]) => row({ title: escapeHtml(bank), subtitle: escapeHtml(hint) }))))}
-    <div class="button-stack"><button type="button" class="button button-primary" data-action="import">${ICONS.upload}<span>Import Bank CSV</span></button></div>`);
+    <div class="button-stack">
+      <button type="button" class="button button-primary" data-action="import">${ICONS.upload}<span>Import Bank CSV</span></button>
+      <button type="button" class="button button-secondary" data-action="test-csv">${ICONS.file}<span>Download a test CSV first</span></button>
+    </div>`);
 
 const openInstallHelp = () =>
   openSheet(`${sheetHeader("Add to Home Screen")}
@@ -988,28 +1197,61 @@ const completeAudit = () => {
   showToast("Audit logged.");
 };
 
+const tierName = (tier) => tier.charAt(0).toUpperCase() + tier.slice(1);
+
 const openMedal = (id) => {
   const medal = derived.medals.find((item) => item.id === id);
   if (!medal) return;
   const levels = ["bronze", "silver", "gold"];
   const reached = medal.tier ? levels.indexOf(medal.tier) : -1;
   openSheet(`${sheetHeader(escapeHtml(medal.name))}
-    <div class="medal-hero">${medalBadge(medal, 150)}</div>
+    <button type="button" class="medal-hero ${medal.tier ? "earned" : ""}" data-action="spin-medal" aria-label="Spin medal">
+      <span class="medal-glow"></span>
+      <span class="medal-3d spin-in">${medalBadge(medal, 168)}</span>
+    </button>
+    ${medal.tier ? `<p class="tier-pill tier-pill-${medal.tier}">${tierName(medal.tier)}</p>` : ""}
     <p class="sheet-copy center">${escapeHtml(medal.description)}</p>
-    ${list(levels.map((level, index) => row({ leading: `<span class="tier-dot tier-${level}${index <= reached ? " reached" : ""}"></span>`, title: level.charAt(0).toUpperCase() + level.slice(1), trailing: index <= reached ? `<span class="amount-in">${ICONS.check}</span>` : escapeHtml(medal.tiers[index]) })))}
-    ${medal.nextGoal ? `<p class="sheet-copy muted center">Next level at ${escapeHtml(medal.nextGoal)}. You are ${percent(medal.progress)} of the way there.</p>` : `<p class="sheet-copy center">Top level reached.</p>`}`);
+    ${list(levels.map((level, index) => row({ leading: `<span class="tier-dot tier-${level}${index <= reached ? " reached" : ""}"></span>`, title: tierName(level), trailing: index <= reached ? `<span class="amount-in">${ICONS.check}</span>` : escapeHtml(medal.tiers[index]) })))}
+    ${medal.nextGoal ? `<div class="progress"><span style="width:${Math.round(medal.progress * 100)}%"></span></div><p class="sheet-copy muted center">Next level at ${escapeHtml(medal.nextGoal)}. You are ${percent(medal.progress)} of the way there.</p>` : `<p class="sheet-copy center">Top level reached.</p>`}`);
 };
 
+const spinElement = (element, className = "spin") => {
+  if (!element) return;
+  element.classList.remove("spin", "spin-in", "nudge");
+  void element.offsetWidth;
+  element.classList.add(className);
+};
+
+let stopConfetti = () => {};
 const openMedalCelebration = (earned) => {
-  if (!$("#sheet-layer").hidden) return;
-  tap();
-  openSheet(`${sheetHeader("Medal Earned")}
-    <div class="celebrate">${earned
-      .slice(0, 3)
-      .map((medal) => `<div class="celebrate-item">${medalBadge(medal, earned.length > 1 ? 104 : 168)}<strong>${escapeHtml(medal.name)}</strong><span>${medal.tier.charAt(0).toUpperCase() + medal.tier.slice(1)}</span></div>`)
-      .join("")}</div>
-    <p class="sheet-copy center">${escapeHtml(earned[0].description)}</p>
-    <div class="button-stack"><button type="button" class="button button-primary" data-action="go-medals">See All Medals</button></div>`);
+  if (!$("#sheet-layer").hidden || !$("#celebration").hidden) return;
+  const [lead, ...others] = earned;
+  haptic([12, 60, 18]);
+  $("#celebration-content").innerHTML = `
+    <div class="celebration-rays" aria-hidden="true"></div>
+    <span class="signal-kicker">Medal Earned</span>
+    <div class="medal-3d celebrate-spin">${medalBadge(lead, 196)}</div>
+    <h2 id="celebration-title">${escapeHtml(lead.name)}</h2>
+    <p class="tier-pill tier-pill-${lead.tier}">${tierName(lead.tier)}</p>
+    <p class="celebration-copy">${escapeHtml(lead.description)}</p>
+    ${others.length ? `<div class="celebration-more">${others.slice(0, 4).map((medal) => `<span>${medalBadge(medal, 52)}<small>${escapeHtml(medal.name)}</small></span>`).join("")}</div>` : ""}
+    <div class="button-stack">
+      <button type="button" class="button button-primary" data-action="go-medals">See All Medals</button>
+      <button type="button" class="button button-plain" data-action="close-celebration">Continue</button>
+    </div>`;
+  const layer = $("#celebration");
+  layer.hidden = false;
+  requestAnimationFrame(() => layer.classList.add("open"));
+  stopConfetti = confetti($("#confetti"));
+  setTimeout(() => $("#celebration .button-primary")?.focus({ preventScroll: true }), 400);
+};
+
+const closeCelebration = () => {
+  const layer = $("#celebration");
+  if (layer.hidden) return;
+  stopConfetti();
+  layer.classList.remove("open");
+  setTimeout(() => (layer.hidden = true), 300);
 };
 
 const confirmSheet = ({ title, copy, confirm, action, data = "" }) =>
@@ -1051,11 +1293,41 @@ const ACTIONS = {
   "complete-review": completeReview,
   audit: openAudit,
   "complete-audit": completeAudit,
-  medal: (button) => openMedal(button.dataset.id),
+  medal: (button) => {
+    const medal = derived.medals.find((item) => item.id === button.dataset.id);
+    spinElement($(".medal-3d", button), medal?.tier ? "spin" : "nudge");
+    haptic(medal?.tier ? 10 : [6, 30, 6]);
+    setTimeout(() => openMedal(button.dataset.id), prefersReducedMotion() ? 0 : 520);
+  },
+  "spin-medal": (button) => {
+    spinElement($(".medal-3d", button), button.classList.contains("earned") ? "spin" : "nudge");
+    haptic(10);
+  },
   "go-medals": () => {
+    closeCelebration();
     closeSheet();
     showTab("medals");
   },
+  "close-celebration": closeCelebration,
+  theme: (button) => {
+    state.settings = { ...state.settings, theme: button.dataset.themeChoice };
+    applyTheme();
+    persist();
+    tap();
+    renderSettings();
+  },
+  "test-csv": () => {
+    downloadFile("cockpit-test-chase-checking.csv", buildTestCsv(today()), "text/csv");
+    showToast("Test CSV saved to Downloads. Now tap Import and choose it.");
+  },
+  period: (button) => {
+    view.period = button.dataset.period;
+    view.selectedSlice = null;
+    tap();
+    renderInsights();
+  },
+  slice: (element) => selectSlice(Number(element.dataset.index)),
+  category: (button) => openCategory(button.dataset.name),
   transaction: (button) => openTransaction(button.dataset.id),
   "set-category": (button) => setCategory(button.dataset.id, button.dataset.category),
   filter: (button) => {
@@ -1111,7 +1383,7 @@ const ACTIONS = {
     }),
   "confirm-erase": () => {
     store.clear();
-    state = emptyState();
+    state = { ...emptyState(), settings: { ...emptyState().settings, theme: state.settings.theme } };
     closeSheet();
     commit({ celebrate: false });
     showTab("today");
@@ -1147,7 +1419,10 @@ document.addEventListener("input", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeSheet();
+  if (event.key === "Escape") {
+    closeCelebration();
+    closeSheet();
+  }
 });
 
 $("#csv-input").addEventListener("change", (event) => handleFile(event.target.files?.[0]).catch(() => showToast("That file could not be read.")));
@@ -1201,6 +1476,8 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && derived?.insights && derived.insights.today !== today()) commit({ celebrate: false });
 });
 
+applyTheme();
+window.matchMedia?.("(prefers-color-scheme: light)").addEventListener?.("change", applyTheme);
 recompute();
 render();
 showTab(location.hash.slice(1) || "today");

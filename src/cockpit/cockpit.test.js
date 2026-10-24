@@ -265,3 +265,46 @@ test("customer facing copy avoids hyphen and dash characters", () => {
     .replace(/<[^>]+>/g, " ");
   assert.ok(!DASHES.test(html), "Dash found in cockpit.html visible text");
 });
+
+test("deeper insights: breakdown, pace, outlook, daily stats, and category detail", async () => {
+  const { categoryBreakdown, categoryChanges, categoryDetail, dailyStats, keepRateTrend, outlook, spendingPace } = await import("./deepInsights.js");
+  const { state } = mergeImport(emptyState(), { accountName: "Sample", format: { id: "sample", name: "Sample", kind: "checking" }, transactions: buildSampleStatement(TODAY), importedAt: TODAY });
+  const transactions = withCategories(state);
+  const insights = buildInsights({ transactions, today: TODAY });
+
+  const breakdown = categoryBreakdown(transactions, TODAY, 90);
+  assert.equal(breakdown.categories[0].name, "Housing");
+  assert.ok(Math.abs(breakdown.categories.reduce((sum, item) => sum + item.share, 0) - 1) < 1e-9);
+  assert.ok(!breakdown.categories.some((item) => item.name === "Saving and Investing"));
+
+  for (const change of categoryChanges(insights, TODAY)) {
+    assert.ok(!["Housing", "Debt Payment", "Insurance", "Utilities", "Subscriptions"].includes(change.name), `${change.name} should not be paced`);
+  }
+
+  const pace = spendingPace(transactions, insights, TODAY);
+  assert.equal(pace.thisMonth.length, 24);
+  assert.equal(pace.typical.length, 31);
+
+  const ahead = outlook(insights, TODAY);
+  assert.ok(ahead.events.every((event) => event.date >= TODAY && event.date <= addDays(TODAY, 30)));
+  assert.equal(ahead.events.filter((event) => event.kind === "income").length, 2);
+  assert.ok(ahead.events.some((event) => event.kind === "saving"));
+  assert.equal(ahead.net, ahead.income - ahead.bills - ahead.saving - ahead.flexible);
+
+  const daily = dailyStats(transactions, TODAY);
+  assert.ok(daily.averageDay > 0 && daily.noSpendDays <= daily.daysThisMonth);
+
+  assert.ok(keepRateTrend(insights).every((item) => item.key < "2026-10"));
+
+  const housing = categoryDetail(transactions, "Housing", TODAY);
+  assert.equal(housing.months.length, 6);
+  assert.equal(housing.average, 145000);
+});
+
+test("test CSV round trips through the real import path", async () => {
+  const { buildTestCsv } = await import("./sampleData.js");
+  const result = readStatement(buildTestCsv(TODAY));
+  assert.equal(result.format.id, "chase-checking");
+  assert.equal(result.transactions.length, buildSampleStatement(TODAY).length);
+  assert.equal(result.skipped, 0);
+});

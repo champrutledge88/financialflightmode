@@ -16,7 +16,13 @@
     <link rel="apple-touch-icon" href="/assets/app/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/app/favicon-32.png" />
     <title>Cockpit | Financial Flight Mode</title>
-    <link rel="stylesheet" href="/src/cockpit/cockpit.css?v=1" />
+    <script>
+      try {
+        var savedTheme = JSON.parse(localStorage.getItem("ffm.cockpit.v1") || "{}").settings.theme;
+        if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
+      } catch (error) {}
+    </script>
+    <link rel="stylesheet" href="/src/cockpit/cockpit.css?v=2" />
   </head>
   <body>
     <div class="app" id="app">
@@ -74,12 +80,18 @@
       </div>
     </div>
 
+    <div class="celebration" id="celebration" role="dialog" aria-modal="true" aria-labelledby="celebration-title" hidden>
+      <div class="celebration-backdrop" data-action="close-celebration"></div>
+      <canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+      <div class="celebration-content" id="celebration-content"></div>
+    </div>
+
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
     <input type="file" id="csv-input" accept=".csv,text/csv,text/comma-separated-values,application/vnd.ms-excel" hidden />
     <input type="file" id="backup-input" accept=".json,application/json" hidden />
 
     <noscript><p class="noscript">Cockpit needs JavaScript to read your statement on this device.</p></noscript>
-    <script type="module" src="/src/cockpit/app.js?v=1"></script>
+    <script type="module" src="/src/cockpit/app.js?v=2"></script>
   </body>
 </html>

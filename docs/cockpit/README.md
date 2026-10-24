@@ -27,10 +27,20 @@ on-device storage**. Server-side storage of financial data remains out of scope.
 - **Insights:** Flight Stage (Pre Flight, Turbulence, Cruise Control, Flight Mode), Know Your Numbers,
   monthly cash flow, category breakdown, pay cycle results, bills and subscriptions, income streams,
   weekday rhythm, top merchants.
+- **Insights, deeper (V1.1):** glass category ring with 30 day, 90 day, and 6 month views and tap to inspect;
+  category drill down sheets; What Changed (everyday categories paced against a 3 month average);
+  Spending Pace; Next 30 Days outlook; Keep Rate Trend; daily stats including no spend days.
 - **Activity:** search, filters, and recategorization that can teach a rule for a merchant.
 - **Medals:** 10 medals with bronze, silver, and gold tiers based on history and habits
   (imports, logbook length, green months, keep rate, fee free months, pay cycles, weekly review streak,
   subscription audits, accounts, category rules).
+- **Medals, V1.1:** 3D coin spin on tap and a full screen celebration with confetti when a medal is earned
+  (skipped under Reduce Motion).
+- **Appearance:** Automatic, Light, or Dark, saved on the device.
+- **Testing the import:** "Download a test CSV" produces a fictional Chase checking export that goes
+  through the real file picker and import path.
+- **Financial Flight Mode links:** Flight Scorecard, The Weekly Briefing, Flight Notes, Starter Kit, and X.
+  No community destination exists yet, so "Join the Conversation" points to X until Mark decides.
 - **Settings:** accounts, balance and cushion, rules, bank export guide, install help, backup export
   and restore, and erase all.
 

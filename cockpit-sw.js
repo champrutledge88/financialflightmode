@@ -2,18 +2,20 @@
 // Financial Flight Mode site is never served from this cache. No financial data is cached:
 // transactions live in the page's own storage, not in network responses.
 
-const CACHE = "ffm-cockpit-v1";
+const CACHE = "ffm-cockpit-v2";
 const SHELL = [
   "/cockpit.html",
   "/manifest.webmanifest",
-  "/src/cockpit/cockpit.css?v=1",
-  "/src/cockpit/app.js?v=1",
+  "/src/cockpit/cockpit.css?v=2",
+  "/src/cockpit/app.js?v=2",
   "/src/cockpit/bankFormats.js",
   "/src/cockpit/banks.js",
   "/src/cockpit/categorize.js",
   "/src/cockpit/charts.js",
   "/src/cockpit/csv.js",
   "/src/cockpit/dates.js",
+  "/src/cockpit/deepInsights.js",
+  "/src/cockpit/effects.js",
   "/src/cockpit/format.js",
   "/src/cockpit/icons.js",
   "/src/cockpit/insights.js",
