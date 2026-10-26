@@ -1834,6 +1834,26 @@ h1 span {
     display: none;
   }
 
+  .landing-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .landing-header .header-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .landing-header .header-actions a {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+
   .hero-section,
   .hero-content {
     min-height: 680px;
@@ -1841,6 +1861,10 @@ h1 span {
 
   .hero-content {
     padding: 122px 18px 54px;
+  }
+
+  .landing-header + main .hero-content {
+    padding-top: 236px;
   }
 
   .badge-row {
