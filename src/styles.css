@@ -2037,3 +2037,51 @@ h1 span {
     transition: none !important;
   }
 }
+.input-mode-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.input-mode-actions button {
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.stage-explanation {
+  margin: 16px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.plan-email-form {
+  max-width: 640px;
+  margin: 20px 0;
+  display: grid;
+  gap: 16px;
+}
+
+.plan-email-form > input {
+  padding: 16px;
+  border: 1px solid #666;
+  border-radius: 8px;
+  width: 100%;
+  font: inherit;
+}
+
+.plan-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.plan-consent input { margin-top: 5px; flex: 0 0 auto; }
+.plan-consent a { color: var(--orange); }
+
+[hidden] {
+  display: none !important;
+}

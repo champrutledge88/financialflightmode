@@ -1,6 +1,7 @@
 import { calculateFlightScore, getRelativeCategoryScores } from "./flightScoreCalculator.js?v=stage-order-1";
-import { getScoreBand, trackEvent } from "./analytics.js?v=ga4-1";
-import { generatePersonalizedFlightPlan } from "./personalizedFlightPlan.js?v=w1-1";
+import { trackEvent } from "./analytics.js?v=ga4-1";
+import { generatePersonalizedFlightPlan, createAnalyticsPayload } from "./personalizedFlightPlan.js?v=launch-funnel-2";
+import { createPlanEmailRequest } from "./planEmailRequest.js?v=launch-funnel-2";
 
 const MAILERLITE_ACCOUNT_ID = "2411474";
 const MAILERLITE_FORM_ID = "189897889621738735";
@@ -27,6 +28,20 @@ const fields = [
 let hasTrackedScorecardStart = false;
 let hasTrackedScorecardComplete = false;
 let hasTrackedBriefingView = false;
+let hasCalculatedPersonalResult = false;
+let currentPlanSummary = null;
+let currentPlanAnalytics = null;
+let pendingPlanRequest = null;
+let planEmailAvailable = false;
+let isPlanSending = false;
+const planEmailForm = document.querySelector("#planEmailForm");
+const planEmailButton = document.querySelector("#openPlanEmail");
+const planEmailStatus = document.querySelector("#planEmailStatus");
+const exampleValues = getExampleValues();
+
+function getExampleValues() {
+  return Object.fromEntries(fields.map((field) => [field, scoreForm.elements[field].defaultValue]));
+}
 
 const trackScorecardStart = () => {
   if (hasTrackedScorecardStart) return;
@@ -138,6 +153,26 @@ const renderPersonalizedFlightPlan = (result) => {
   });
   const planNode = document.querySelector("#personalized-flight-plan");
   const hasFallback = Boolean(plan.fallback);
+  currentPlanSummary = {
+    score: result.score, stage: result.stage.key, strongSignalCategory: plan.strongSignal.category,
+    warningLight1Category: hasFallback ? "Ownership Mindset" : plan.warningLights[0].category,
+    warningLight2Category: hasFallback ? "" : plan.warningLights[1].category,
+    actionId: hasFallback ? plan.fallback.actionId : plan.warningLights[0].actionId,
+    workbookTab: plan.workbookConnection.tab, workbookAction: plan.workbookConnection.action,
+    doNow: plan.doNow, thisPayday: plan.thisPayday, thisMonth: plan.thisMonth, thirtyDayMission: plan.thirtyDayMission,
+  };
+  currentPlanAnalytics = {
+    stage: result.stage.key, strongSignalCategory: plan.strongSignal.category,
+    warningLight1Category: currentPlanSummary.warningLight1Category, decisionPath: plan.decisionPath,
+  };
+  pendingPlanRequest = null;
+  planEmailForm.reset();
+  planEmailForm.hidden = true;
+  planEmailButton.setAttribute("aria-expanded", "false");
+  planEmailForm.querySelector('button[type="submit"]').disabled = !planEmailAvailable;
+  planEmailStatus.textContent = planEmailAvailable
+    ? "Send this plan and Starter Kit access with your consent."
+    : "Email delivery is being prepared. Your Flight Plan remains visible here.";
 
   document.querySelector("#planScore").textContent = result.score;
   document.querySelector("#planStage").textContent = result.stage.name;
@@ -145,6 +180,7 @@ const renderPersonalizedFlightPlan = (result) => {
   document.querySelector("#planWarningLightOne").textContent = hasFallback
     ? "Ownership Mindset"
     : plan.warningLights[0].category;
+  document.querySelector("#planWarningLightOneCard").hidden = hasFallback;
   document.querySelector("#planWarningLightTwo").textContent = hasFallback
     ? ""
     : plan.warningLights[1].category;
@@ -158,12 +194,34 @@ const renderPersonalizedFlightPlan = (result) => {
   document.querySelector("#planThirtyDayMission").textContent = plan.thirtyDayMission;
   document.querySelector("#planWorkbookTab").textContent = plan.workbookConnection.tab;
   document.querySelector("#planWorkbookAction").textContent = plan.workbookConnection.action;
+  document.querySelector("#planContextNote").textContent = hasFallback ? "" : plan.flagContextNote || "";
+  document.querySelector("#planContextNote").hidden = hasFallback || !plan.flagContextNote;
 
   planNode.hidden = false;
+  document.querySelector("#briefing").hidden = true;
+  document.querySelector("#resultsLink").href = "#personalized-flight-plan";
+  const event = createAnalyticsPayload("personalized_plan_view", {
+    stage: result.stage.key,
+    strongSignalCategory: plan.strongSignal.category,
+    warningLight1Category: hasFallback ? "Ownership Mindset" : plan.warningLights[0].category,
+    decisionPath: plan.decisionPath,
+  });
+  trackEvent(event.eventName, event.parameters);
   planNode.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 const validateInputs = () => {
+  const missing = fields.find((field) => scoreForm.elements[field].value.trim() === "");
+  if (missing) {
+    errorNode.textContent = "Complete every amount. Enter 0 only when the amount is zero.";
+    scoreForm.elements[missing].focus();
+    return false;
+  }
+  const nonFinite = fields.find((field) => !Number.isFinite(Number(scoreForm.elements[field].value)));
+  if (nonFinite) {
+    errorNode.textContent = "Enter a valid amount in every field.";
+    return false;
+  }
   const invalid = fields.find((field) => Number(scoreForm.elements[field].value) < 0);
   if (invalid) {
     errorNode.textContent = "Use zero or higher for every field.";
@@ -224,6 +282,8 @@ const submitLeadToMailerLite = async ({ email }) => {
       signal: controller.signal,
     });
 
+    if (!response.ok) throw new Error("Provider request failed.");
+
     const data = await response.json();
     if (data?.success) return data;
 
@@ -240,11 +300,14 @@ scoreForm.addEventListener("submit", (event) => {
   if (!validateInputs()) return;
 
   const result = calculateFlightScore(getInputValues());
+  hasCalculatedPersonalResult = true;
+  document.querySelector("#results").hidden = false;
+  document.querySelector("#resultsTitle").textContent = "Your Results";
   if (!hasTrackedScorecardComplete) {
     hasTrackedScorecardComplete = true;
     trackEvent("scorecard_complete");
   }
-  renderResults(result, true);
+  renderResults(result);
   renderPersonalizedFlightPlan(result);
   if (!hasTrackedBriefingView) {
     hasTrackedBriefingView = true;
@@ -254,10 +317,46 @@ scoreForm.addEventListener("submit", (event) => {
 
 scoreForm.addEventListener("input", (event) => {
   if (event.target.matches("input")) trackScorecardStart();
+  currentPlanSummary = null;
+  currentPlanAnalytics = null;
+  pendingPlanRequest = null;
+  document.querySelector("#personalized-flight-plan").hidden = true;
+  document.querySelector("#resultsLink").href = document.querySelector("#results").hidden
+    ? "#scorecard"
+    : "#results";
+  document.querySelector("#resultsTitle").textContent = hasCalculatedPersonalResult
+    ? "Previous Results — Calculate To Update"
+    : "Example Results — Calculate To Update";
+});
 
-  if (event.target.matches("input") && Number(event.target.value) < 0) {
-    event.target.value = 0;
-  }
+document.querySelector("#startOwnNumbers").addEventListener("click", () => {
+  currentPlanSummary = null;
+  pendingPlanRequest = null;
+  fields.forEach((field) => { scoreForm.elements[field].value = ""; });
+  scoreForm.elements.immediatePressure.value = "";
+  scoreForm.elements.shortTermObjective.value = "";
+  document.querySelector("#results").hidden = true;
+  document.querySelector("#personalized-flight-plan").hidden = true;
+  document.querySelector("#resultsLink").href = "#scorecard";
+  document.querySelector("#inputModeNote").textContent = "Enter your own amounts in every field. Enter 0 only when the amount is zero; cents are accepted. Your numbers stay in this browser.";
+  errorNode.textContent = "";
+  scoreForm.elements.income.focus();
+});
+
+document.querySelector("#loadExample").addEventListener("click", () => {
+  currentPlanSummary = null;
+  pendingPlanRequest = null;
+  fields.forEach((field) => { scoreForm.elements[field].value = exampleValues[field]; });
+  scoreForm.elements.immediatePressure.value = "";
+  scoreForm.elements.shortTermObjective.value = "";
+  document.querySelector("#results").hidden = false;
+  document.querySelector("#personalized-flight-plan").hidden = true;
+  document.querySelector("#resultsLink").href = "#results";
+  document.querySelector("#resultsTitle").textContent = "Example Results";
+  document.querySelector("#inputModeNote").textContent = "These are example amounts. Replace every amount with your own, or start with blank fields. Enter 0 only when the amount is zero; cents are accepted.";
+  hasCalculatedPersonalResult = false;
+  errorNode.textContent = "";
+  renderResults(calculateFlightScore(exampleValues));
 });
 
 leadForm.addEventListener("submit", (event) => {
@@ -299,6 +398,82 @@ leadForm.addEventListener("submit", (event) => {
 });
 
 renderResults(calculateFlightScore(getInputValues()));
+
+const trackPlanEmailEvent = (name, analytics = currentPlanAnalytics) => {
+  if (!analytics) return;
+  const event = createAnalyticsPayload(name, analytics);
+  trackEvent(event.eventName, event.parameters);
+};
+
+fetch("/api/email-flight-plan", { signal: AbortSignal.timeout(10000) })
+  .then(response => response.ok ? response.json() : { available: false })
+  .then(data => {
+    planEmailAvailable = data.available === true;
+    planEmailButton.disabled = !planEmailAvailable;
+    planEmailForm.querySelector('button[type="submit"]').disabled = !planEmailAvailable;
+    planEmailStatus.textContent = planEmailAvailable
+      ? "Send this plan and Starter Kit access with your consent."
+      : "Email delivery is being prepared. Your Flight Plan remains visible here.";
+  })
+  .catch(() => { planEmailStatus.textContent = "Email delivery is being prepared. Your Flight Plan remains visible here."; });
+
+planEmailButton.addEventListener("click", () => {
+  if (!currentPlanSummary || !planEmailAvailable) return;
+  planEmailForm.hidden = false;
+  planEmailButton.setAttribute("aria-expanded", "true");
+  planEmailForm.elements.planEmail.focus();
+});
+
+planEmailForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (isPlanSending || !currentPlanSummary || !planEmailAvailable || !planEmailForm.reportValidity()) return;
+  const email = planEmailForm.elements.planEmail.value.trim().toLowerCase();
+  if (!isValidEmail(email) || !planEmailForm.elements.planEmailConsent.checked) return;
+  // Preserve the exact request and consent time for safe retries; changed email or plan is a new request.
+  if (!pendingPlanRequest || pendingPlanRequest.email !== email) {
+    pendingPlanRequest = createPlanEmailRequest({ email, consentTimestamp: new Date().toISOString(), requestId: crypto.randomUUID(), planSummary: currentPlanSummary });
+  }
+  const request = pendingPlanRequest;
+  const requestAnalytics = currentPlanAnalytics;
+  const submitButton = planEmailForm.querySelector('button[type="submit"]');
+  isPlanSending = true;
+  submitButton.disabled = true;
+  planEmailStatus.textContent = "Requesting your plan email...";
+  trackPlanEmailEvent("personalized_plan_email_start", requestAnalytics);
+  let accepted = false;
+  try {
+    const response = await fetch("/api/email-flight-plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request), signal: AbortSignal.timeout(20000) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.accepted !== true) {
+      const messages = {
+        email_preferences: "This address has paused FFM email or needs confirmation. Contact hello@financialflightmode.com for help. Your plan remains here.",
+        rate_limited: "Please wait a few minutes before trying again. Your plan remains here.",
+        request_conflict: "This request changed while sending. Calculate your current plan again before requesting another email.",
+        test_only: "Plan email is still in testing. Your plan remains here; Starter Kit access is available below.",
+        invalid_request: "This request has expired or is incomplete. Calculate your plan again and retry.",
+      };
+      throw new Error(messages[data.error] || (response.status === 429 ? messages.rate_limited : "We couldn't request the email right now. Try again; your plan remains here."));
+    }
+    accepted = true;
+    trackPlanEmailEvent("personalized_plan_email_success", requestAnalytics);
+    if (pendingPlanRequest === request) planEmailStatus.textContent = "Your plan was accepted for sending. Check your inbox and Spam or Junk. Your plan stays visible here.";
+  } catch (error) {
+    trackPlanEmailEvent("personalized_plan_email_error", requestAnalytics);
+    if (pendingPlanRequest === request) planEmailStatus.textContent = error.name === "TimeoutError"
+      ? "This is taking longer than expected. Retry safely; your plan remains here."
+      : error.message === "Failed to fetch" ? "We couldn't reach the email service. Retry safely; your plan remains here." : error.message;
+  } finally {
+    isPlanSending = false;
+    submitButton.disabled = accepted && pendingPlanRequest === request;
+  }
+});
+
+planEmailForm.elements.planEmail.addEventListener("input", () => {
+  if (!isPlanSending && pendingPlanRequest && pendingPlanRequest.email !== planEmailForm.elements.planEmail.value.trim().toLowerCase()) {
+    pendingPlanRequest = null;
+    planEmailForm.querySelector('button[type="submit"]').disabled = !planEmailAvailable;
+  }
+});
 
 const aboutSection = document.querySelector("#about");
 if (aboutSection && typeof IntersectionObserver === "function") {
