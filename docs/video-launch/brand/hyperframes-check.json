@@ -1,0 +1,135 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "filesScanned": 12
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "duration": 134,
+    "samples": [
+      2.913,
+      8.739,
+      14.565,
+      20.391,
+      26.217,
+      32.043,
+      37.87,
+      43.696,
+      49.522,
+      55.348,
+      61.174,
+      67,
+      72.826,
+      78.652,
+      84.478,
+      90.304,
+      96.13,
+      101.957,
+      107.783,
+      113.609,
+      119.435,
+      125.261,
+      131.087
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 0,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "specPath": "/Users/rsg/Documents/Codex/2026-10-28/financial-cockpit-walkthrough/index.motion.json",
+    "samples": 300
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [
+      2.913,
+      32.043,
+      67,
+      96.13,
+      131.087
+    ],
+    "checked": 23,
+    "passed": 23
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "step": 0.22399999999999665,
+    "samples": 599
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": true,
+    "files": [
+      ".hyperframes/artifacts/snapshots/e7cc5c84-fc8c-4602-b1e6-934df233d716/frame-00-at-2.9s.png",
+      ".hyperframes/artifacts/snapshots/e7cc5c84-fc8c-4602-b1e6-934df233d716/frame-01-at-32.0s.png",
+      ".hyperframes/artifacts/snapshots/e7cc5c84-fc8c-4602-b1e6-934df233d716/frame-02-at-67.0s.png",
+      ".hyperframes/artifacts/snapshots/e7cc5c84-fc8c-4602-b1e6-934df233d716/frame-03-at-96.1s.png",
+      ".hyperframes/artifacts/snapshots/e7cc5c84-fc8c-4602-b1e6-934df233d716/frame-04-at-131.1s.png"
+    ],
+    "times": [
+      2.913,
+      32.043,
+      67,
+      96.13,
+      131.087
+    ],
+    "findingFiles": []
+  },
+  "saved": {
+    "id": "c33d4839-bc88-482c-9a79-1046e561ab8a",
+    "revision": null,
+    "report": "/Users/rsg/Documents/Codex/2026-10-28/financial-cockpit-walkthrough/.hyperframes/artifacts/checks/c33d4839-bc88-482c-9a79-1046e561ab8a.json",
+    "attribution": "inputs-changed"
+  },
+  "_meta": {
+    "version": "0.8.214",
+    "latestVersion": "0.8.210",
+    "updateAvailable": false
+  }
+}
