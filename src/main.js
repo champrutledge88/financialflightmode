@@ -1,3 +1,6 @@
+import { enhanceScorecard } from "./guidedScorecard.js?v=phase2-1";
+import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=phase2-1";
+import { moneyError } from "./scorecardFlow.js?v=phase2-1";
 import { calculateFlightScore, getRelativeCategoryScores } from "./flightScoreCalculator.js?v=stage-order-1";
 import { getScoreBand, trackEvent } from "./analytics.js?v=ga4-1";
 import { generatePersonalizedFlightPlan } from "./personalizedFlightPlan.js?v=w1-1";
@@ -51,7 +54,8 @@ const wholePercent = new Intl.NumberFormat("en-US", {
   style: "percent",
 });
 
-const getInputValues = () =>
+let guidedFlow;
+const getInputValues = () => guidedFlow ? guidedFlow.getValues() :
   fields.reduce((values, field) => {
     values[field] = scoreForm.elements[field].value;
     return values;
@@ -75,11 +79,12 @@ const setMetricTone = (node, tone) => {
     tone === "orange" ? "var(--orange)" : tone === "red" ? "var(--red)" : "var(--green)";
 };
 
-const animateScore = (start, end) => {
-  const scoreValue = document.querySelector("#scoreValue");
-  const scoreRing = document.querySelector("#scoreRing");
-  const duration = 520;
+const animateScore = (start, end, scoreValue = document.querySelector("#scoreValue"), scoreRing = document.querySelector("#scoreRing"), duration = 520) => {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    scoreValue.textContent = end; scoreRing.style.setProperty("--score", end); return () => {};
+  }
   const started = performance.now();
+  let frame;
 
   const tick = (now) => {
     const progress = Math.min((now - started) / duration, 1);
@@ -88,10 +93,11 @@ const animateScore = (start, end) => {
     scoreValue.textContent = current;
     scoreRing.style.setProperty("--score", current);
 
-    if (progress < 1) requestAnimationFrame(tick);
+    if (progress < 1) frame = requestAnimationFrame(tick);
   };
 
-  requestAnimationFrame(tick);
+  frame = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(frame);
 };
 
 const renderResults = (result, shouldScroll = false) => {
@@ -136,7 +142,7 @@ const renderResults = (result, shouldScroll = false) => {
   }
 };
 
-const renderPersonalizedFlightPlan = (result) => {
+const renderPersonalizedFlightPlan = (result, shouldScroll = true) => {
   const plan = generatePersonalizedFlightPlan({
     derivedContext: createDerivedContext(result),
     immediatePressure: scoreForm.elements.immediatePressure.value,
@@ -166,18 +172,14 @@ const renderPersonalizedFlightPlan = (result) => {
   document.querySelector("#planWorkbookAction").textContent = plan.workbookConnection.action;
 
   planNode.hidden = false;
-  planNode.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (shouldScroll) planNode.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 const validateInputs = () => {
-  const invalid = fields.find((field) => Number(scoreForm.elements[field].value) < 0);
+  const values = getInputValues();
+  const invalid = fields.find(field => moneyError(Number(values[field]), field));
   if (invalid) {
-    errorNode.textContent = "Use zero or higher for every field.";
-    return false;
-  }
-
-  if (Number(scoreForm.elements.income.value) <= 0) {
-    errorNode.textContent = "Enter monthly take home income to calculate your score.";
+    errorNode.textContent = moneyError(Number(values[invalid]), invalid);
     return false;
   }
 
@@ -250,20 +252,18 @@ scoreForm.addEventListener("submit", (event) => {
     hasTrackedScorecardComplete = true;
     trackEvent("scorecard_complete");
   }
-  renderResults(result, true);
-  renderPersonalizedFlightPlan(result);
-  if (!hasTrackedBriefingView) {
-    hasTrackedBriefingView = true;
-    trackEvent("briefing_view");
-  }
-});
-
-scoreForm.addEventListener("input", (event) => {
-  if (event.target.matches("input")) trackScorecardStart();
-
-  if (event.target.matches("input") && Number(event.target.value) < 0) {
-    event.target.value = 0;
-  }
+  guidedFlow?.complete();
+  revealFlightReport(result, {
+    animateScore,
+    onComplete: () => {
+      renderResults(result);
+      renderPersonalizedFlightPlan(result, false);
+      if (!hasTrackedBriefingView) {
+        hasTrackedBriefingView = true;
+        trackEvent("briefing_view");
+      }
+    },
+  });
 });
 
 leadForm.addEventListener("submit", (event) => {
@@ -304,7 +304,11 @@ leadForm.addEventListener("submit", (event) => {
     });
 });
 
-renderResults(calculateFlightScore(getInputValues()));
+const exampleResult = calculateFlightScore(getInputValues());
+renderResults(exampleResult);
+renderFlightReport(exampleResult, { example: true });
+guidedFlow = enhanceScorecard(scoreForm, { onStart: trackScorecardStart });
+document.querySelector(".results-panel").hidden = true;
 
 const aboutSection = document.querySelector("#about");
 if (aboutSection && typeof IntersectionObserver === "function") {
