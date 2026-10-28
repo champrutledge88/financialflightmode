@@ -310,6 +310,12 @@ renderFlightReport(exampleResult, { example: true });
 guidedFlow = enhanceScorecard(scoreForm, { onStart: trackScorecardStart });
 document.querySelector(".results-panel").hidden = true;
 
+// Closing the optional walkthrough also stops its sound.
+const cockpitWalkthrough = document.querySelector("#cockpit-walkthrough");
+cockpitWalkthrough?.addEventListener("toggle", () => {
+  if (!cockpitWalkthrough.open) cockpitWalkthrough.querySelector("video")?.pause();
+});
+
 const aboutSection = document.querySelector("#about");
 if (aboutSection && typeof IntersectionObserver === "function") {
   let hasTrackedAboutView = false;

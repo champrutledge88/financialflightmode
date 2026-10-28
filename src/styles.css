@@ -2168,3 +2168,13 @@ h1 span {
 .guided-form .primary-button { box-shadow: none; }
 .flight-report .one-move .eyebrow { color: #050505; }
 .guided-form h3, .flight-report h2, .flight-report h3, .reveal-overlay h2, .reveal-overlay h3 { font-family: Impact, Oswald, "Arial Narrow", sans-serif; }
+
+/* Optional, locally hosted cockpit tutorial. */
+.cockpit-walkthrough { max-width: 800px; margin: 0 auto 24px; border: 1px solid #555; border-radius: 12px; background: #1a1a1a; color: #fff; }
+.cockpit-walkthrough summary { min-height: 56px; padding: 18px 24px; cursor: pointer; font-weight: 700; }
+.cockpit-walkthrough summary::marker { color: #e95c03; }
+.cockpit-walkthrough summary:focus-visible { outline: 2px solid rgba(255,90,0,.84); outline-offset: 3px; }
+.walkthrough-content { padding: 0 24px 24px; }
+.walkthrough-content p { line-height: 1.5; margin: 0 0 16px; }
+.walkthrough-content video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #050505; border-radius: 8px; }
+@media (max-width: 759px) { .cockpit-walkthrough summary { padding: 16px; }.walkthrough-content { padding: 0 16px 16px; } }

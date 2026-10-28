@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 
 const origin = process.env.SCORECARD_ORIGIN || 'http://127.0.0.1:4173';
-const directory = 'docs/phase2';
+const directory = process.env.SCORECARD_EVIDENCE_DIR || 'docs/phase2';
 await mkdir(`${directory}/screenshots`, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const evidence = { browser: 'Chromium', runs: [], checks: [] };
