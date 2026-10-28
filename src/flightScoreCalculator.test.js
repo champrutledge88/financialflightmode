@@ -5,6 +5,7 @@ import {
   calculateFlightScore,
   categoryMaximums,
   getRelativeCategoryScores,
+  getPriorityAlerts,
   getStage,
 } from "./flightScoreCalculator.js";
 
@@ -45,7 +46,7 @@ test("preserves representative existing Scorecard results", () => {
         investmentsCurrentValue: 0,
       },
       score: 25,
-      stage: "turbulence",
+      stage: "preflight",
       strongestSignal: "Debt Load",
       warningLight: "Cash Remaining",
     },
@@ -142,4 +143,56 @@ test("does not expose mutable shared category configuration", () => {
     first[0][1] = 999;
   }, TypeError);
   assert.deepEqual(getRelativeCategoryScores(categoryScores), first);
+});
+
+test("low scores always read as Pre Flight, never a harsher label", () => {
+  for (const score of [0, 10, 25, 39]) {
+    const stage = getStage({ score, cashRemaining: -500 });
+    assert.equal(stage.key, "preflight", `score ${score}`);
+    assert.equal(stage.name, "Pre Flight");
+  }
+});
+
+test("weak savings or runway no longer change the stage", () => {
+  assert.equal(getStage({ score: 35, cashRemaining: 200 }).key, "preflight");
+  assert.equal(getStage({ score: 55, cashRemaining: 200 }).key, "turbulence");
+  assert.equal(getStage({ score: 75, cashRemaining: 200 }).key, "cruise");
+});
+
+test("spending more than take home pay caps the stage at Turbulence", () => {
+  assert.equal(getStage({ score: 75, cashRemaining: -1 }).key, "turbulence");
+  assert.equal(getStage({ score: 95, cashRemaining: -1 }).key, "turbulence");
+  assert.equal(getStage({ score: 45, cashRemaining: -1 }).key, "turbulence");
+});
+
+test("priority alerts flag savings, runway, and cash flow without relabeling the stage", () => {
+  const alerts = getPriorityAlerts({ cashRemaining: -300, savingsRate: 0, emergencyFundLevel: 0.1 });
+  assert.deepEqual(alerts.map((a) => a.key), ["cashFlow", "savingsRate", "emergencyFund"]);
+  assert.equal(Object.isFrozen(alerts), true);
+  assert.deepEqual(getPriorityAlerts({ cashRemaining: 100, savingsRate: 0.05, emergencyFundLevel: 0.25 }), []);
+});
+
+test("calculateFlightScore exposes the first priority alert in the briefing", () => {
+  const jordan = calculateFlightScore({
+    income: 4200, needs: 3200, wants: 1200, savings: 0, extraDebtPayment: 100,
+    totalDebtBalance: 6000, emergencyFundSaved: 200, emergencyFundGoal: 2000,
+    investmentsCurrentValue: 0,
+  });
+  assert.equal(jordan.stage.key, "preflight");
+  assert.equal(jordan.briefing.priorityAlert.key, "cashFlow");
+  assert.equal(jordan.briefing.priorityAlerts.length, 3);
+
+  const lowSaver = calculateFlightScore({
+    income: 5000, needs: 3000, wants: 1500, savings: 100, extraDebtPayment: 0,
+    totalDebtBalance: 0, emergencyFundSaved: 2000, emergencyFundGoal: 6000,
+    investmentsCurrentValue: 0,
+  });
+  assert.equal(lowSaver.briefing.priorityAlert.key, "savingsRate");
+});
+
+test("publishable alert copy contains no dash characters", () => {
+  const alerts = getPriorityAlerts({ cashRemaining: -1, savingsRate: 0, emergencyFundLevel: 0 });
+  for (const alert of alerts) {
+    assert.equal(/[-\u2013\u2014]/.test(alert.message + alert.label), false, alert.key);
+  }
 });

@@ -914,6 +914,20 @@ h1 span {
   margin: 8px 0 0;
 }
 
+.stage-card .stage-alert {
+  background: rgba(255, 196, 0, 0.12);
+  border: 1px solid rgba(255, 196, 0, 0.55);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.92rem;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
+.stage-card .stage-alert[hidden] {
+  display: none;
+}
+
 .score-legend {
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 8px;

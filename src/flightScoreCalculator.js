@@ -1,7 +1,7 @@
 export const STAGES = {
   preflight: {
     key: "preflight",
-    name: "Pre-Flight",
+    name: "Pre Flight",
     message: "Start with the baseline numbers. Your first move is getting the cockpit ready before the next payday.",
     nextAction:
       "Enter your baseline budget, confirm income and bills, and identify the first number that needs attention.",
@@ -98,13 +98,47 @@ export const getInvestmentLabel = (investmentsCurrentValue) => {
   return "Command";
 };
 
-export const getStage = ({ score, cashRemaining, savingsRate, emergencyFundLevel }) => {
-  const hasCriticalCashFailure = cashRemaining < 0;
+// Stage is set by score band alone, so a low score always reads as Pre Flight
+// (the start of the journey) rather than a harsher label. The one guardrail:
+// spending more than take home pay can never show Cruise Control or Flight Mode.
+export const getStage = ({ score, cashRemaining = 0 }) => {
+  let stage = STAGES.preflight;
+  if (score >= 90) stage = STAGES.flight;
+  else if (score >= 70) stage = STAGES.cruise;
+  else if (score >= 40) stage = STAGES.turbulence;
 
-  if (score >= 90) return STAGES.flight;
-  if (score >= 70 && !hasCriticalCashFailure) return STAGES.cruise;
-  if (score >= 40 || hasCriticalCashFailure || savingsRate < 0.05 || emergencyFundLevel < 0.25) return STAGES.turbulence;
-  return STAGES.preflight;
+  const spendingExceedsIncome = cashRemaining < 0;
+  if (spendingExceedsIncome && (stage === STAGES.cruise || stage === STAGES.flight)) {
+    return STAGES.turbulence;
+  }
+  return stage;
+};
+
+// Priority alerts surface urgent signals without changing the stage label.
+export const PRIORITY_ALERTS = Object.freeze({
+  cashFlow: Object.freeze({
+    key: "cashFlow",
+    label: "Cash Flow",
+    message: "Your plan spends more than you bring home. Find the gap before the next payday.",
+  }),
+  savingsRate: Object.freeze({
+    key: "savingsRate",
+    label: "Savings Rate",
+    message: "You are saving under 5% of take home pay. Start with one automatic transfer on payday, even a small one.",
+  }),
+  emergencyFund: Object.freeze({
+    key: "emergencyFund",
+    label: "Emergency Runway",
+    message: "Your emergency runway is under 25% of your goal. Building it protects every other part of the plan.",
+  }),
+});
+
+export const getPriorityAlerts = ({ cashRemaining, savingsRate, emergencyFundLevel }) => {
+  const alerts = [];
+  if (cashRemaining < 0) alerts.push(PRIORITY_ALERTS.cashFlow);
+  if (savingsRate < 0.05) alerts.push(PRIORITY_ALERTS.savingsRate);
+  if (emergencyFundLevel < 0.25) alerts.push(PRIORITY_ALERTS.emergencyFund);
+  return Object.freeze(alerts);
 };
 
 const signalLabels = {
@@ -185,12 +219,8 @@ export const calculateFlightScore = (inputValues) => {
     investmentStatus: getInvestmentLabel(values.investmentsCurrentValue),
   };
 
-  const stage = getStage({
-    score,
-    cashRemaining,
-    savingsRate,
-    emergencyFundLevel,
-  });
+  const stage = getStage({ score, cashRemaining });
+  const priorityAlerts = getPriorityAlerts({ cashRemaining, savingsRate, emergencyFundLevel });
 
   return {
     values,
@@ -205,6 +235,8 @@ export const calculateFlightScore = (inputValues) => {
       warningLight: getWarningLight(categoryScores),
       sevenDayAction: stage.nextAction,
       starterSection: stage.starterSection,
+      priorityAlerts,
+      priorityAlert: priorityAlerts[0] ?? null,
     },
   };
 };
