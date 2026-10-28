@@ -11,6 +11,9 @@ analytics, and habit medals. Authorized by Mark Rutledge on 2026-10-24 with thes
 | Bank linking | None. Manual CSV import only, consistent with the manual first direction |
 | Launch exposure | Live at `/cockpit.html` once merged, `noindex`, not linked from the homepage or funnel |
 
+Founder feedback (2026-10-28): keep the sidebar brand lockup (FM mark plus "Cockpit" in the upper left of the
+iPad and desktop layout) as is. This approves that layout element only; the product name itself is still open.
+
 This supersedes the Personalized Flight Plan spec's "no full budget storage" exclusion **only for
 on-device storage**. Server-side storage of financial data remains out of scope.
 
