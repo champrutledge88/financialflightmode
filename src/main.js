@@ -116,6 +116,12 @@ const renderResults = (result, shouldScroll = false) => {
 
   document.querySelector("#stageName").textContent = result.stage.name;
   document.querySelector("#stageMessage").textContent = result.stage.message;
+  const stageAlertNode = document.querySelector("#stageAlert");
+  if (stageAlertNode) {
+    const alert = result.briefing.priorityAlert;
+    stageAlertNode.hidden = !alert;
+    stageAlertNode.textContent = alert ? `Warning light: ${alert.label}. ${alert.message}` : "";
+  }
   document.querySelector("#briefingStage").textContent = result.briefing.stage;
   document.querySelector("#briefingMessage").textContent = result.briefing.message;
   document.querySelector("#strongestSignal").textContent = result.briefing.strongestSignal;
