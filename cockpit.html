@@ -22,11 +22,29 @@
         if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
       } catch (error) {}
     </script>
-    <link rel="stylesheet" href="/src/cockpit/cockpit.css?v=2" />
+    <link rel="stylesheet" href="/src/cockpit/cockpit.css?v=3" />
   </head>
   <body>
     <div class="app" id="app">
+      <aside class="sidebar glass" aria-label="Cockpit navigation">
+        <div class="sidebar-brand"><img src="/assets/logos/ffm-icon-mark.png" alt="" width="40" height="26" /><span>Cockpit</span></div>
+        <button type="button" class="side-item" data-tab="today"><span data-icon="today"></span>Today</button>
+        <button type="button" class="side-item" data-tab="plan"><span data-icon="plan"></span>Plan</button>
+        <button type="button" class="side-item" data-tab="insights"><span data-icon="insights"></span>Insights</button>
+        <button type="button" class="side-item" data-tab="activity"><span data-icon="activity"></span>Activity</button>
+        <button type="button" class="side-item" data-tab="medals"><span data-icon="medals"></span>Medals</button>
+        <p class="side-heading">Reports</p>
+        <button type="button" class="side-item side-sub" data-action="report" data-report="categories"><span data-icon="insights"></span>Spending by Category</button>
+        <button type="button" class="side-item side-sub" data-action="report" data-report="incomeExpense"><span data-icon="activity"></span>Income vs Expense</button>
+        <button type="button" class="side-item side-sub" data-action="report" data-report="subscriptions"><span data-icon="calendar"></span>Subscriptions</button>
+        <button type="button" class="side-item side-sub" data-action="report" data-report="yearEnd"><span data-icon="spark"></span>Year End Projection</button>
+        <button type="button" class="side-item side-sub" data-action="report" data-report="livingCosts"><span data-icon="bank"></span>Monthly Living Costs</button>
+        <div class="side-spacer"></div>
+        <button type="button" class="side-item" data-tab="settings"><span data-icon="settings"></span>Settings</button>
+      </aside>
+
       <header class="nav-bar" id="nav-bar">
+        <button class="nav-action nav-left" type="button" data-action="settings" aria-label="Settings"><span data-icon="settings"></span></button>
         <span class="nav-title" id="nav-title">Today</span>
         <button class="nav-action" type="button" id="import-button" aria-label="Import a bank CSV"></button>
       </header>
@@ -36,6 +54,12 @@
           <p class="screen-kicker" id="today-date"></p>
           <h1 class="large-title" id="title-today">Today</h1>
           <div id="today-body"></div>
+        </section>
+
+        <section class="screen" data-screen="plan" aria-labelledby="title-plan" hidden>
+          <p class="screen-kicker">Plan before payday</p>
+          <h1 class="large-title" id="title-plan">Plan</h1>
+          <div id="plan-body"></div>
         </section>
 
         <section class="screen" data-screen="insights" aria-labelledby="title-insights" hidden>
@@ -65,10 +89,10 @@
 
       <nav class="tab-bar" aria-label="Cockpit sections">
         <button type="button" class="tab" data-tab="today" aria-label="Today"><span class="tab-icon" data-icon="today"></span><span>Today</span></button>
+        <button type="button" class="tab" data-tab="plan" aria-label="Plan"><span class="tab-icon" data-icon="plan"></span><span>Plan</span></button>
         <button type="button" class="tab" data-tab="insights" aria-label="Insights"><span class="tab-icon" data-icon="insights"></span><span>Insights</span></button>
         <button type="button" class="tab" data-tab="activity" aria-label="Activity"><span class="tab-icon" data-icon="activity"></span><span>Activity</span></button>
         <button type="button" class="tab" data-tab="medals" aria-label="Medals"><span class="tab-icon" data-icon="medals"></span><span>Medals</span></button>
-        <button type="button" class="tab" data-tab="settings" aria-label="Settings"><span class="tab-icon" data-icon="settings"></span><span>Settings</span></button>
       </nav>
     </div>
 
@@ -92,6 +116,6 @@
     <input type="file" id="backup-input" accept=".json,application/json" hidden />
 
     <noscript><p class="noscript">Cockpit needs JavaScript to read your statement on this device.</p></noscript>
-    <script type="module" src="/src/cockpit/app.js?v=2"></script>
+    <script type="module" src="/src/cockpit/app.js?v=3"></script>
   </body>
 </html>

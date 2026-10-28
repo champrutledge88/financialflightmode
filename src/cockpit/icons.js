@@ -32,6 +32,10 @@ export const ICONS = {
   people: icon('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.8"/><path d="M16 14.2a5.5 5.5 0 0 1 5.5 5.8"/>'),
   external: icon('<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>', ' width="15" height="15"'),
   file: icon('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 14h8M8 17.5h5"/>'),
+  plan: icon('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>'),
+  target: icon('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>'),
+  wallet: icon('<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18"/><circle cx="16.5" cy="15" r="1.2" fill="currentColor"/>'),
+  reports: icon('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 17v-3M13 17v-5M16 17v-2"/>'),
   bank: icon('<path d="M3 10l9-6 9 6"/><path d="M5 10v8"/><path d="M10 10v8"/><path d="M14 10v8"/><path d="M19 10v8"/><path d="M3 21h18"/>'),
 };
 
@@ -51,6 +55,8 @@ const MEDAL_GLYPHS = {
   weeklyReview: '<circle cx="50" cy="50" r="17"/><path d="M50 40v10l7 5"/>',
   auditor: '<circle cx="47" cy="47" r="12"/><path d="M56 56l11 11"/>',
   fullPicture: '<rect x="31" y="35" width="38" height="12" rx="4"/><rect x="31" y="53" width="38" height="12" rx="4"/>',
+  budgetKeeper: '<rect x="31" y="33" width="38" height="34" rx="6"/><path d="M31 44h38"/><path d="M40 56l6 5 12-12"/>',
+  goalGetter: '<circle cx="50" cy="50" r="17"/><circle cx="50" cy="50" r="9"/><circle cx="50" cy="50" r="2" fill="currentColor"/>',
   trainer: '<path d="M34 50l10-10h18v18L52 68z"/><circle cx="56" cy="46" r="2.5"/>',
 };
 

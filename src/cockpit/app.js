@@ -6,6 +6,7 @@ import { PERIODS, categoryBreakdown, categoryChanges, categoryDetail, dailyStats
 import { confetti, haptic, prefersReducedMotion } from "./effects.js";
 import { addDays, daysBetween, todayIso } from "./dates.js";
 import {
+  longMonthLabel,
   compactMoney,
   dateRange,
   escapeHtml,
@@ -22,6 +23,7 @@ import {
 import { ICONS, medalBadge } from "./icons.js";
 import { buildInsights } from "./insights.js";
 import { evaluateMedals, medalCount, newlyEarned, reviewStreak, weekIndex } from "./medals.js";
+import { REPORTS, budgetStatus, budgetsKeptLastMonth, goalProjection, incomeVsExpense, livingCosts, spendingByCategoryForMonth, subscriptionInsights, suggestBudgets, yearEndProjection } from "./planning.js";
 import { buildSampleStatement, buildTestCsv } from "./sampleData.js";
 import { createStore, emptyState, exportBackup, importBackup, mergeImport, removeAccount, withCategories } from "./store.js";
 
@@ -43,7 +45,7 @@ const store = createStore(safeStorage());
 let state = store.load();
 let derived = null;
 let pendingImport = null;
-const view = { tab: "today", query: "", filter: "all", limit: 120, period: "90", slices: [], selectedSlice: null };
+const view = { tab: "today", query: "", filter: "all", limit: 120, period: "90", planTab: "budgets", reportMonth: null };
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -54,12 +56,14 @@ const tap = () => navigator.vibrate?.(8);
 
 const emptyInsights = () => ({ today: today(), range: { days: 0 }, months: [], monthsCounted: 0, averages: { savingsRate: 0 }, cycles: [] });
 
-const activitySummary = () => ({
+const activitySummary = (insights) => ({
   imports: state.activity.imports,
   audits: state.activity.audits,
   reviews: state.activity.reviews,
   accounts: state.accounts.length,
   rules: Object.keys(state.overrides).length,
+  budgetsKept: insights ? budgetsKeptLastMonth(state.budgets, insights.months, today()) : 0,
+  goalBest: Math.max(0, ...state.goals.map((goal) => goalProjection(goal, { today: today() }).progress)),
 });
 
 const recompute = () => {
@@ -67,7 +71,7 @@ const recompute = () => {
   const insights = transactions.length
     ? buildInsights({ transactions, today: today(), balanceOverride: state.settings.balance, cushion: state.settings.cushion })
     : null;
-  const medals = evaluateMedals({ insights: insights ?? emptyInsights(), activity: activitySummary() });
+  const medals = evaluateMedals({ insights: insights ?? emptyInsights(), activity: activitySummary(insights) });
   derived = { transactions, insights, medals };
 };
 
@@ -327,6 +331,7 @@ const renderToday = () => {
     ${sampleBanner()}
     ${staleBanner(insights)}
     ${heroCard(insights)}
+    ${todayPlanCard()}
     <div class="card next-move"><span class="signal-kicker">Your Next Move</span><p>${escapeHtml(insights.nextMove)}</p></div>
     ${beforePayday(insights)}
     ${signalCards(insights)}
@@ -393,7 +398,6 @@ const categoriesSection = () => {
   const breakdown = categoryBreakdown(derived.transactions, today(), PERIODS.find((period) => period.key === view.period).days);
   if (!breakdown.categories.length) return "";
   const slices = foldSlices(breakdown.categories.map((item) => ({ name: item.name, value: item.total, color: item.color, monthly: item.monthly })));
-  view.slices = slices;
   const [first, second] = breakdown.categories;
   const groups = ["essentials", "lifestyle", "financial"].map((key) => ({
     key,
@@ -407,13 +411,7 @@ const categoriesSection = () => {
       (period) => `<button type="button" class="${view.period === period.key ? "selected" : ""}" data-action="period" data-period="${period.key}">${period.label}</button>`,
     ).join("")}</div>
     <div class="glass glass-donut-card" style="--blob-a:${first.color};--blob-b:${second?.color ?? first.color}">
-      <div class="donut-stage">
-        ${glassDonut({ slices })}
-        <div class="donut-center" id="donut-center" aria-live="polite">
-          <span class="donut-center-value">${compactMoney(breakdown.monthly)}</span>
-          <span class="donut-center-label">a month</span>
-        </div>
-      </div>
+      ${donutStage(slices, `<span class="donut-center-value">${compactMoney(breakdown.monthly)}</span><span class="donut-center-label">a month</span>`)}
       <p class="glass-hint">Tap the ring or a category for more.</p>
       <div class="bar-list">${breakdown.categories
         .slice(0, 8)
@@ -436,21 +434,31 @@ const categoriesSection = () => {
   );
 };
 
-const selectSlice = (index) => {
-  const slice = view.slices?.[index];
-  const center = $("#donut-center");
-  if (!slice || !center) return;
-  const same = view.selectedSlice === index;
-  view.selectedSlice = same ? null : index;
-  for (const element of $$(".glass-donut .slice, .glass-donut .slice-glow")) {
-    element.classList.toggle("dim", !same && Number(element.dataset.index ?? [...element.parentNode.children].indexOf(element)) !== index);
-  }
-  const total = view.slices.reduce((sum, item) => sum + item.value, 0) || 1;
+// Each ring keeps its own slices on its stage, so the Insights ring and a report's ring never mix.
+const donutStage = (slices, center) =>
+  `<div class="donut-stage" data-slices="${escapeHtml(JSON.stringify(slices.map(({ name, value, color, monthly }) => ({ name, value, color, monthly }))))}">
+    ${glassDonut({ slices })}
+    <div class="donut-center" aria-live="polite">${center}</div>
+  </div>`;
+
+const selectSlice = (element) => {
+  const stage = element.closest(".donut-stage");
+  const center = stage?.querySelector(".donut-center");
+  if (!stage || !center) return;
+  const slices = JSON.parse(stage.dataset.slices || "[]");
+  const index = Number(element.dataset.index);
+  const slice = slices[index];
+  if (!slice) return;
+  stage.dataset.defaultCenter ??= center.innerHTML;
+  const same = stage.dataset.selected === String(index);
+  stage.dataset.selected = same ? "" : String(index);
+  for (const arc of $$(".slice, .slice-glow", stage)) arc.classList.toggle("dim", !same && Number(arc.dataset.index) !== index);
+  const total = slices.reduce((sum, item) => sum + item.value, 0) || 1;
   center.innerHTML = same
-    ? `<span class="donut-center-value">${compactMoney(total * (30.4 / PERIODS.find((period) => period.key === view.period).days))}</span><span class="donut-center-label">a month</span>`
+    ? stage.dataset.defaultCenter
     : `<span class="donut-center-name" style="color:${slice.color}">${escapeHtml(slice.name)}</span>
        <span class="donut-center-value">${percent(slice.value / total)}</span>
-       <span class="donut-center-label">${compactMoney(slice.monthly ?? 0)} a month</span>`;
+       <span class="donut-center-label">${slice.monthly ? `${compactMoney(slice.monthly)} a month` : compactMoney(slice.value)}</span>`;
   center.classList.remove("pop");
   void center.offsetWidth;
   center.classList.add("pop");
@@ -647,6 +655,7 @@ const renderInsights = () => {
   $("#insights-body").innerHTML = insights
     ? [
         stageCard(insights),
+        reportsSection(),
         numbersGrid(insights),
         categoriesSection(),
         changesSection(insights),
@@ -831,23 +840,388 @@ const renderSettings = () => {
     <p class="fine-print"><a href="/">Financial Flight Mode</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>`;
 };
 
+// ---------- Plan: budgets and goals ----------
+
+const STATUS_LABELS = { onTrack: "On track", watch: "Watch", over: "Over" };
+
+const planSummary = () => {
+  const status = budgetStatus(state.budgets, derived.transactions, today());
+  const goals = state.goals.map((goal) => ({ goal, projection: goalProjection(goal, { monthlyMargin: derived.insights?.averages.net ?? 0, today: today() }) }));
+  return { status, goals };
+};
+
+const budgetCard = (item, daysLeft) => `
+  <button type="button" class="budget-card glass" data-action="budget" data-category="${escapeHtml(item.category)}" style="--blob-a:${item.color};--blob-b:transparent">
+    <span class="budget-top">
+      ${categoryDot(item.category)}
+      <span class="budget-name">${escapeHtml(item.category)}</span>
+      <span class="status-pill status-${item.status}">${STATUS_LABELS[item.status]}</span>
+    </span>
+    <span class="budget-figures"><strong>${money(item.spent)}</strong><span> of ${wholeMoney(item.budget)}</span></span>
+    <span class="progress progress-slim"><span style="width:${Math.min(100, item.usedShare * 100)}%;background:${item.status === "over" ? "var(--red)" : item.status === "watch" ? "var(--amber)" : item.color}"></span></span>
+    <span class="budget-foot"><span>${plural(daysLeft, "day")} left</span><span>${item.remaining >= 0 ? `${money(item.perDay)} a day` : `${money(item.remaining)} over`}</span></span>
+  </button>`;
+
+const budgetsView = (summary) => {
+  const { status } = summary;
+  if (!status.items.length) {
+    const suggestions = derived.insights ? suggestBudgets(derived.insights.months, today()) : {};
+    const count = Object.keys(suggestions).length;
+    return `<div class="glass plan-empty" style="--blob-a:var(--accent);--blob-b:#bf5af2">
+      <span class="hub-icon">${ICONS.wallet}</span>
+      <h2>Plan how to spend before you spend it.</h2>
+      <p>${count ? `Cockpit can start you with ${plural(count, "budget")} built from your last three months. Adjust any of them anytime.` : "Import a few months of history and Cockpit will suggest budgets from your real spending."}</p>
+      <div class="button-stack">
+        ${count ? `<button type="button" class="button button-primary" data-action="use-suggested">${ICONS.spark}<span>Use Suggested Budgets</span></button>` : ""}
+        <button type="button" class="button button-secondary" data-action="edit-budgets">Set Budgets Myself</button>
+      </div>
+    </div>`;
+  }
+  const used = status.totalBudget ? status.totalSpent / status.totalBudget : 0;
+  return `
+    <div class="glass plan-hero" style="--blob-a:var(--accent);--blob-b:#30d158">
+      <div class="plan-hero-main">
+        <div>
+          <span class="hero-label">You can spend</span>
+          <span class="hero-value" data-count="${Math.max(0, status.perDay)}">${money(Math.max(0, status.perDay))}</span>
+          <span class="hero-sub">a day for the rest of ${longMonthLabel(status.month).split(" ")[0]} · ${plural(status.daysLeft, "day")} left</span>
+        </div>
+        ${ring({ size: 104, stroke: 12, rings: [{ value: Math.min(used, 1), color: used > status.elapsedShare + 0.08 ? "var(--red)" : "var(--accent)", track: "var(--ring-track)" }, { value: status.elapsedShare, color: "var(--label)", track: "var(--ring-track)" }] })}
+      </div>
+      <div class="stat-grid compact plan-stats">
+        ${stat("Spent so far", wholeMoney(status.totalSpent))}
+        ${stat(status.totalRemaining >= 0 ? "Remaining" : "Over plan", wholeMoney(status.totalRemaining), `of ${wholeMoney(status.totalBudget)} budgeted`, status.totalRemaining >= 0 ? "" : "tone-out")}
+      </div>
+      <p class="plan-note">${status.onTrack} of ${plural(status.items.length, "budget")} on track this month.</p>
+    </div>
+    <div class="group-header"><h2>Budgets</h2><button type="button" class="link-button" data-action="edit-budgets">Edit</button></div>
+    <div class="budget-grid">${status.items.map((item) => budgetCard(item, status.daysLeft)).join("")}</div>`;
+};
+
+const goalCard = ({ goal, projection }) => `
+  <button type="button" class="goal-card glass" data-action="goal" data-id="${goal.id}" style="--blob-a:var(--accent);--blob-b:#ffd60a">
+    <span class="goal-top"><span class="hub-icon small">${ICONS.target}</span><strong>${escapeHtml(goal.name)}</strong>
+      <span class="status-pill ${projection.complete ? "status-onTrack" : "status-neutral"}">${projection.complete ? "Reached" : percent(projection.progress)}</span></span>
+    <span class="budget-figures"><strong>${money(projection.saved)}</strong><span> of ${wholeMoney(goal.target)}</span></span>
+    <span class="progress progress-slim"><span style="width:${projection.progress * 100}%"></span></span>
+    <span class="budget-foot"><span>${projection.complete ? "Goal reached" : projection.eta ? `On pace for ${monthYear(projection.eta)}` : "Add a deposit to see your pace"}</span><span>${goal.targetDate ? `Target ${monthYear(goal.targetDate)}` : ""}</span></span>
+  </button>`;
+
+const goalsView = (summary) => {
+  const list = summary.goals;
+  const empty = !list.length
+    ? `<div class="glass plan-empty" style="--blob-a:#ffd60a;--blob-b:var(--accent)">
+        <span class="hub-icon">${ICONS.target}</span>
+        <h2>Give your savings a destination.</h2>
+        <p>Emergency runway, a car, a trip, paying cash for the holidays. Name it, set the number, and Cockpit tracks the pace.</p>
+        <div class="button-stack"><button type="button" class="button button-primary" data-action="new-goal">${ICONS.plus}<span>New Goal</span></button></div>
+      </div>`
+    : "";
+  const totals = list.reduce((acc, item) => ({ saved: acc.saved + item.projection.saved, target: acc.target + item.goal.target }), { saved: 0, target: 0 });
+  return list.length
+    ? `<div class="glass plan-hero" style="--blob-a:#ffd60a;--blob-b:var(--accent)">
+        <span class="hero-label">Saved toward goals</span>
+        <span class="hero-value" data-count="${totals.saved}">${money(totals.saved)}</span>
+        <span class="hero-sub">of ${wholeMoney(totals.target)} across ${plural(list.length, "goal")}</span>
+        <span class="progress"><span style="width:${totals.target ? Math.min(100, (totals.saved / totals.target) * 100) : 0}%"></span></span>
+      </div>
+      <div class="group-header"><h2>Goals</h2><button type="button" class="link-button" data-action="new-goal">New</button></div>
+      <div class="budget-grid">${list.map(goalCard).join("")}</div>`
+    : empty;
+};
+
+const renderPlan = () => {
+  const summary = planSummary();
+  view.planSummary = summary;
+  $("#plan-body").innerHTML = `
+    <div class="segmented segmented-2">
+      <button type="button" class="${view.planTab === "budgets" ? "selected" : ""}" data-action="plan-tab" data-plan-tab="budgets">Budgets</button>
+      <button type="button" class="${view.planTab === "goals" ? "selected" : ""}" data-action="plan-tab" data-plan-tab="goals">Goals</button>
+    </div>
+    ${view.planTab === "goals" ? goalsView(summary) : budgetsView(summary)}
+    <p class="fine-print">Budgets and goals are saved only on this device. ${escapeHtml(EDUCATION_NOTE)}</p>`;
+  animateCounts($("#plan-body"));
+};
+
+const monthYear = (isoDay) => `${longMonthLabel(isoDay.slice(0, 7)).replace(/^(\w{3})\w*/, "$1")}`;
+
+const todayPlanCard = () => {
+  const summary = planSummary();
+  const { status } = summary;
+  const goal = summary.goals.find((item) => !item.projection.complete);
+  if (!status.items.length && !goal) {
+    return `<button type="button" class="card plan-prompt" data-action="go-plan"><span class="hub-icon small">${ICONS.plan}</span>
+      <span class="review-text"><strong>Plan before payday</strong><span>Set budgets and goals from your real numbers.</span></span><span class="row-chevron">${ICONS.chevron}</span></button>`;
+  }
+  return `<div class="plan-glance">
+    ${status.items.length ? `<button type="button" class="glass glance-tile" data-action="go-plan" style="--blob-a:var(--accent);--blob-b:transparent">
+      <span class="signal-kicker">Daily Limit</span><strong class="glance-value">${money(status.perDay)}</strong>
+      <span class="progress progress-slim"><span style="width:${Math.min(100, (status.totalSpent / (status.totalBudget || 1)) * 100)}%"></span></span>
+      <span class="glance-sub">${status.onTrack} of ${status.items.length} budgets on track</span></button>` : ""}
+    ${goal ? `<button type="button" class="glass glance-tile" data-action="goal" data-id="${goal.goal.id}" style="--blob-a:#ffd60a;--blob-b:transparent">
+      <span class="signal-kicker">Smart Goal</span><strong class="glance-value">${percent(goal.projection.progress)}</strong>
+      <span class="progress progress-slim"><span style="width:${goal.projection.progress * 100}%"></span></span>
+      <span class="glance-sub">${escapeHtml(goal.goal.name)}</span></button>` : ""}
+  </div>`;
+};
+
+const openBudget = (category) => {
+  const item = view.planSummary?.status.items.find((entry) => entry.category === category) ?? budgetStatus(state.budgets, derived.transactions, today()).items.find((entry) => entry.category === category);
+  if (!item) return;
+  const status = budgetStatus(state.budgets, derived.transactions, today());
+  const recent = derived.transactions.filter((transaction) => transaction.category === category && transaction.date >= status.start && transaction.amount < 0).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
+  openSheet(`${sheetHeader(escapeHtml(category))}
+    <p class="tier-pill status-pill status-${item.status}">${item.status === "onTrack" ? "You are on budget" : item.status === "watch" ? "Pacing above plan" : "Over budget"}</p>
+    <div class="glass budget-detail" style="--blob-a:${item.color};--blob-b:transparent">
+      <div class="stat-grid compact">
+        ${stat("You can spend", money(item.perDay), "per day")}
+        ${stat("Spent so far", money(item.spent), "this month")}
+        ${stat("Remaining", percent(Math.max(0, item.remainingShare)), item.remaining >= 0 ? `${money(item.remaining)} left` : `${money(item.remaining)} over`, item.remaining >= 0 ? "" : "tone-out")}
+        ${stat("Budgeted", money(item.budget), longMonthLabel(status.month))}
+      </div>
+      <span class="progress"><span style="width:${Math.min(100, item.usedShare * 100)}%;background:${item.color}"></span></span>
+      <div class="budget-foot"><span>${shortDate(status.start)}</span><span>${plural(status.daysLeft, "day")} remaining</span><span>${shortDate(status.end)}</span></div>
+    </div>
+    ${recent.length ? section("This Month", list(recent.map((transaction) => row({ title: escapeHtml(displayMerchant(transaction.description)), subtitle: shortDate(transaction.date), trailing: money(transaction.amount), action: "transaction", data: `data-id="${transaction.id}"` })))) : ""}
+    <div class="button-stack"><button type="button" class="button button-secondary" data-action="edit-budgets">Edit Budgets</button></div>`);
+};
+
+const openEditBudgets = () => {
+  const suggestions = derived.insights ? suggestBudgets(derived.insights.months, today()) : {};
+  const names = [...new Set([...Object.keys(suggestions), ...Object.keys(state.budgets)])].sort((a, b) => (suggestions[b] ?? 0) - (suggestions[a] ?? 0));
+  const extra = CATEGORY_NAMES.filter((name) => !names.includes(name) && ["essentials", "lifestyle"].includes(groupOf(name)));
+  openSheet(`${sheetHeader("Budgets", { done: "Save", doneAction: "save-budgets" })}
+    <p class="sheet-copy muted">Monthly amounts. Suggestions come from your last three months. Leave a field empty to skip that category.</p>
+    <div class="list budget-form">${[...names, ...extra]
+      .map(
+        (name) => `<label class="row budget-input">${categoryDot(name)}<span class="row-text"><span class="row-title">${escapeHtml(name)}</span>${suggestions[name] ? `<span class="row-subtitle">Suggested ${wholeMoney(suggestions[name])}</span>` : ""}</span>
+          <input type="text" inputmode="decimal" data-budget="${escapeHtml(name)}" placeholder="$0" value="${state.budgets[name] ? state.budgets[name] / 100 : ""}" /></label>`,
+      )
+      .join("")}</div>
+    ${Object.keys(suggestions).length ? `<div class="button-stack"><button type="button" class="button button-plain" data-action="fill-suggested">Fill in all suggestions</button></div>` : ""}`);
+};
+
+const saveBudgets = () => {
+  const budgets = {};
+  for (const input of $$("[data-budget]")) {
+    const value = parseMoneyInput(input.value);
+    if (Number.isNaN(value)) return showToast(`Check the amount for ${input.dataset.budget}.`);
+    if (value > 0) budgets[input.dataset.budget] = value;
+  }
+  state.budgets = budgets;
+  closeSheet();
+  commit();
+  showToast(Object.keys(budgets).length ? `${plural(Object.keys(budgets).length, "budget")} saved.` : "Budgets cleared.");
+};
+
+const openGoalForm = (id) => {
+  const goal = state.goals.find((item) => item.id === id);
+  openSheet(`${sheetHeader(goal ? "Edit Goal" : "New Goal", { done: "Save", doneAction: "save-goal" })}
+    <input type="hidden" id="goal-id" value="${goal?.id ?? ""}" />
+    <label class="field"><span>Name</span><input type="text" id="goal-name" maxlength="40" placeholder="Emergency runway" value="${escapeHtml(goal?.name ?? "")}" autofocus /></label>
+    <div class="chips">${["Emergency runway", "Pay off a card", "Car fund", "Holiday cash", "Home down payment"].map((name) => `<button type="button" class="chip" data-action="goal-name" data-name="${name}">${name}</button>`).join("")}</div>
+    <label class="field"><span>Target amount</span><input type="text" inputmode="decimal" id="goal-target" placeholder="$1,000" value="${goal ? goal.target / 100 : ""}" /></label>
+    <label class="field"><span>Target date (optional)</span><input type="date" id="goal-date" value="${goal?.targetDate ?? ""}" min="${today()}" /></label>
+    ${goal ? "" : `<label class="field"><span>Already saved (optional)</span><input type="text" inputmode="decimal" id="goal-start" placeholder="$0" /></label>`}
+    <p class="sheet-copy muted">A runway of three to six months of essentials is a common first goal. Your Monthly Living Costs report shows that number.</p>
+    ${goal ? `<div class="button-stack"><button type="button" class="button button-plain text-danger" data-action="delete-goal" data-id="${goal.id}">Delete Goal</button></div>` : ""}`);
+};
+
+const saveGoal = () => {
+  const name = ($("#goal-name")?.value ?? "").trim();
+  const target = parseMoneyInput($("#goal-target")?.value);
+  const start = parseMoneyInput($("#goal-start")?.value);
+  if (!name) return showToast("Give the goal a name.");
+  if (!target || Number.isNaN(target) || target <= 0) return showToast("Enter a target amount, like 1000.");
+  if (Number.isNaN(start)) return showToast("Enter the amount already saved as a number.");
+  const id = $("#goal-id")?.value || `g${Date.now().toString(36)}`;
+  const targetDate = $("#goal-date")?.value || null;
+  const existing = state.goals.find((goal) => goal.id === id);
+  const goal = existing
+    ? { ...existing, name, target, targetDate }
+    : { id, name, target, targetDate, createdAt: today(), deposits: start > 0 ? [{ date: today(), amount: start }] : [] };
+  state.goals = existing ? state.goals.map((item) => (item.id === id ? goal : item)) : [...state.goals, goal];
+  view.planTab = "goals";
+  closeSheet();
+  commit();
+  showToast(existing ? "Goal updated." : "Goal created. Log deposits as you save.");
+};
+
+const openGoal = (id) => {
+  const goal = state.goals.find((item) => item.id === id);
+  if (!goal) return;
+  const projection = goalProjection(goal, { monthlyMargin: derived.insights?.averages.net ?? 0, today: today() });
+  const paceLine = projection.complete
+    ? "Goal reached. Choose the next destination."
+    : projection.paceSource === "deposits"
+      ? `At your pace of about ${wholeMoney(projection.monthlyPace)} a month, you reach it around ${monthYear(projection.eta)}.`
+      : projection.paceSource === "margin"
+        ? `If half of your usual monthly margin went here, about ${wholeMoney(projection.monthlyPace)}, you would reach it around ${monthYear(projection.eta)}.`
+        : "Log a deposit or import more history to see a pace.";
+  openSheet(`${sheetHeader(escapeHtml(goal.name), { done: "Done" })}
+    <div class="glass goal-hero" style="--blob-a:#ffd60a;--blob-b:var(--accent)">
+      ${ring({ size: 150, stroke: 16, rings: [{ value: projection.progress, color: "var(--accent)", track: "var(--ring-track)" }] })}
+      <div class="goal-hero-center"><strong>${percent(projection.progress)}</strong><span>achieved</span></div>
+    </div>
+    <div class="stat-grid compact">
+      ${stat("Saved", money(projection.saved))}
+      ${stat("Remaining", money(projection.remaining))}
+      ${projection.neededMonthly ? stat("Needed monthly", wholeMoney(projection.neededMonthly), `to hit ${monthYear(goal.targetDate)}`) : ""}
+      ${stat("Target", wholeMoney(goal.target), goal.targetDate ? monthYear(goal.targetDate) : "no date set")}
+    </div>
+    <div class="card next-move"><span class="signal-kicker">Flight Path</span><p>${escapeHtml(paceLine)}</p></div>
+    <label class="field"><span>Log a deposit</span><input type="text" inputmode="decimal" id="deposit-amount" placeholder="$50" /></label>
+    <div class="button-stack">
+      <button type="button" class="button button-primary" data-action="add-deposit" data-id="${goal.id}">${ICONS.plus}<span>Add Deposit</span></button>
+      <button type="button" class="button button-plain" data-action="edit-goal" data-id="${goal.id}">Edit Goal</button>
+    </div>
+    ${(goal.deposits ?? []).length ? section("Deposits", list([...goal.deposits].reverse().slice(0, 10).map((deposit) => row({ title: money(deposit.amount), subtitle: shortDate(deposit.date) })))) : ""}
+    <p class="fine-print">Projections assume your recent pattern continues. They are estimates, not promises.</p>`);
+};
+
+const addDeposit = (id) => {
+  const amount = parseMoneyInput($("#deposit-amount")?.value);
+  if (!amount || Number.isNaN(amount)) return showToast("Enter the deposit amount, like 50.");
+  state.goals = state.goals.map((goal) => (goal.id === id ? { ...goal, deposits: [...(goal.deposits ?? []), { date: today(), amount }] } : goal));
+  haptic(10);
+  closeSheet();
+  commit();
+  showToast(amount > 0 ? `${money(amount)} logged. Keep climbing.` : "Withdrawal logged.");
+};
+
+// ---------- Reports ----------
+
+const reportsSection = () =>
+  section(
+    "Reports",
+    `<div class="report-grid">${REPORTS.map(
+      (report) => `<button type="button" class="report-tile glass" data-action="report" data-report="${report.id}" style="--blob-a:var(--accent);--blob-b:transparent">
+        <span class="hub-icon small">${ICONS[report.icon]}</span>
+        <strong>${report.title}</strong><span>${report.copy}</span>
+      </button>`,
+    ).join("")}</div>`,
+  );
+
+const changeBadge = (change, { goodWhenDown = true } = {}) => {
+  if (change === null || !Number.isFinite(change)) return `<span class="change change-flat">New</span>`;
+  const up = change > 0;
+  const good = goodWhenDown ? !up : up;
+  return `<span class="change ${good ? "change-down" : "change-up"}">${up ? ICONS.arrowUp : ICONS.arrowDown}${percent(Math.abs(change))}</span>`;
+};
+
+const reportCategories = () => {
+  const keys = derived.insights.months.map((month) => month.key);
+  const key = keys.includes(view.reportMonth) ? view.reportMonth : keys.at(-1);
+  view.reportMonth = key;
+  const data = spendingByCategoryForMonth(derived.transactions, key);
+  const slices = foldSlices(data.categories.map((item) => ({ name: item.name, value: item.total, color: item.color })));
+  return `${sheetHeader("Spending by Category")}
+    <div class="segmented month-scroller">${keys.slice(-6).map((month) => `<button type="button" class="${month === key ? "selected" : ""}" data-action="report-month" data-month="${month}">${monthLabel(month)}</button>`).join("")}</div>
+    <div class="glass glass-donut-card" style="--blob-a:${data.categories[0]?.color ?? "var(--accent)"};--blob-b:${data.categories[1]?.color ?? "var(--accent)"}">
+      ${donutStage(slices, `<span class="donut-center-value">${compactMoney(data.total)}</span><span class="donut-center-label">${longMonthLabel(key)}</span>`)}
+      <p class="chart-note center">${data.change === null ? "No prior month to compare." : `${changeBadge(data.change)} vs ${monthLabel(shiftMonthKey(key, -1))}`}</p>
+    </div>
+    ${list(data.categories.map((item) => row({ leading: categoryDot(item.name), title: escapeHtml(item.name), subtitle: `${percent(item.share)} of spending`, trailing: `${money(item.total)}${changeBadge(item.change)}`, action: "category", data: `data-name="${escapeHtml(item.name)}"` })))}`;
+};
+
+const reportIncomeExpense = () => {
+  const rows = incomeVsExpense(derived.insights.months).slice(-12);
+  const totals = rows.reduce((acc, item) => ({ income: acc.income + item.income, spending: acc.spending + item.spending }), { income: 0, spending: 0 });
+  return `${sheetHeader("Income vs Expense")}
+    <div class="stat-grid compact">
+      ${stat("Total in", wholeMoney(totals.income), plural(rows.length, "month"), "tone-in")}
+      ${stat("Total out", wholeMoney(totals.spending), plural(rows.length, "month"))}
+    </div>
+    <div class="card chart-card"><div class="legend"><span><i class="dot-in"></i>Money in</span><span><i class="dot-out"></i>Money out</span></div>
+      ${pairedBars({ items: rows.slice(-6).map((item) => ({ label: monthLabel(item.key), a: item.income, b: item.spending })) })}</div>
+    <div class="table-card"><div class="table-row table-head"><span>Month</span><span>In</span><span>Out</span><span>Kept</span></div>
+      ${[...rows].reverse().map((item) => `<div class="table-row"><span>${monthLabel(item.key)} ${item.key.slice(2, 4)}</span><span>${wholeMoney(item.income)}</span><span>${wholeMoney(item.spending)}</span><span class="${item.net >= 0 ? "amount-in" : "text-danger"}">${item.net >= 0 ? "" : "short "}${wholeMoney(item.net)}</span></div>`).join("")}</div>
+    <p class="fine-print">The current month is still in progress. Transfers and card payments are excluded.</p>`;
+};
+
+const reportSubscriptions = () => {
+  const data = subscriptionInsights(derived.transactions, derived.insights.subscriptions, today());
+  if (!data.rows.length) return `${sheetHeader("Subscription Insights")}<p class="sheet-copy">No repeating subscriptions found yet. Cockpit needs to see a charge at least twice.</p>`;
+  const year = today().slice(0, 4);
+  return `${sheetHeader("Subscription Insights")}
+    <div class="stat-grid compact">
+      ${stat(`Total this year`, wholeMoney(data.thisYear), year)}
+      ${stat("Total last year", wholeMoney(data.lastYear), String(Number(year) - 1))}
+      ${stat("Total lifetime", wholeMoney(data.lifetime), "in your history")}
+      ${stat("Yearly run rate", wholeMoney(data.annual), "at current prices", "tone-out")}
+    </div>
+    ${list(data.rows.map((item) => row({ leading: categoryDot(item.category), title: escapeHtml(item.name), subtitle: `${money(item.typicalAmount)} ${item.cadence.label.toLowerCase()} · since ${shortDate(item.since)}`, trailing: `${wholeMoney(item.lifetime)}<small>${wholeMoney(item.annualCost)}/yr</small>` })))}
+    <div class="button-stack"><button type="button" class="button button-secondary" data-action="audit">Run a Subscription Audit</button></div>
+    <p class="fine-print">Lifetime covers only the history you imported.</p>`;
+};
+
+const reportYearEnd = () => {
+  const data = yearEndProjection(derived.transactions, derived.insights.averages, today());
+  return `${sheetHeader("Year End Projection")}
+    <div class="glass plan-hero" style="--blob-a:#30d158;--blob-b:var(--accent)">
+      <span class="hero-label">${data.projected.net >= 0 ? "On pace to keep" : "On pace to fall short by"}</span>
+      <span class="hero-value ${data.projected.net >= 0 ? "" : "value-short"}">${wholeMoney(data.projected.net)}</span>
+      <span class="hero-sub">by December 31, ${data.year}, if your monthly averages hold</span>
+    </div>
+    <div class="table-card"><div class="table-row table-head"><span></span><span>So far</span><span>Projected</span></div>
+      <div class="table-row"><span>Income</span><span>${wholeMoney(data.ytd.income)}</span><span>${wholeMoney(data.projected.income)}</span></div>
+      <div class="table-row"><span>Spending</span><span>${wholeMoney(data.ytd.spending)}</span><span>${wholeMoney(data.projected.spending)}</span></div>
+      <div class="table-row"><span>Kept</span><span>${wholeMoney(data.ytd.net)}</span><span class="${data.projected.net >= 0 ? "amount-in" : "text-danger"}">${wholeMoney(data.projected.net)}</span></div>
+    </div>
+    ${data.partialYear ? `<p class="sheet-copy muted">Your history starts ${shortDate(data.coverageStart)}, so "so far" covers only part of the year.</p>` : ""}
+    <p class="fine-print">A projection from your own averages for the ${data.monthsLeft} months left. An estimate, not a forecast or advice.</p>`;
+};
+
+const reportLivingCosts = () => {
+  const data = livingCosts(derived.insights.months, today());
+  return `${sheetHeader("Monthly Living Costs")}
+    <div class="glass plan-hero" style="--blob-a:var(--accent);--blob-b:#ffd60a">
+      <span class="hero-label">It costs about</span>
+      <span class="hero-value">${wholeMoney(data.monthly)}</span>
+      <span class="hero-sub">a month to cover essentials and debt payments</span>
+    </div>
+    <div class="stat-grid compact">
+      ${stat("3 month runway", wholeMoney(data.monthly * 3), "a common first target")}
+      ${stat("6 month runway", wholeMoney(data.monthly * 6), "a stronger cushion")}
+    </div>
+    ${data.trend.length > 1 ? `<div class="card chart-card">${columnBars({ items: data.trend.map((item) => ({ label: monthLabel(item.key), value: item.total })), highlight: data.trend.length - 1, height: 120 })}</div>` : ""}
+    ${list(data.categories.map((item) => row({ leading: categoryDot(item.name), title: escapeHtml(item.name), trailing: `${wholeMoney(item.monthly)}<small>a month</small>`, action: "category", data: `data-name="${escapeHtml(item.name)}"` })))}
+    <div class="button-stack"><button type="button" class="button button-primary" data-action="new-goal">${ICONS.target}<span>Make Runway a Goal</span></button></div>
+    <p class="fine-print">Average of your last ${plural(data.months, "full month")}.</p>`;
+};
+
+const REPORT_RENDERERS = { categories: reportCategories, incomeExpense: reportIncomeExpense, subscriptions: reportSubscriptions, yearEnd: reportYearEnd, livingCosts: reportLivingCosts };
+
+const openReport = (id) => {
+  if (!derived.insights) return startImport();
+  view.report = id;
+  openSheet(REPORT_RENDERERS[id]());
+};
+
+const shiftMonthKey = (key, offset) => {
+  const [year, month] = key.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + offset, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+};
+
 // ---------- Rendering and navigation ----------
 
 const render = () => {
   renderToday();
+  renderPlan();
   renderInsights();
   renderActivity();
   renderMedals();
   renderSettings();
 };
 
-const TITLES = { today: "Today", insights: "Insights", activity: "Activity", medals: "Medals", settings: "Settings" };
+const TITLES = { today: "Today", plan: "Plan", insights: "Insights", activity: "Activity", medals: "Medals", settings: "Settings" };
 
 const showTab = (tab, { focus = false } = {}) => {
   if (!TITLES[tab]) tab = "today";
   view.tab = tab;
   for (const screen of $$(".screen")) screen.hidden = screen.dataset.screen !== tab;
-  for (const button of $$(".tab")) {
+  for (const button of $$(".tab, .side-item[data-tab]")) {
     const active = button.dataset.tab === tab;
     button.classList.toggle("active", active);
     if (active) button.setAttribute("aria-current", "page");
@@ -1309,6 +1683,44 @@ const ACTIONS = {
     showTab("medals");
   },
   "close-celebration": closeCelebration,
+  "plan-tab": (button) => {
+    view.planTab = button.dataset.planTab;
+    tap();
+    renderPlan();
+  },
+  "go-plan": () => showTab("plan"),
+  budget: (button) => openBudget(button.dataset.category),
+  "edit-budgets": openEditBudgets,
+  "save-budgets": saveBudgets,
+  "use-suggested": () => {
+    state.budgets = suggestBudgets(derived.insights.months, today());
+    commit();
+    showToast(`${plural(Object.keys(state.budgets).length, "budget")} set from your history.`);
+  },
+  "fill-suggested": () => {
+    const suggestions = suggestBudgets(derived.insights.months, today());
+    for (const input of $$("[data-budget]")) if (suggestions[input.dataset.budget]) input.value = suggestions[input.dataset.budget] / 100;
+  },
+  "new-goal": () => openGoalForm(null),
+  "edit-goal": (button) => openGoalForm(button.dataset.id),
+  "goal-name": (button) => {
+    $("#goal-name").value = button.dataset.name;
+  },
+  "save-goal": saveGoal,
+  goal: (button) => openGoal(button.dataset.id),
+  "add-deposit": (button) => addDeposit(button.dataset.id),
+  "delete-goal": (button) => {
+    state.goals = state.goals.filter((goal) => goal.id !== button.dataset.id);
+    closeSheet();
+    commit({ celebrate: false });
+    showToast("Goal deleted.");
+  },
+  report: (button) => openReport(button.dataset.report),
+  "report-month": (button) => {
+    view.reportMonth = button.dataset.month;
+    $("#sheet-content").innerHTML = reportCategories();
+  },
+  settings: () => showTab("settings"),
   theme: (button) => {
     state.settings = { ...state.settings, theme: button.dataset.themeChoice };
     applyTheme();
@@ -1322,11 +1734,10 @@ const ACTIONS = {
   },
   period: (button) => {
     view.period = button.dataset.period;
-    view.selectedSlice = null;
     tap();
     renderInsights();
   },
-  slice: (element) => selectSlice(Number(element.dataset.index)),
+  slice: (element) => selectSlice(element),
   category: (button) => openCategory(button.dataset.name),
   transaction: (button) => openTransaction(button.dataset.id),
   "set-category": (button) => setCategory(button.dataset.id, button.dataset.category),
@@ -1392,7 +1803,7 @@ const ACTIONS = {
 };
 
 document.addEventListener("click", (event) => {
-  const tab = event.target.closest(".tab");
+  const tab = event.target.closest(".tab, .side-item[data-tab]");
   if (tab) {
     tap();
     showTab(tab.dataset.tab);

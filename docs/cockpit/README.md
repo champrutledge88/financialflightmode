@@ -41,13 +41,23 @@ on-device storage**. Server-side storage of financial data remains out of scope.
   through the real file picker and import path.
 - **Financial Flight Mode links:** Flight Scorecard, The Weekly Briefing, Flight Notes, Starter Kit, and X.
   No community destination exists yet, so "Join the Conversation" points to X until Mark decides.
+- **Plan (V1.2):** Budgets with one-tap suggestions from the last three full months (rounded up to $10, fees
+  excluded), a daily limit ("you can spend $X a day"), and On track / Watch / Over status. Bills that land once a
+  month are never paced from a partial month. Goals with deposits, progress, and a projected finish date from the
+  person's own deposit pace, or half of their monthly margin before any deposits exist; labeled as estimates.
+- **Reports library (V1.2):** Spending by Category (month switcher and change vs the prior month), Income vs Expense,
+  Subscription Insights (this year, last year, lifetime within imported history, yearly run rate), Year End
+  Projection (year to date plus monthly averages), and Monthly Living Costs (with 3 and 6 month runway targets).
+- **Executive layout (V1.2):** warm ambient backdrop with glass panels; on screens 1000px and wider a sidebar
+  (sections plus the Reports library), two column dashboards, and centered modal sheets. On iPhone the tab bar is
+  Today, Plan, Insights, Activity, Medals, with Settings behind the gear.
 - **Settings:** accounts, balance and cushion, rules, bank export guide, install help, backup export
   and restore, and erase all.
 
 ## Code map
 
 - `src/cockpit/` pure modules: `csv.js`, `bankFormats.js`, `categorize.js`, `insights.js`, `medals.js`,
-  `store.js`, `sampleData.js`, `dates.js`, `format.js`; UI in `app.js`, `charts.js`, `icons.js`, `cockpit.css`.
+  `store.js`, `sampleData.js`, `dates.js`, `format.js`, `deepInsights.js`, `planning.js`; UI in `app.js`, `charts.js`, `icons.js`, `cockpit.css`.
 - `cockpit.html`, `manifest.webmanifest`, `cockpit-sw.js` (offline cache scoped to `/cockpit`), `assets/app/` icons.
 - Tests: `src/cockpit/cockpit.test.js` (`npm test`), including a check that customer facing copy has no dash characters.
 
@@ -60,3 +70,5 @@ on-device storage**. Server-side storage of financial data remains out of scope.
 - No usage analytics are fired from Cockpit, so product usage is currently **Unknown**. Adding
   privacy-safe events (no financial values) is a founder decision.
 - Name "Cockpit" is a working name pending founder confirmation.
+- Net Worth was considered from the reference designs but deferred: it needs asset and debt balances that
+  CSV transactions do not contain, so it would require manual entry.

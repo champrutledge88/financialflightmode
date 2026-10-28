@@ -10,6 +10,8 @@ export const emptyState = () => ({
   accounts: [],
   transactions: [],
   overrides: {},
+  budgets: {},
+  goals: [],
   activity: { imports: 0, audits: 0, reviews: [], auditDates: [] },
   settings: { balance: null, cushion: 0 },
   medals: [],

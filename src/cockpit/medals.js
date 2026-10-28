@@ -114,6 +114,20 @@ export const MEDALS = Object.freeze([
     tiers: ["1 rule", "5 rules", "15 rules"],
     measure: ({ activity }) => ({ value: activity.rules, thresholds: [1, 5, 15] }),
   },
+  {
+    id: "budgetKeeper",
+    name: "Budget Keeper",
+    description: "Budgets that finished last month at or under plan.",
+    tiers: ["1 budget", "3 budgets", "6 budgets"],
+    measure: ({ activity }) => ({ value: activity.budgetsKept ?? 0, thresholds: [1, 3, 6] }),
+  },
+  {
+    id: "goalGetter",
+    name: "Goal Getter",
+    description: "Progress on your best savings goal.",
+    tiers: ["25%", "50%", "100%"],
+    measure: ({ activity }) => ({ value: Math.round((activity.goalBest ?? 0) * 100), thresholds: [25, 50, 100] }),
+  },
 ]);
 
 export const evaluateMedals = ({ insights, activity }) =>

@@ -308,3 +308,73 @@ test("test CSV round trips through the real import path", async () => {
   assert.equal(result.transactions.length, buildSampleStatement(TODAY).length);
   assert.equal(result.skipped, 0);
 });
+
+test("planning: budgets suggest from history and pace everyday spending only", async () => {
+  const { budgetStatus, budgetsKeptLastMonth, suggestBudgets } = await import("./planning.js");
+  const { state } = mergeImport(emptyState(), { accountName: "Sample", format: { id: "sample", name: "Sample", kind: "checking" }, transactions: buildSampleStatement(TODAY), importedAt: TODAY });
+  const transactions = withCategories(state);
+  const insights = buildInsights({ transactions, today: TODAY });
+
+  const suggestions = suggestBudgets(insights.months, TODAY);
+  assert.equal(suggestions.Housing, 145000);
+  assert.ok(!("Fees and Interest" in suggestions), "fees are never budgeted");
+  assert.ok(!("Saving and Investing" in suggestions));
+  assert.ok(Object.values(suggestions).every((value) => value % 1000 === 0));
+
+  const status = budgetStatus(suggestions, transactions, TODAY);
+  const housing = status.items.find((item) => item.category === "Housing");
+  assert.equal(housing.status, "onTrack", "a paid bill is not flagged as pacing high");
+  assert.equal(status.daysLeft, 8);
+  assert.equal(status.totalRemaining, status.totalBudget - status.totalSpent);
+  for (const item of status.items) assert.equal(item.perDay, Math.max(0, Math.floor(item.remaining / status.daysLeft)));
+
+  const over = budgetStatus({ Coffee: 100 }, transactions, TODAY).items[0];
+  assert.equal(over.status, "over");
+  assert.ok(budgetsKeptLastMonth(suggestions, insights.months, TODAY) >= 1);
+});
+
+test("planning: goal projections use deposits first, then margin, and never promise", async () => {
+  const { goalProjection, goalSaved } = await import("./planning.js");
+  const goal = { target: 100000, targetDate: "2027-04-24", deposits: [{ date: "2026-07-24", amount: 20000 }, { date: "2026-09-24", amount: 20000 }] };
+  assert.equal(goalSaved(goal), 40000);
+  const paced = goalProjection(goal, { monthlyMargin: 50000, today: TODAY });
+  assert.equal(paced.paceSource, "deposits");
+  assert.equal(paced.progress, 0.4);
+  assert.equal(paced.neededMonthly, 10000);
+  assert.ok(paced.eta > TODAY);
+
+  const fresh = goalProjection({ target: 60000, deposits: [] }, { monthlyMargin: 20000, today: TODAY });
+  assert.equal(fresh.paceSource, "margin");
+  assert.equal(fresh.monthlyPace, 10000);
+  assert.equal(fresh.monthsToGo, 6);
+
+  const unknown = goalProjection({ target: 60000, deposits: [] }, { monthlyMargin: 0, today: TODAY });
+  assert.equal(unknown.eta, null);
+  assert.equal(goalProjection({ target: 500, deposits: [{ date: TODAY, amount: 900 }] }, { today: TODAY }).complete, true);
+});
+
+test("reports: category month comparison, living costs, subscriptions, and year end", async () => {
+  const { incomeVsExpense, livingCosts, spendingByCategoryForMonth, subscriptionInsights, yearEndProjection } = await import("./planning.js");
+  const { state } = mergeImport(emptyState(), { accountName: "Sample", format: { id: "sample", name: "Sample", kind: "checking" }, transactions: buildSampleStatement(TODAY), importedAt: TODAY });
+  const transactions = withCategories(state);
+  const insights = buildInsights({ transactions, today: TODAY });
+
+  const september = spendingByCategoryForMonth(transactions, "2026-09");
+  assert.equal(september.categories[0].name, "Housing");
+  assert.equal(september.categories[0].change, 0);
+  assert.ok(Math.abs(september.categories.reduce((sum, item) => sum + item.share, 0) - 1) < 1e-9);
+
+  const living = livingCosts(insights.months, TODAY);
+  assert.ok(living.categories.some((item) => item.name === "Housing" && item.monthly === 145000));
+  assert.ok(!living.categories.some((item) => ["Dining", "Coffee", "Shopping"].includes(item.name)));
+
+  const subs = subscriptionInsights(transactions, insights.subscriptions, TODAY);
+  assert.equal(subs.lastYear, 0);
+  assert.ok(Object.is(subs.rows[0].lastYear, 0), "no negative zero in the report");
+  assert.equal(subs.lifetime, subs.thisYear);
+
+  const year = yearEndProjection(transactions, insights.averages, TODAY);
+  assert.equal(year.partialYear, true);
+  assert.ok(year.projected.income > year.ytd.income);
+  assert.equal(incomeVsExpense(insights.months).length, insights.months.length);
+});
