@@ -3,6 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:browser": "node scripts/verify-scorecard.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "acorn": "^8.19.0"
   }
 }

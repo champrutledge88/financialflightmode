@@ -1,0 +1,102 @@
+{
+  "checks": [
+    {
+      "width": 390,
+      "score": 0,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 390,
+      "score": 39,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 390,
+      "score": 40,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 390,
+      "score": 69,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 390,
+      "score": 70,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 390,
+      "score": 89,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 390,
+      "score": 90,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 390,
+      "score": 100,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 1280,
+      "score": 0,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 1280,
+      "score": 39,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 1280,
+      "score": 40,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 1280,
+      "score": 69,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 1280,
+      "score": 70,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 1280,
+      "score": 89,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 1280,
+      "score": 90,
+      "centerAligned": true,
+      "circular": true
+    },
+    {
+      "width": 1280,
+      "score": 100,
+      "centerAligned": true,
+      "circular": true
+    }
+  ],
+  "revealDot": true,
+  "errors": []
+}
