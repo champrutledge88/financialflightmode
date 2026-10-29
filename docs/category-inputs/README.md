@@ -25,3 +25,7 @@ With income 6000, extra debt 250, debt balance 18120, emergency cash 4000, goal 
 73 unit tests pass, including blank/zero/negative/cents, classification, label escaping and unchanged 71 fixture. Existing flow/privacy regression passes at 390/760/1280 with scores 25,71,100; prior export/edit/no-JS and release-readability tests pass using the new rows. Dedicated feature browser checks at 390/1280 cover each total, add/remove, all-removed deliberate zero, named blank errors, keyboard, Back/edit, single savings input, HYSA exclusion and unchanged emergency balance, download breakdown and absence of private account/category labels from captured requests. Full synthetic itemized print output was rendered on 3 legible pages and visually inspected. No physical-device/VoiceOver or manual Safari print validation is claimed.
 
 One final local browser run encountered a startup timeout in its last fresh context; readiness was made explicit and the full suite rerun. Inspect verification.json for the current completed run. No production source or scoring engine was changed to accommodate tests.
+
+## Preview tutorial update
+
+The completed matching v3 tutorial and its 39-cue captions were subsequently integrated into this draft preview. See ../tutorial-v3/README.md for hashes, validation and the asset-only rollback. Production keeps v2 until the expanded UI and matching tutorial are reviewed.

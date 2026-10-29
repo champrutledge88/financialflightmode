@@ -18,13 +18,15 @@ try {
     await page.locator('#cockpit-walkthrough > summary').click();
     const video=page.locator('#cockpit-walkthrough-video');
     assert.equal(await video.isVisible(),true);
+    assert.equal(await video.evaluate(v=>v.autoplay),false);
+    assert.equal(await video.evaluate(v=>v.paused),true);
     assert.doesNotMatch(await page.locator('#cockpit-walkthrough').innerText(),/[-–—]/);
     await video.evaluate(v=>{v.muted=true;return v.play();});
     await page.waitForFunction(()=>document.querySelector('#cockpit-walkthrough-video').currentTime>.1);
     await video.evaluate(v=>new Promise(resolve=>{v.pause();v.addEventListener('seeked',resolve,{once:true});v.currentTime=2.9;}));
     await page.waitForFunction(()=>{const v=document.querySelector('#cockpit-walkthrough-video');return v.readyState>=2&&v.textTracks[0]?.cues?.length>0;});
     const metadata=await video.evaluate(v=>({duration:v.duration,width:v.videoWidth,height:v.videoHeight,cues:v.textTracks[0].cues.length,captions:v.textTracks[0].mode,preload:v.preload}));
-    assert.equal(metadata.duration,134);assert.equal(metadata.width,1920);assert.equal(metadata.height,1080);assert.equal(metadata.cues,38);assert.equal(metadata.captions,'showing');assert.equal(metadata.preload,'none');
+    assert.equal(metadata.duration,134);assert.equal(metadata.width,1920);assert.equal(metadata.height,1080);assert.equal(metadata.cues,39);assert.equal(metadata.captions,'showing');assert.equal(metadata.preload,'none');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     await video.evaluate(v=>v.play());
     await page.waitForFunction(()=>document.querySelector('#cockpit-walkthrough-video').textTracks[0].activeCues?.length>0);
