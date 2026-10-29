@@ -14,7 +14,7 @@ try {
     await page.goto(origin,{waitUntil:'domcontentloaded'});
     await page.locator('[data-start]').waitFor();
     const startsOpen=await page.locator('#cockpit-walkthrough').evaluate(node=>node.open);
-    assert.equal(startsOpen, new URL(origin).pathname !== '/ffm-scorecard.html');
+    assert.equal(startsOpen, true, 'Landing walkthrough is visible on arrival');
     assert.equal(requests.some(url=>url.includes('.mp4')),false,'No video download before the visitor presses play');
     if (!startsOpen) await page.locator('#cockpit-walkthrough > summary').click();
     const video=page.locator('#cockpit-walkthrough-video');
