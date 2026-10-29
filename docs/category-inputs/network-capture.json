@@ -1,0 +1,148 @@
+{
+  "requests": [
+    "https://www.google-analytics.com/g/collect?v=2&tid=G-JXVRBKSSMH&gtm=45je6as0h1v9258612267za200zd9258612267xf1&_p=1793291681456&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AAAAAAQ&cid=1938688415.1793291682&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=1280x1080&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.4%7CHeadlessChrome%3B156.0.8078.4&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&sid=1793291681&sct=1&seg=0&dl=http%3A%2F%2F127.0.0.1%2F&dt=Financial%20Flight%20Mode%20%7C%20Flight%20Plan%20Budget%20Scorecard&_tu=AAg&_s=2&tfd=577 en=scorecard_start&_ee=1&_et=50\r\nen=scorecard_step_view&_ee=1&epn.step_number=1&ep.step_name=monthly_income&_et=5",
+    "https://www.google-analytics.com/g/collect?v=2&tid=G-JXVRBKSSMH&gtm=45je6as0h1v9258612267za200zd9258612267xf1&_p=1793291681456&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AEEAAAQ&ae=a&cid=1938688415.1793291682&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=1280x1080&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.4%7CHeadlessChrome%3B156.0.8078.4&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&_s=3&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&sid=1793291681&sct=1&seg=0&dl=http%3A%2F%2F127.0.0.1%2F&dt=Financial%20Flight%20Mode%20%7C%20Flight%20Plan%20Budget%20Scorecard&_tu=AAg&en=form_start&ep.form_id=score-form&ep.form_destination=http%3A%2F%2F127.0.0.1%3A4173%2F%23scorecard&epn.form_length=93&ep.first_field_id=income&ep.first_field_name=income&ep.first_field_type=text&epn.first_field_position=1&_et=156&tfd=585 ",
+    "https://www.google-analytics.com/g/collect?v=2&tid=G-JXVRBKSSMH&gtm=45je6as0h1v9258612267za200zd9258612267xf1&_p=1793291681456&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AAAAAAQ&cid=1938688415.1793291682&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=1280x1080&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.4%7CHeadlessChrome%3B156.0.8078.4&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&sid=1793291681&sct=1&seg=0&dl=http%3A%2F%2F127.0.0.1%2F&dt=Financial%20Flight%20Mode%20%7C%20Flight%20Plan%20Budget%20Scorecard&_tu=AAg&_s=4&tfd=1710 en=scorecard_step_view&_ee=1&epn.step_number=2&ep.step_name=monthly_needs&_et=7\r\nen=scorecard_step_view&_ee=1&epn.step_number=3&ep.step_name=monthly_wants&_et=390\r\nen=scorecard_step_view&_ee=1&epn.step_number=4&ep.step_name=monthly_saving&_et=166\r\nen=scorecard_step_view&_ee=1&epn.step_number=5&ep.step_name=extra_payment&_et=46\r\nen=scorecard_step_view&_ee=1&epn.step_number=6&ep.step_name=total_balance&_et=48\r\nen=scorecard_step_view&_ee=1&epn.step_number=7&ep.step_name=emergency_runway&_et=49\r\nen=scorecard_step_view&_ee=1&epn.step_number=8&ep.step_name=long_term&_et=49\r\nen=scorecard_step_view&_ee=1&epn.step_number=9&ep.step_name=current_pressure&_et=248",
+    "https://www.google-analytics.com/g/collect?v=2&tid=G-JXVRBKSSMH&gtm=45je6as0h1v9258612267za200zd9258612267xf1&_p=1793291681456&gcd=13l3l3l3l3l1&npa=1&dma=0&_eu=AAAAAAQ&cid=1938688415.1793291682&frm=0&ngs=1&pscdl=noapi&rcb=2&sr=1280x1080&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.4%7CHeadlessChrome%3B156.0.8078.4&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&_s=5&tag_exp=115616986~115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&sid=1793291681&sct=1&seg=0&dl=http%3A%2F%2F127.0.0.1%2F&dt=Financial%20Flight%20Mode%20%7C%20Flight%20Plan%20Budget%20Scorecard&_tu=AAg&en=scorecard_complete&_c=1&_ee=1&_et=114&tfd=1710 "
+  ],
+  "events": [
+    {
+      "name": "scorecard_start",
+      "params": {
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 1,
+        "step_name": "monthly_income",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 2,
+        "step_name": "monthly_needs",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 3,
+        "step_name": "monthly_wants",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 4,
+        "step_name": "monthly_saving",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 5,
+        "step_name": "extra_payment",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 6,
+        "step_name": "total_balance",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 7,
+        "step_name": "emergency_runway",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 8,
+        "step_name": "long_term",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 9,
+        "step_name": "current_pressure",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_complete",
+      "params": {
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "briefing_view",
+      "params": {
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "report_view",
+      "params": {
+        "stage_key": "cruise",
+        "score_band": "60-79",
+        "is_return": false,
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 1,
+        "step_name": "monthly_income",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 2,
+        "step_name": "monthly_needs",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 3,
+        "step_name": "monthly_wants",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_back",
+      "params": {
+        "step_number": 3,
+        "send_to": "G-JXVRBKSSMH"
+      }
+    },
+    {
+      "name": "scorecard_step_view",
+      "params": {
+        "step_number": 2,
+        "step_name": "monthly_needs",
+        "send_to": "G-JXVRBKSSMH"
+      }
+    }
+  ]
+}

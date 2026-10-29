@@ -1,5 +1,6 @@
+import { createCategoryEditor } from './categoryInputs.js?v=categories-1';
 import { parseCurrency, formatCurrencyInput, paycheckToMonthly, moneyError } from './scorecardFlow.js?v=final-review-1';
-import { money } from './flightReport.js?v=release-1';
+import { money } from './flightReport.js?v=categories-1';
 import { trackEvent } from './analytics.js?v=ga4-1';
 
 const steps = [
@@ -10,7 +11,7 @@ const steps = [
   { name: 'extra_payment', question: 'How much extra do you pay toward debt each month?', helper: 'Only payments above the minimum. Your minimum payments belong in monthly needs.', fields: ['extraDebtPayment'], zero: 'None', example: 'For example, count only the extra you pay above the amount due.' },
   { name: 'total_balance', question: 'Total debt you owe today, not counting your mortgage?', fields: ['totalDebtBalance'], zero: 'No debt', helper: 'Include car loans, credit cards, student loans, personal loans, and medical bills. Leave out your mortgage.', example: 'For example, add your latest balances for loans and cards outside your mortgage.' },
   { name: 'emergency_runway', question: 'How much emergency cash do you have today?', helper: 'Enter the current cash balance and your savings goal. Leave investments out. Your goal is a balance, not a monthly transfer.', fields: ['emergencyFundSaved', 'emergencyFundGoal'], example: 'For example, count cash you could use for an unexpected bill. Your goal can be three months of needs.' },
-  { name: 'long_term', question: 'Invested so far for the long term?', fields: ['investmentsCurrentValue'], zero: 'None yet', helper: 'Current account balances, including retirement accounts. This is not a monthly contribution.', example: 'For example, add your retirement account and other investment balances.' },
+  { name: 'long_term', question: 'Invested so far for the long term?', fields: ['investmentsCurrentValue'], zero: 'None yet', helper: 'List current invested balances by account. Roth and brokerage investments count. Cash and high yield savings are listed separately, not scored as investments.', example: 'For example, add your retirement account and other investment balances.' },
   { name: 'current_pressure', question: 'What feels most pressing right now?', helper: 'Your focus can guide your plan when supported by your numbers. It does not change your score.', fields: ['immediatePressure', 'shortTermObjective'] },
 ];
 const labels = { income: 'Monthly take home income', needs: 'Monthly needs', wants: 'Monthly wants', savings: 'Monthly cash savings contributions', extraDebtPayment: 'Monthly extra debt payment', totalDebtBalance: 'Total debt balance', emergencyFundSaved: 'Emergency fund saved', emergencyFundGoal: 'Emergency fund goal', investmentsCurrentValue: 'Invested so far' };
@@ -19,8 +20,10 @@ export function enhanceScorecard(form, { onStart }) {
   const originalLabels = Object.fromEntries([...form.querySelectorAll('label')].map(label => [label.htmlFor, label]));
   const error = form.querySelector('#form-error');
   form.classList.add('guided-form'); form.noValidate = true;
-  form.innerHTML = `<div class="flow-start"><p class="eyebrow">Your first checkpoint</p><h3 tabindex="-1">Run your Pre Flight check.</h3><p>About 90 seconds. Use estimates if needed. No financial answers stored. Education only.</p><button class="primary-button" type="button" data-start>Start</button></div><div class="flow-journey" hidden><div class="flow-top"><p class="flow-progress" aria-live="polite"></p><p class="cash-left" hidden aria-live="polite"></p></div><progress max="9" value="1" aria-label="Scorecard progress"></progress><div class="flow-steps"></div><div class="flow-nav"><button type="button" data-back>Back</button><button type="button" class="primary-button" data-next>Continue</button></div><p class="privacy-note">Your financial answers stay in this browser. Usage analytics include your stage and a broad score range. <a href="/privacy.html">Privacy details</a>. Education only.</p></div>`;
+  form.innerHTML = `<div class="flow-start"><p class="eyebrow">Your first checkpoint</p><h3 tabindex="-1">Run your Pre Flight check.</h3><p>9 steps. Use estimates if needed. No financial answers stored. Education only.</p><button class="primary-button" type="button" data-start>Start</button></div><div class="flow-journey" hidden><div class="flow-top"><p class="flow-progress" aria-live="polite"></p><p class="cash-left" hidden aria-live="polite"></p></div><progress max="9" value="1" aria-label="Scorecard progress"></progress><div class="flow-steps"></div><div class="flow-nav"><button type="button" data-back>Back</button><button type="button" class="primary-button" data-next>Continue</button></div><p class="privacy-note">Your financial answers stay in this browser. Usage analytics include your stage and a broad score range. <a href="/privacy.html">Privacy details</a>. Education only.</p></div>`;
   const journey = form.querySelector('.flow-journey');
+  const categoryEditors = {};
+  const categoryFields = ['needs','wants','investmentsCurrentValue'];
   const panels = steps.map((step, index) => {
     const panel = document.createElement('section'); panel.className = 'flow-step'; panel.hidden = true;
     panel.innerHTML = `<h3 tabindex="-1" id="step-heading-${index + 1}">${step.question}</h3>${step.helper ? `<p class="flow-helper">${step.helper}</p>` : ''}`;
@@ -55,6 +58,15 @@ export function enhanceScorecard(form, { onStart }) {
         panel.append(group);
       }
       panel.append(label);
+      if (categoryFields.includes(field)) {
+        label.hidden = true; label.querySelector('input').type = 'hidden';
+        categoryEditors[field] = createCategoryEditor(field, {
+          aggregateInput: label.querySelector('input'),
+          onChange: () => { error.textContent = ''; updateGauge(); },
+          onEnter: () => form.querySelector('[data-next]').focus(),
+        });
+        panel.append(categoryEditors[field].root);
+      }
     });
     if (index === 0) {
       const pay = document.createElement('div'); pay.className = 'paycheck-controls';
@@ -63,7 +75,7 @@ export function enhanceScorecard(form, { onStart }) {
     }
     if (step.zero) {
       const chip = document.createElement('button'); chip.type = 'button'; chip.className = 'zero-chip'; chip.textContent = step.zero;
-      chip.onclick = () => { form.elements[step.fields[0]].value = '0'; next(); }; panel.append(chip);
+      chip.onclick = () => { const field=step.fields[0]; if(categoryEditors[field]) categoryEditors[field].zero(); else form.elements[field].value='0'; next(); }; panel.append(chip);
     }
     if (index === 6) {
       const chip = document.createElement('button'); chip.type = 'button'; chip.dataset.runwayGoal = ''; chip.onclick = () => { form.elements.emergencyFundGoal.value = formatCurrencyInput(String(parseCurrency(form.elements.needs.value) * 3)); next(); }; panel.append(chip);
@@ -85,6 +97,8 @@ export function enhanceScorecard(form, { onStart }) {
   const updateGauge = () => {
     const remaining = monthlyValue() - ['needs', 'wants', 'savings', 'extraDebtPayment'].reduce((sum, field) => sum + (parseCurrency(form.elements[field].value) || 0), 0);
     const node = form.querySelector('.cash-left'); node.hidden = current < 1;
+    const invalidCategory = ['needs','wants'].find(field => categoryEditors[field].summary().hasEntered && !categoryEditors[field].summary().valid);
+    if (invalidCategory) { node.textContent = 'Check your category entries to update cash left.'; return; }
     node.textContent = remaining < 0 ? `Cash left so far: over by ${money(remaining)}` : `Cash left so far: ${money(remaining)}`;
     const goal = form.querySelector('[data-runway-goal]'); goal.textContent = `Use 3 months (${money((parseCurrency(form.elements.needs.value) || 0) * 3)})`;
   };
@@ -98,6 +112,7 @@ export function enhanceScorecard(form, { onStart }) {
   };
   const valid = () => {
     for (const field of steps[current].fields.filter(field => labels[field])) {
+      if (categoryEditors[field]) { const validation=categoryEditors[field].validate(); if(validation!==true){error.textContent=validation.message;validation.focus();return false;} continue; }
       const input = form.elements[field]; const message = moneyError(parseCurrency(input.value), field);
       if (message) { error.textContent = message; input.setAttribute('aria-invalid', 'true'); input.focus(); return false; }
     }
@@ -136,6 +151,7 @@ export function enhanceScorecard(form, { onStart }) {
   });
   return {
     getValues: () => Object.fromEntries(Object.keys(labels).map(field => [field, field === 'income' ? monthlyValue() : parseCurrency(form.elements[field].value)])),
+    getBreakdown: () => ({ needs: categoryEditors.needs.summary().details || [], wants: categoryEditors.wants.summary().details || [], investments: categoryEditors.investmentsCurrentValue.summary().details || [], cashAccounts: categoryEditors.investmentsCurrentValue.summary().cashAccounts || [] }),
     complete: () => { completed = true; },
     edit: () => { journey.hidden = false; form.querySelector('.flow-start').hidden = true; completed = false; show(0); form.scrollIntoView({block:'start'}); },
   };

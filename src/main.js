@@ -1,5 +1,5 @@
-import { enhanceScorecard } from "./guidedScorecard.js?v=release-1";
-import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=release-1";
+import { enhanceScorecard } from "./guidedScorecard.js?v=categories-1";
+import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=categories-1";
 import { moneyError } from "./scorecardFlow.js?v=final-review-1";
 import { calculateFlightScore } from "./flightScoreCalculator.js?v=stage-order-1";
 import { trackEvent } from "./analytics.js?v=ga4-1";
@@ -149,6 +149,7 @@ scoreForm.addEventListener("submit", (event) => {
   guidedFlow?.complete();
   revealFlightReport(result, {
     animateScore,
+    inputBreakdown: guidedFlow.getBreakdown(),
     onComplete: () => {
 
       if (!hasTrackedBriefingView) {

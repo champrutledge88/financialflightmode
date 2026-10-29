@@ -1,3 +1,4 @@
+import { fillMoney, moneyInput } from './scorecard-test-helpers.mjs';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
@@ -10,7 +11,7 @@ try{
   const colors=await p.locator('.header-cta').evaluate(n=>{const c=getComputedStyle(n);return [c.color,c.backgroundColor].map(s=>s.match(/[\d.]+/g).map(Number));});const l=colors.map(luminance);const ratio=(Math.max(...l)+.05)/(Math.min(...l)+.05);assert.ok(ratio>=4.5);
   await p.locator('[data-start]').click();assert.match(await p.locator('.privacy-note').innerText(),/stage and a broad score range/);
   const names=['income','needs','wants','savings','extraDebtPayment','totalDebtBalance','emergencyFundSaved','emergencyFundGoal','investmentsCurrentValue'];const v=[6000,4260,1200,300,250,6000,200,2000,0];
-  for(let i=0;i<names.length;i++){await p.locator('#'+names[i]).fill(String(v[i]));if(i!==6)await p.locator('[data-next]').click();}
+  for(let i=0;i<names.length;i++){await fillMoney(p,names[i],v[i]);if(i!==6)await p.locator('[data-next]').click();}
   await p.getByRole('button',{name:'Stable',exact:true}).click();await p.locator('[data-next]').click();await p.locator('[data-save-report]').waitFor();
   assert.match(await p.locator('.one-move h3').textContent(),/Find \$10 to close the gap/);
   assert.equal(await p.locator('#report-checkpoint').evaluate(n=>n.previousElementSibling.id),'report-next-move');

@@ -1,5 +1,5 @@
-import { buildSnapshotHTML, snapshotFilename } from './flightSnapshot.js?v=final-review-1';
-import { buildFlightReport, money } from './flightReport.js?v=release-1';
+import { buildSnapshotHTML, snapshotFilename } from './flightSnapshot.js?v=categories-1';
+import { buildFlightReport, money } from './flightReport.js?v=categories-1';
 import { trackEvent, getScoreBand } from './analytics.js?v=ga4-1';
 
 const escape = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -7,9 +7,9 @@ const icon = state => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" s
 const stages = [['preflight', 'Pre Flight', '0 to 39'], ['turbulence', 'Turbulence', '40 to 69'], ['cruise', 'Cruise Control', '70 to 89'], ['flight', 'Flight Mode', '90 to 100']];
 let activeReveal = null;
 
-export function renderFlightReport(result, { example = false } = {}) {
+export function renderFlightReport(result, { example = false, inputBreakdown = null } = {}) {
   const form = document.querySelector('#score-form');
-  const report = buildFlightReport(result, { flightDate: new Date(), immediatePressure: example ? 'Stable' : form.elements.immediatePressure.value, shortTermObjective: example ? '' : form.elements.shortTermObjective.value });
+  const report = buildFlightReport(result, { flightDate: new Date(), immediatePressure: example ? 'Stable' : form.elements.immediatePressure.value, shortTermObjective: example ? '' : form.elements.shortTermObjective.value, inputBreakdown });
   if (example) report.focus = [];
   let node = document.querySelector('#flight-report');
   if (!node) {
@@ -34,6 +34,7 @@ export function renderFlightReport(result, { example = false } = {}) {
     <article class="report-card"><h3>Follow through on this priority</h3><p><strong>Do now:</strong> ${escape(report.plan.doNow)}</p><p><strong>This payday:</strong> ${escape(report.plan.thisPayday)}</p><p><strong>This month:</strong> ${escape(report.plan.thisMonth)}</p><p><strong>Your 30 day mission:</strong> ${escape(report.plan.thirtyDayMission)}</p><p>${escape(report.plan.flagContextNote)}</p></article>
     <article class="report-card"><h3>Your input snapshot</h3><p>US dollars. Monthly amounts are flows. Current balances and your emergency goal are totals.</p>${report.focus.length ? `<p>Your focus: ${report.focus.map(escape).join(' · ')}. Your focus can guide the plan when supported by your numbers. It does not change your score.</p>` : ''}<dl class="report-readouts">${report.inputs.map(r => `<div><dt>${escape(r.label)}</dt><dd>${money(r.amount)}</dd></div>`).join('')}</dl></article>
 
+    ${report.breakdown ? `<article class="report-card"><h3>Your categories and accounts</h3>${[['needs','Monthly needs'],['wants','Monthly wants'],['investments','Current investments'],['cashAccounts','Cash accounts for reference only']].map(([key,title]) => report.breakdown[key].length ? `<h4>${title}</h4><dl class="report-readouts">${report.breakdown[key].map(row=>`<div><dt>${escape(row.label)}</dt><dd>${money(row.amount)}</dd></div>`).join('')}</dl>` : '').join('')}<p>Cash accounts listed here are excluded from investing and are not added to your Step 7 emergency balance.</p></article>` : ''}
     <p class="report-footer">Education only. This score is a planning signal. Your numbers were not stored.</p>`;
   if (!example) {
     node.querySelector('[data-save-report]').onclick = () => {
@@ -52,9 +53,9 @@ export function renderFlightReport(result, { example = false } = {}) {
   return node;
 }
 
-export function revealFlightReport(result, { animateScore, onComplete }) {
+export function revealFlightReport(result, { animateScore, onComplete, inputBreakdown = null }) {
   activeReveal?.();
-  const node = renderFlightReport(result);
+  const node = renderFlightReport(result, { inputBreakdown });
   node.scrollIntoView({ behavior: 'instant', block: 'start' });
   const finish = (skipped = false) => {
     if (done) return;
