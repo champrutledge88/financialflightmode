@@ -13,9 +13,10 @@ try {
     page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>errors.push(e.message));
     await page.goto(origin,{waitUntil:'domcontentloaded'});
     await page.locator('[data-start]').waitFor();
-    assert.equal(await page.locator('#cockpit-walkthrough').getAttribute('open'),null);
+    const startsOpen=await page.locator('#cockpit-walkthrough').evaluate(node=>node.open);
+    assert.equal(startsOpen, new URL(origin).pathname !== '/ffm-scorecard.html');
     assert.equal(requests.some(url=>url.includes('.mp4')),false,'No video download before the visitor presses play');
-    await page.locator('#cockpit-walkthrough > summary').click();
+    if (!startsOpen) await page.locator('#cockpit-walkthrough > summary').click();
     const video=page.locator('#cockpit-walkthrough-video');
     assert.equal(await video.isVisible(),true);
     assert.equal(await video.evaluate(v=>v.autoplay),false);

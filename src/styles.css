@@ -2207,3 +2207,17 @@ h1 span {
 .category-row > label.category-row-amount { grid-column:1; }
 .category-row .remove-category { grid-column:2; align-self:end; min-height:48px; padding:8px; margin:0 0 12px; font-size:24px; }
 .category-editor:not([data-field="investmentsCurrentValue"]) [data-row-amount-label] { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+/* Landing walkthrough stays visible and hands off directly to the cockpit. */
+.walkthrough-section { max-width: 1064px; margin: 0 auto; padding: 48px 32px 0; }
+.walkthrough-section .cockpit-walkthrough { max-width: none; margin-bottom: 0; }
+.walkthrough-section + .scorecard-shell { padding-top: 48px; }
+@media (max-width: 759px) {
+  .walkthrough-section { padding: 32px 18px 0; }
+  .walkthrough-section + .scorecard-shell { padding-top: 32px; }
+}
+
+@media (max-width: 759px) {
+  .landing-header + main .hero-copy { min-width: 0; }
+  .landing-header + main h1 { font-size: clamp(2.6rem, 10vw, 4.6rem); }
+}
