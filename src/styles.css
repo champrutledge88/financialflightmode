@@ -2121,8 +2121,7 @@ h1 span {
 .flight-check strong { grid-column: 2; }
 .flight-check.yes svg { color: #8bdc65; } .flight-check.partial svg { color: #ffc400; } .flight-check.no svg { color: #ff3b20; }
 .flight-track { height: 4px; background: #777; position: relative; margin: 48px 16px 26px; }
-.plane-marker { position: absolute; width: 32px; top: -16px; transform: translateX(-50%); color: #e95c03; }
-.plane-marker svg { width: 32px; height: 32px; }
+.score-position-marker { position: absolute; width: 14px; height: 14px; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; background: #e95c03; border: 2px solid #1a1a1a; box-shadow: 0 0 0 1px rgba(255,255,255,.65); }
 .flight-stages { display: grid; grid-template-columns: 40fr 30fr 20fr 10fr; gap: 8px; }
 .flight-stages > div { padding: 10px 4px; border-top: 3px solid #555; font-size: 13px; }
 .flight-stages strong, .flight-stages span { display: block; }
@@ -2150,9 +2149,9 @@ h1 span {
 .reveal-names span { opacity: .25; padding: 8px; border: 1px solid #555; border-radius: 6px; }.reveal-names .on { opacity: 1; border-color: #e95c03; }
 .reveal-gauge { color: black; }
 .reveal-stage { opacity: 0; transform: scale(.8); font-size: 28px; }.stage-locked .reveal-stage { opacity: 1; transform: scale(1); transition: .25s; color: #e95c03; }
-.reveal-path { height: 4px; background: #777; margin: 40px 16px; position: relative; }.reveal-path span { position: absolute; width: 32px; top: -16px; left: 0; transition: left .5s; color: #e95c03; }
+.reveal-path { height: 4px; background: #777; margin: 40px 16px; position: relative; }.reveal-path .score-position-marker { left: 0; transition: left .5s; }
 .reveal-finishing { background: transparent; pointer-events: none; align-items: start; padding-top: 8px; }.reveal-finishing .reveal-content > :not(.reveal-skip) { visibility: hidden; }.reveal-finishing .reveal-skip { pointer-events: auto; background: #050505; }
-.revealing .report-stage, .revealing .plane-marker { opacity: 0; }.revealing.reveal-tiles .report-stage, .revealing.reveal-tiles .plane-marker { opacity: 1; }
+.revealing .report-stage, .revealing .score-position-marker { opacity: 0; }.revealing.reveal-tiles .report-stage, .revealing.reveal-tiles .score-position-marker { opacity: 1; }
 .revealing .instrument { opacity: .15; }.reveal-tiles .instrument { animation: tile-fill .14s forwards; animation-delay: calc(var(--order) * .1s); }
 .revealing .one-move { opacity: 0; transform: translateY(24px); }.reveal-tiles .one-move { animation: move-up .3s .5s forwards; }
 .reveal-tiles .warning-lights.has-warnings h3::before { animation: warning-blink .4s 2; }
