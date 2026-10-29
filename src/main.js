@@ -1,16 +1,20 @@
-import { enhanceScorecard } from "./guidedScorecard.js?v=phase2-1";
-import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=phase2-1";
-import { moneyError } from "./scorecardFlow.js?v=phase2-1";
-import { calculateFlightScore, getRelativeCategoryScores } from "./flightScoreCalculator.js?v=stage-order-1";
-import { getScoreBand, trackEvent } from "./analytics.js?v=ga4-1";
-import { generatePersonalizedFlightPlan } from "./personalizedFlightPlan.js?v=w1-1";
+import { enhanceScorecard } from "./guidedScorecard.js?v=final-review-1";
+import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=final-review-1";
+import { moneyError } from "./scorecardFlow.js?v=final-review-1";
+import { calculateFlightScore } from "./flightScoreCalculator.js?v=stage-order-1";
+import { trackEvent } from "./analytics.js?v=ga4-1";
 
 const MAILERLITE_ACCOUNT_ID = "2411474";
 const MAILERLITE_FORM_ID = "189897889621738735";
 const MAILERLITE_ENDPOINT = `https://assets.mailerlite.com/jsonp/${MAILERLITE_ACCOUNT_ID}/forms/${MAILERLITE_FORM_ID}/subscribe`;
 const THANK_YOU_URL = "/thank-you.html";
 
-const scoreForm = document.querySelector("#score-form");
+// Financial inputs have no form owner in static HTML. Create a form only after JS loads.
+const inputTemplate = document.querySelector("#score-inputs");
+const scoreForm = document.createElement("form");
+scoreForm.id = "score-form"; scoreForm.className = inputTemplate.className;
+scoreForm.append(...inputTemplate.childNodes); inputTemplate.replaceWith(scoreForm);
+scoreForm.addEventListener("submit", event => event.preventDefault());
 const leadForm = document.querySelector("#lead-form");
 const errorNode = document.querySelector("#form-error");
 const leadStatus = document.querySelector("#leadStatus");
@@ -37,23 +41,6 @@ const trackScorecardStart = () => {
   trackEvent("scorecard_start");
 };
 
-const currency = new Intl.NumberFormat("en-US", {
-  currency: "USD",
-  maximumFractionDigits: 0,
-  style: "currency",
-});
-
-const percent = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 1,
-  minimumFractionDigits: 1,
-  style: "percent",
-});
-
-const wholePercent = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-  style: "percent",
-});
-
 let guidedFlow;
 const getInputValues = () => guidedFlow ? guidedFlow.getValues() :
   fields.reduce((values, field) => {
@@ -61,25 +48,7 @@ const getInputValues = () => guidedFlow ? guidedFlow.getValues() :
     return values;
   }, {});
 
-const createDerivedContext = (result) =>
-  Object.freeze({
-    score: result.score,
-    stageKey: result.stage.key,
-    stageName: result.stage.name,
-    relativeScores: getRelativeCategoryScores(result.categoryScores),
-    pressureMetrics: Object.freeze({
-      cashRemaining: result.metrics.cashRemaining,
-      savingsRate: result.metrics.savingsRate,
-      emergencyFundLevel: result.metrics.emergencyFundLevel,
-    }),
-  });
-
-const setMetricTone = (node, tone) => {
-  node.style.color =
-    tone === "orange" ? "var(--orange)" : tone === "red" ? "var(--red)" : "var(--green)";
-};
-
-const animateScore = (start, end, scoreValue = document.querySelector("#scoreValue"), scoreRing = document.querySelector("#scoreRing"), duration = 520) => {
+const animateScore = (start, end, scoreValue, scoreRing, duration = 520) => {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
     scoreValue.textContent = end; scoreRing.style.setProperty("--score", end); return () => {};
   }
@@ -98,81 +67,6 @@ const animateScore = (start, end, scoreValue = document.querySelector("#scoreVal
 
   frame = requestAnimationFrame(tick);
   return () => cancelAnimationFrame(frame);
-};
-
-const renderResults = (result, shouldScroll = false) => {
-  const previousScore = Number(document.querySelector("#scoreValue").textContent) || 0;
-  const cashNode = document.querySelector("#cashRemaining");
-  const savingsNode = document.querySelector("#savingsRate");
-  const debtNode = document.querySelector("#debtToIncome");
-  const emergencyNode = document.querySelector("#emergencyFundLevel");
-  const investmentNode = document.querySelector("#investmentStatus");
-
-  cashNode.textContent = currency.format(result.metrics.cashRemaining);
-  savingsNode.textContent = percent.format(result.metrics.savingsRate);
-  debtNode.textContent = `${result.metrics.debtToIncome.toFixed(2)}x`;
-  emergencyNode.textContent = wholePercent.format(result.metrics.emergencyFundLevel);
-  investmentNode.textContent = result.metrics.investmentStatus;
-
-  setMetricTone(cashNode, result.metrics.cashRemaining < 0 ? "red" : "green");
-  setMetricTone(savingsNode, result.metrics.savingsRate >= 0.05 ? "green" : "orange");
-  setMetricTone(debtNode, result.metrics.debtToIncome > 2 ? "orange" : "green");
-  setMetricTone(emergencyNode, result.metrics.emergencyFundLevel >= 0.25 ? "green" : "orange");
-  setMetricTone(investmentNode, result.metrics.investmentStatus === "No Fuel" ? "orange" : "green");
-
-  document.querySelector("#stageName").textContent = result.stage.name;
-  document.querySelector("#stageMessage").textContent = result.stage.message;
-  const stageAlertNode = document.querySelector("#stageAlert");
-  if (stageAlertNode) {
-    const alert = result.briefing.priorityAlert;
-    stageAlertNode.hidden = !alert;
-    stageAlertNode.textContent = alert ? `Warning light: ${alert.label}. ${alert.message}` : "";
-  }
-  document.querySelector("#briefingStage").textContent = result.briefing.stage;
-  document.querySelector("#briefingMessage").textContent = result.briefing.message;
-  document.querySelector("#strongestSignal").textContent = result.briefing.strongestSignal;
-  document.querySelector("#warningLight").textContent = result.briefing.warningLight;
-  document.querySelector("#sevenDayAction").textContent = result.briefing.sevenDayAction;
-  document.querySelector("#starterSection").textContent = result.briefing.starterSection;
-
-  animateScore(previousScore, result.score);
-
-  if (shouldScroll) {
-    document.querySelector("#briefing").scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-};
-
-const renderPersonalizedFlightPlan = (result, shouldScroll = true) => {
-  const plan = generatePersonalizedFlightPlan({
-    derivedContext: createDerivedContext(result),
-    immediatePressure: scoreForm.elements.immediatePressure.value,
-    shortTermObjective: scoreForm.elements.shortTermObjective.value,
-  });
-  const planNode = document.querySelector("#personalized-flight-plan");
-  const hasFallback = Boolean(plan.fallback);
-
-  document.querySelector("#planScore").textContent = result.score;
-  document.querySelector("#planStage").textContent = result.stage.name;
-  document.querySelector("#planStrongSignal").textContent = plan.strongSignal.category;
-  document.querySelector("#planWarningLightOne").textContent = hasFallback
-    ? "Ownership Mindset"
-    : plan.warningLights[0].category;
-  document.querySelector("#planWarningLightTwo").textContent = hasFallback
-    ? ""
-    : plan.warningLights[1].category;
-  document.querySelector("#planWarningLightTwoCard").hidden = hasFallback;
-  document.querySelector("#planFallbackCard").hidden = !hasFallback;
-  document.querySelector("#planFallback").textContent = hasFallback ? "Ownership Mindset" : "";
-  document.querySelector("#planFallbackNote").textContent = hasFallback ? plan.fallback.note || "" : "";
-  document.querySelector("#planDoNow").textContent = plan.doNow;
-  document.querySelector("#planThisPayday").textContent = plan.thisPayday;
-  document.querySelector("#planThisMonth").textContent = plan.thisMonth;
-  document.querySelector("#planThirtyDayMission").textContent = plan.thirtyDayMission;
-  document.querySelector("#planWorkbookTab").textContent = plan.workbookConnection.tab;
-  document.querySelector("#planWorkbookAction").textContent = plan.workbookConnection.action;
-
-  planNode.hidden = false;
-  if (shouldScroll) planNode.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 const validateInputs = () => {
@@ -256,8 +150,7 @@ scoreForm.addEventListener("submit", (event) => {
   revealFlightReport(result, {
     animateScore,
     onComplete: () => {
-      renderResults(result);
-      renderPersonalizedFlightPlan(result, false);
+
       if (!hasTrackedBriefingView) {
         hasTrackedBriefingView = true;
         trackEvent("briefing_view");
@@ -305,10 +198,12 @@ leadForm.addEventListener("submit", (event) => {
 });
 
 const exampleResult = calculateFlightScore(getInputValues());
-renderResults(exampleResult);
 renderFlightReport(exampleResult, { example: true });
 guidedFlow = enhanceScorecard(scoreForm, { onStart: trackScorecardStart });
-document.querySelector(".results-panel").hidden = true;
+document.addEventListener("flight-report-edit", () => {
+  document.querySelector("#flight-report").hidden = true;
+  guidedFlow.edit();
+});
 
 // Closing the optional walkthrough also stops its sound.
 const cockpitWalkthrough = document.querySelector("#cockpit-walkthrough");

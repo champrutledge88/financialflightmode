@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { calculateFlightScore, categoryMaximums, STAGES } from './flightScoreCalculator.js';
 import { buildFlightReport } from './flightReport.js';
 const base = { income: 6000, needs: 3400, wants: 1200, savings: 500, extraDebtPayment: 250, totalDebtBalance: 18120, emergencyFundSaved: 4000, emergencyFundGoal: 8000, investmentsCurrentValue: 2500 };
-const report = (changes = {}) => buildFlightReport(calculateFlightScore({ ...base, ...changes }), { flightDate: '2026-10-28' });
+const report = (changes = {}) => buildFlightReport(calculateFlightScore({ ...base, ...changes }), { flightDate: '2026-10-28', shortTermObjective: 'Save more consistently' });
 
 test('report reads authoritative scores and stages without mutating the result', () => {
   const result = calculateFlightScore(base), before = JSON.stringify(result);
@@ -11,7 +11,7 @@ test('report reads authoritative scores and stages without mutating the result',
   assert.equal(r.score, result.score); assert.equal(r.stage.key, result.stage.key);
   assert.equal(JSON.stringify(result), before);
   assert.equal(r.flightDate, 'Oct 28, 2026'); assert.equal(r.nextCheckDate, 'Nov 27, 2026');
-  assert.equal(r.oneMove.starterSection, result.briefing.starterSection);
+  assert.equal(r.oneMove.starterSection, r.plan.workbookTab);
 });
 test('instruments use ordered relative category ratings, words, tones, rounding and clamps', () => {
   for (const [relative, rating, word, tone] of [[0,1,'Warning','warning'],[.4,2,'Watch','warning'],[.5,3,'Steady','watch'],[.8,4,'Solid','good'],[1,5,'Strong','good'],[2,5,'Strong','good'],[-1,1,'Warning','warning']]) {
@@ -65,17 +65,17 @@ test('lights prioritize alerts, then no checks, then partial checks and cap at t
   assert.equal(report({income:1,emergencyFundSaved:0,savings:0}).warningLights.length,3);
   assert.equal(report({totalDebtBalance:0,savings:1200,wants:1000,emergencyFundSaved:15000}).warningLights.length,0);
 });
-test('one move rounds available transfer down with minimum 25 and projected savings rate', () => {
+test('one move rounds larger transfers down and caps small transfers at available cash', () => {
   assert.equal(report().oneMove.text,'Move $100 of unassigned cash into savings on payday.');
   assert.equal(report().oneMove.followLine,'That lifts your savings rate to 10.0%.');
   const tiny = report({needs:4240, wants:1200, savings:300, extraDebtPayment:250});
-  assert.match(tiny.oneMove.text,/\$25/);
-  assert.match(report({needs:4279, wants:1200,savings:250,extraDebtPayment:250}).oneMove.text,/\$25/);
+  assert.match(tiny.oneMove.text,/\$10 /);
+  assert.match(report({needs:4279, wants:1200,savings:250,extraDebtPayment:250}).oneMove.text,/\$21 /);
   assert.match(report({savings:0, needs:5700,wants:0,extraDebtPayment:0}).oneMove.text,/\$300/);
 });
-test('one move uses stage nextAction at 10 percent savings or zero cash', () => {
-  assert.equal(report({savings:600}).oneMove.text,STAGES.cruise.nextAction);
-  assert.equal(report({income:5350}).oneMove.text,STAGES.turbulence.nextAction.replace('1-3','1 to 3').replace('cash-flow','cash flow'));
+test('one move uses stage action at 10 percent savings and protects zero cash', () => {
+  assert.equal(report({savings:600}).oneMove.text,report({savings:600}).plan.doNow);
+  assert.match(report({income:5350}).oneMove.text,/no unassigned cash/);
 });
 test('dates cross month and year boundaries using local calendar dates', () => {
   const r=buildFlightReport(calculateFlightScore(base),{flightDate:'2026-12-15'}); assert.equal(r.nextCheckDate,'Jan 14, 2027');
@@ -86,4 +86,29 @@ test('every generated sentence is free of dash characters and negative currency'
     else if (value && typeof value === 'object') Object.values(value).forEach(walk);
   };
   for (const values of [{}, {income:4200, needs:3200, wants:1200,savings:0,extraDebtPayment:100, emergencyFundSaved:200, investmentsCurrentValue:0}, {savings:1200,totalDebtBalance:0,emergencyFundSaved:20000}, {income:1}, {needs:0,emergencyFundSaved:0}]) walk(report(values));
+});
+
+test('extra savings respects available cents and target shortfall', () => {
+  for (const cash of [.01,.49,.99,1,10,24.99,25,26,49.99,50,99.99,100]) {
+    const r = report({needs:4050-cash,wants:1200,savings:500,extraDebtPayment:250});
+    const transfer = Number(r.oneMove.text.match(/Move \$([\d,.]+)/)[1].replaceAll(',',''));
+    assert.ok(transfer > 0 && transfer <= cash + 1e-8);
+    assert.ok(transfer <= 100);
+  }
+  const smallGap = report({income:6000,needs:3000,wants:1000,savings:599.99,extraDebtPayment:0,totalDebtBalance:0,emergencyFundSaved:15000,investmentsCurrentValue:40000});
+  assert.match(smallGap.oneMove.text,/Move \$0.01 /);
+});
+
+test('canonical report preserves approved objective tie breaks and pressure overrides',()=>{
+ const raw=calculateFlightScore(base);
+ const stable=buildFlightReport(raw,{flightDate:'2026-10-28',shortTermObjective:'Save more consistently'});
+ const pressure=buildFlightReport(raw,{flightDate:'2026-10-28',immediatePressure:'Income disruption',shortTermObjective:'Save more consistently'});
+ assert.equal(stable.plan.warningLights[0],'Savings System');
+ assert.equal(pressure.plan.warningLights[0],'Savings System');
+ assert.match(pressure.plan.flagContextNote,/flagged current pressure/);
+ const fragile=calculateFlightScore({...base, emergencyFundSaved:500});
+ const override=buildFlightReport(fragile,{flightDate:'2026-10-28',immediatePressure:'Income disruption'});
+ assert.equal(override.plan.warningLights[0],'Cash Flow Control');
+ assert.equal(stable.score,pressure.score);assert.equal(stable.stage.key,pressure.stage.key);
+ assert.equal(override.oneMove.text,override.plan.doNow);
 });

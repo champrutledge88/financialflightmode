@@ -2178,3 +2178,10 @@ h1 span {
 .walkthrough-content p { line-height: 1.5; margin: 0 0 16px; }
 .walkthrough-content video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #050505; border-radius: 8px; }
 @media (max-width: 759px) { .cockpit-walkthrough summary { padding: 16px; }.walkthrough-content { padding: 0 16px 16px; } }
+
+/* Saved checkpoint controls follow the existing cockpit language. */
+.report-actions { display:flex; flex-wrap:wrap; gap:12px; margin:20px 0; }
+.report-actions button { min-height:48px; padding:12px 18px; border:1px solid #e95c03; border-radius:8px; color:#fff; background:#1a1a1a; font:inherit; font-weight:700; cursor:pointer; }
+.report-actions button:first-child { background:#e95c03; color:#050505; }
+.report-readouts dt { overflow-wrap:anywhere; }
+@media(max-width:760px) { .report-actions button { width:100%; } .report-readouts dt { max-width:68%; } }

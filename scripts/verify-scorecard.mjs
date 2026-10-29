@@ -54,7 +54,8 @@ async function checkReport(page, example) {
   assert.equal(await node.locator('.report-stage').textContent(),example.stage);
   assert.doesNotMatch(await node.innerText(), /[-–—]/);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth),false,'No horizontal overflow');
-  assert.equal(await page.locator('#personalized-flight-plan').isVisible(),true);
+  assert.equal(await page.locator('#personalized-flight-plan, #briefing, .results-panel').count(),0);
+  assert.equal(await page.locator('#flight-report').count(),1);
   if(page.viewportSize().width>=760) {
     const heading=await node.locator('h2').boundingBox();
     const header=await page.locator('.site-header').boundingBox();
@@ -166,11 +167,11 @@ try {
   {
     const context=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
     const page=await context.newPage(); await page.goto(origin,{waitUntil:'domcontentloaded'});
-    assert.equal(await page.locator('#score-form input:visible').count(),9);
-    assert.match(await page.locator('label[for="totalDebtBalance"]').innerText(),/Not counting your mortgage/);
-    assert.equal(await page.locator('#score-form').getAttribute('method'),'post');
-    assert.equal(await page.locator('#score-form select:visible').count(),2);
-    evidence.checks.push({name:'No JavaScript fallback keeps original fields and submission',pass:true}); await context.close();
+    assert.equal(await page.locator('#score-form').count(),0);
+    assert.equal(await page.locator('#score-inputs input:visible').count(),0);
+    assert.equal(await page.locator('#score-inputs input').evaluateAll(inputs=>inputs.every(i=>i.form===null)),true);
+    assert.match(await page.locator('noscript').innerText(),/cannot accept financial answers/);
+    evidence.checks.push({name:'No JavaScript financial inputs have no form owner or submission path',pass:true}); await context.close();
   }
   assert.deepEqual(errors,[]);
   evidence.checks.push({name:'No uncaught browser errors',pass:true});

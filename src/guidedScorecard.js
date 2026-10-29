@@ -1,25 +1,25 @@
-import { parseCurrency, formatCurrencyInput, paycheckToMonthly, moneyError } from './scorecardFlow.js?v=phase2-1';
-import { money } from './flightReport.js?v=phase2-1';
+import { parseCurrency, formatCurrencyInput, paycheckToMonthly, moneyError } from './scorecardFlow.js?v=final-review-1';
+import { money } from './flightReport.js?v=final-review-1';
 import { trackEvent } from './analytics.js?v=ga4-1';
 
 const steps = [
-  { name: 'monthly_income', question: 'What reaches your account each month?', fields: ['income'], example: 'For example, add up what lands in your account after taxes each month.' },
-  { name: 'monthly_needs', question: 'What do your bills and must pays cost each month?', fields: ['needs'], helper: 'Rent, utilities, insurance, groceries, minimum debt payments', example: 'For example, add rent, groceries, utilities, insurance, and minimum payments.' },
-  { name: 'monthly_wants', question: 'What do you spend on wants each month?', fields: ['wants'], helper: 'Dining out, subscriptions, shopping', example: 'For example, add a typical month of dining out, entertainment, and shopping.' },
-  { name: 'monthly_saving', question: 'How much do you save each month?', fields: ['savings'], zero: 'None right now', example: 'For example, count regular transfers into savings, even small ones.' },
-  { name: 'extra_payment', question: 'Extra paid toward debt, above minimums?', fields: ['extraDebtPayment'], zero: 'None', example: 'For example, count only the extra you pay above the amount due.' },
+  { name: 'monthly_income', question: 'What is your monthly take home income?', helper: 'Use money received after taxes and deductions. All amounts are in US dollars.', fields: ['income'], example: 'For example, add up what lands in your account after taxes each month.' },
+  { name: 'monthly_needs', question: 'What do your bills and must pays cost each month?', fields: ['needs'], helper: 'Include rent or your monthly mortgage payment, utilities, insurance, groceries and minimum debt payments. Count each payment once.', example: 'For example, add rent, groceries, utilities, insurance, and minimum payments.' },
+  { name: 'monthly_wants', question: 'What do you spend on wants each month?', fields: ['wants'], helper: 'Dining out, optional subscriptions and shopping. Essential subscriptions belong in needs. Count each expense once.', example: 'For example, add a typical month of dining out, entertainment, and shopping.' },
+  { name: 'monthly_saving', question: 'How much cash do you set aside each month?', helper: 'New cash savings contributions, not the balance already saved. Do not count payroll retirement deductions again.', fields: ['savings'], zero: 'None right now', example: 'For example, count regular transfers into savings, even small ones.' },
+  { name: 'extra_payment', question: 'How much extra do you pay toward debt each month?', helper: 'Only payments above the minimum. Your minimum payments belong in monthly needs.', fields: ['extraDebtPayment'], zero: 'None', example: 'For example, count only the extra you pay above the amount due.' },
   { name: 'total_balance', question: 'Total debt you owe today, not counting your mortgage?', fields: ['totalDebtBalance'], zero: 'No debt', helper: 'Include car loans, credit cards, student loans, personal loans, and medical bills. Leave out your mortgage.', example: 'For example, add your latest balances for loans and cards outside your mortgage.' },
-  { name: 'emergency_runway', question: 'Emergency fund saved, and your goal?', fields: ['emergencyFundSaved', 'emergencyFundGoal'], example: 'For example, count cash you could use for an unexpected bill. Your goal can be three months of needs.' },
-  { name: 'long_term', question: 'Invested so far for the long term?', fields: ['investmentsCurrentValue'], zero: 'None yet', helper: 'Retirement accounts count', example: 'For example, add your retirement account and other investment balances.' },
-  { name: 'current_pressure', question: 'What feels most pressing right now?', fields: ['immediatePressure', 'shortTermObjective'] },
+  { name: 'emergency_runway', question: 'How much emergency cash do you have today?', helper: 'Enter the current cash balance and your savings goal. Leave investments out. Your goal is a balance, not a monthly transfer.', fields: ['emergencyFundSaved', 'emergencyFundGoal'], example: 'For example, count cash you could use for an unexpected bill. Your goal can be three months of needs.' },
+  { name: 'long_term', question: 'Invested so far for the long term?', fields: ['investmentsCurrentValue'], zero: 'None yet', helper: 'Current account balances, including retirement accounts. This is not a monthly contribution.', example: 'For example, add your retirement account and other investment balances.' },
+  { name: 'current_pressure', question: 'What feels most pressing right now?', helper: 'Your focus can guide your plan when supported by your numbers. It does not change your score.', fields: ['immediatePressure', 'shortTermObjective'] },
 ];
-const labels = { income: 'Monthly take home income', needs: 'Monthly needs', wants: 'Monthly wants', savings: 'Monthly savings', extraDebtPayment: 'Extra debt payment', totalDebtBalance: 'Total debt balance', emergencyFundSaved: 'Emergency fund saved', emergencyFundGoal: 'Emergency fund goal', investmentsCurrentValue: 'Invested so far' };
+const labels = { income: 'Monthly take home income', needs: 'Monthly needs', wants: 'Monthly wants', savings: 'Monthly cash savings contributions', extraDebtPayment: 'Monthly extra debt payment', totalDebtBalance: 'Total debt balance', emergencyFundSaved: 'Emergency fund saved', emergencyFundGoal: 'Emergency fund goal', investmentsCurrentValue: 'Invested so far' };
 
 export function enhanceScorecard(form, { onStart }) {
   const originalLabels = Object.fromEntries([...form.querySelectorAll('label')].map(label => [label.htmlFor, label]));
   const error = form.querySelector('#form-error');
   form.classList.add('guided-form'); form.noValidate = true;
-  form.innerHTML = `<div class="flow-start"><p class="eyebrow">Your first checkpoint</p><h3 tabindex="-1">Run your Pre Flight check.</h3><p>90 seconds. Nothing stored. Education only.</p><button class="primary-button" type="button" data-start>Start</button></div><div class="flow-journey" hidden><div class="flow-top"><p class="flow-progress" aria-live="polite"></p><p class="cash-left" hidden aria-live="polite"></p></div><progress max="9" value="1" aria-label="Scorecard progress"></progress><div class="flow-steps"></div><div class="flow-nav"><button type="button" data-back>Back</button><button type="button" class="primary-button" data-next>Continue</button></div><p class="privacy-note">Education only. Your numbers stay in this browser.</p></div>`;
+  form.innerHTML = `<div class="flow-start"><p class="eyebrow">Your first checkpoint</p><h3 tabindex="-1">Run your Pre Flight check.</h3><p>About 90 seconds. Use estimates if needed. Nothing stored. Education only.</p><button class="primary-button" type="button" data-start>Start</button></div><div class="flow-journey" hidden><div class="flow-top"><p class="flow-progress" aria-live="polite"></p><p class="cash-left" hidden aria-live="polite"></p></div><progress max="9" value="1" aria-label="Scorecard progress"></progress><div class="flow-steps"></div><div class="flow-nav"><button type="button" data-back>Back</button><button type="button" class="primary-button" data-next>Continue</button></div><p class="privacy-note">Education only. Your numbers stay in this browser.</p></div>`;
   const journey = form.querySelector('.flow-journey');
   const panels = steps.map((step, index) => {
     const panel = document.createElement('section'); panel.className = 'flow-step'; panel.hidden = true;
@@ -85,7 +85,7 @@ export function enhanceScorecard(form, { onStart }) {
   const updateGauge = () => {
     const remaining = monthlyValue() - ['needs', 'wants', 'savings', 'extraDebtPayment'].reduce((sum, field) => sum + (parseCurrency(form.elements[field].value) || 0), 0);
     const node = form.querySelector('.cash-left'); node.hidden = current < 1;
-    node.textContent = remaining < 0 ? `Cash left: over by ${money(remaining)}` : `Cash left: ${money(remaining)}`;
+    node.textContent = remaining < 0 ? `Cash left so far: over by ${money(remaining)}` : `Cash left so far: ${money(remaining)}`;
     const goal = form.querySelector('[data-runway-goal]'); goal.textContent = `Use 3 months (${money((parseCurrency(form.elements.needs.value) || 0) * 3)})`;
   };
   const show = index => {
@@ -137,5 +137,6 @@ export function enhanceScorecard(form, { onStart }) {
   return {
     getValues: () => Object.fromEntries(Object.keys(labels).map(field => [field, field === 'income' ? monthlyValue() : parseCurrency(form.elements[field].value)])),
     complete: () => { completed = true; },
+    edit: () => { journey.hidden = false; form.querySelector('.flow-start').hidden = true; completed = false; show(0); form.scrollIntoView({block:'start'}); },
   };
 }

@@ -1,12 +1,13 @@
+import { generatePersonalizedFlightPlan } from './personalizedFlightPlan.js?v=w1-1';
 import { getRelativeCategoryScores } from './flightScoreCalculator.js?v=stage-order-1';
 
-export const money = (number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Math.abs(number));
+export const money = (number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: Number.isInteger(Math.abs(number)) ? 0 : 2, maximumFractionDigits: 2 }).format(Math.abs(number));
 // Source stage copy contains punctuation that is not used in the report's publishable copy.
 const plain = (text) => text.replace(/(\d)[-–—](\d)/g, '$1 to $2').replace(/[-–—]/g, ' ');
 const pct = (number) => `${(number * 100).toFixed(1)}%`;
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
-export function buildFlightReport(result, { flightDate }) {
+export function buildFlightReport(result, { flightDate, immediatePressure = 'Stable', shortTermObjective = '' }) {
   const { values: v, metrics: m, briefing: b, stage } = result;
   const relative = Object.fromEntries(getRelativeCategoryScores(result.categoryScores));
   const instruments = [
@@ -38,13 +39,28 @@ export function buildFlightReport(result, { flightDate }) {
     ...checks.filter(c => c.state === 'no').map(c => c.sentence),
     ...checks.filter(c => c.state === 'partial').map(c => c.sentence),
   ])].slice(0, 3);
-  let move = plain(stage.nextAction);
+  // Preserve the approved plan ranking, subjective-pressure safeguards and objective tie breaks.
+  // The Flight Report is the single view of that existing plan, not a second priority engine.
+  const plan = generatePersonalizedFlightPlan({
+    derivedContext: { score: result.score, stageKey: stage.key, stageName: stage.name,
+      relativeScores: getRelativeCategoryScores(result.categoryScores),
+      pressureMetrics: { cashRemaining: m.cashRemaining, savingsRate: m.savingsRate, emergencyFundLevel: m.emergencyFundLevel } },
+    immediatePressure, shortTermObjective,
+  });
+  const primaryAction = plan.warningLights?.[0]?.actionId;
+  let move = plain(plan.doNow);
   let followLine = '';
   if (overBy) move = `Find ${money(Math.ceil(overBy / 25) * 25)} to close the gap before your next payday.`;
-  else if (m.savingsRate < .1 && m.cashRemaining > 0) {
-    const transfer = Math.max(25, Math.floor(Math.min(m.cashRemaining, .1 * v.income - v.savings) / 25) * 25);
-    move = `Move ${money(transfer)} of unassigned cash into savings on payday.`;
-    followLine = `That lifts your savings rate to ${pct((v.savings + transfer) / v.income)}.`;
+  else if (m.savingsRate < .1 && m.cashRemaining > 0 && ['savingsSystem', 'emergencyRunway'].includes(primaryAction)) {
+    // Work in cents and never recommend more than cash or the savings shortfall.
+    const availableCents = Math.max(0, Math.floor((Math.min(m.cashRemaining, .1 * v.income - v.savings) + 1e-9) * 100));
+    const transfer = (availableCents >= 2500 ? Math.floor(availableCents / 2500) * 2500 : availableCents) / 100;
+    if (transfer > 0) {
+      move = `Move ${money(transfer)} of unassigned cash into savings on payday.`;
+      followLine = `That lifts your savings rate to ${pct((v.savings + transfer) / v.income)}.`;
+    } else move = 'Review your bills before payday. There is less than one cent available for an extra transfer.';
+  } else if (m.cashRemaining === 0) {
+    move = 'Review your bills before payday. Your current plan has no unassigned cash for an extra transfer.';
   }
   // Construct date-only strings in local time, without UTC date shifts or DST arithmetic.
   const date = typeof flightDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(flightDate)
@@ -52,10 +68,22 @@ export function buildFlightReport(result, { flightDate }) {
   const next = new Date(date); next.setDate(next.getDate() + 30);
   const formatDate = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return {
+    focus: [immediatePressure, shortTermObjective].filter(Boolean),
+    plan: { strongSignal: plain(plan.strongSignal.category), warningLights: (plan.warningLights || []).map(w => plain(w.category)),
+      doNow: plain(plan.doNow), thisPayday: plain(plan.thisPayday), thisMonth: plain(plan.thisMonth),
+      thirtyDayMission: plain(plan.thirtyDayMission), flagContextNote: plan.flagContextNote ? plain(plan.flagContextNote) : '',
+      workbookTab: plain(plan.workbookConnection.tab), workbookAction: plain(plan.workbookConnection.action) },
+    inputs: [
+      ['Monthly take home income', v.income], ['Monthly needs including minimum debt payments', v.needs],
+      ['Monthly wants', v.wants], ['Monthly cash savings contributions', v.savings],
+      ['Monthly extra debt payments', v.extraDebtPayment], ['Current debt balance excluding mortgage', v.totalDebtBalance],
+      ['Current emergency cash saved', v.emergencyFundSaved], ['Emergency cash goal', v.emergencyFundGoal],
+      ['Current long term investments', v.investmentsCurrentValue],
+    ].map(([label, amount]) => ({ label, amount })),
     score: result.score, stage: { ...stage, message: plain(stage.message), nextAction: plain(stage.nextAction) },
     flightDate: formatDate(date), nextCheckDate: formatDate(next), instruments, paycheckMix, checks,
     runway: { monthsCovered: Number.isFinite(months) ? Math.round(months * 10) / 10 : 6, goalMonths: Number.isFinite(goal) ? goal : 6, zone: months < 1 ? 'Thin' : months < 3 ? 'Building' : 'Cleared', scaleMonths: Math.min(6, months), scaleMax: 6, noMonthlyNeeds: v.needs === 0 },
-    greenLights, warningLights, oneMove: { text: move, followLine, starterSection: plain(b.starterSection) },
+    greenLights, warningLights, oneMove: { text: move, followLine, starterSection: plain(plan.workbookConnection.tab) },
     readouts: [
       ['Cash left', overBy ? `Over by ${money(overBy)}` : money(m.cashRemaining)],
       ['Savings rate', pct(m.savingsRate)], ['Debt vs monthly income', `${m.debtToIncome.toFixed(2)}x`],
