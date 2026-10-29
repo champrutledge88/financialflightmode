@@ -1,0 +1,29 @@
+{
+  "previous_main": "5fa264d29c30eff8b9a0e27d14c4bd84d7957226",
+  "files": {
+    "index.html": {
+      "url": "https://financialflightmode.com/",
+      "status": 200,
+      "sha256": "d2a31bfbecba18b17295d5fee63eb79e356932d19a7afa979a8c68f091310d2b",
+      "etag": "\"93e75f5f10f2566590ccb89d56ceb3bb-ssl\""
+    },
+    "src/main.js": {
+      "url": "https://financialflightmode.com/src/main.js",
+      "status": 200,
+      "sha256": "b9326a816ac2e3129f48289a059c4e83a00b12ccbccc94702bb9495ee6d3c6e0",
+      "etag": "\"5fe3632a535c47d6e84e1536adc031c6-ssl\""
+    },
+    "src/flightScoreCalculator.js": {
+      "url": "https://financialflightmode.com/src/flightScoreCalculator.js",
+      "status": 200,
+      "sha256": "fe508a5cf84373c83090627d9047c88c8a92cb18d5d9ebeead8d883a97022296",
+      "etag": "\"8533d87fc0dd418c431eb49424a0a610-ssl\""
+    },
+    "src/analytics.js": {
+      "url": "https://financialflightmode.com/src/analytics.js",
+      "status": 200,
+      "sha256": "8285b8e2e4091c3187b2869507a1c60367484dbce9c65720c6dc290e82f1477b",
+      "etag": "\"fc3a1a736a2cffaf973a93a65a9ab40a-ssl\""
+    }
+  }
+}

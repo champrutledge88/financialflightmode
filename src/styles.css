@@ -177,7 +177,7 @@ input {
 
 .header-actions .header-cta {
   background: var(--orange);
-  color: var(--white);
+  color: var(--black);
 }
 
 .hero-section {
@@ -2184,3 +2184,8 @@ h1 span {
 .report-actions button:first-child { background:#e95c03; color:#050505; }
 .report-readouts dt { overflow-wrap:anywhere; }
 @media(max-width:760px) { .report-actions button { width:100%; } .report-readouts dt { max-width:68%; } }
+
+.report-quick-links { display:flex; flex-wrap:wrap; gap:12px; margin:0 0 20px; }
+.report-quick-links a { display:inline-flex; align-items:center; min-height:44px; padding:8px 14px; border:1px solid #777; border-radius:8px; text-decoration:underline; font-weight:700; }
+#report-next-move, #report-checkpoint { scroll-margin-top:128px; }
+@media(max-width:760px) { #report-next-move, #report-checkpoint { scroll-margin-top:24px; } }

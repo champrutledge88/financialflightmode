@@ -1,5 +1,5 @@
 import { parseCurrency, formatCurrencyInput, paycheckToMonthly, moneyError } from './scorecardFlow.js?v=final-review-1';
-import { money } from './flightReport.js?v=final-review-1';
+import { money } from './flightReport.js?v=release-1';
 import { trackEvent } from './analytics.js?v=ga4-1';
 
 const steps = [
@@ -19,7 +19,7 @@ export function enhanceScorecard(form, { onStart }) {
   const originalLabels = Object.fromEntries([...form.querySelectorAll('label')].map(label => [label.htmlFor, label]));
   const error = form.querySelector('#form-error');
   form.classList.add('guided-form'); form.noValidate = true;
-  form.innerHTML = `<div class="flow-start"><p class="eyebrow">Your first checkpoint</p><h3 tabindex="-1">Run your Pre Flight check.</h3><p>About 90 seconds. Use estimates if needed. Nothing stored. Education only.</p><button class="primary-button" type="button" data-start>Start</button></div><div class="flow-journey" hidden><div class="flow-top"><p class="flow-progress" aria-live="polite"></p><p class="cash-left" hidden aria-live="polite"></p></div><progress max="9" value="1" aria-label="Scorecard progress"></progress><div class="flow-steps"></div><div class="flow-nav"><button type="button" data-back>Back</button><button type="button" class="primary-button" data-next>Continue</button></div><p class="privacy-note">Education only. Your numbers stay in this browser.</p></div>`;
+  form.innerHTML = `<div class="flow-start"><p class="eyebrow">Your first checkpoint</p><h3 tabindex="-1">Run your Pre Flight check.</h3><p>About 90 seconds. Use estimates if needed. No financial answers stored. Education only.</p><button class="primary-button" type="button" data-start>Start</button></div><div class="flow-journey" hidden><div class="flow-top"><p class="flow-progress" aria-live="polite"></p><p class="cash-left" hidden aria-live="polite"></p></div><progress max="9" value="1" aria-label="Scorecard progress"></progress><div class="flow-steps"></div><div class="flow-nav"><button type="button" data-back>Back</button><button type="button" class="primary-button" data-next>Continue</button></div><p class="privacy-note">Your financial answers stay in this browser. Usage analytics include your stage and a broad score range. <a href="/privacy.html">Privacy details</a>. Education only.</p></div>`;
   const journey = form.querySelector('.flow-journey');
   const panels = steps.map((step, index) => {
     const panel = document.createElement('section'); panel.className = 'flow-step'; panel.hidden = true;

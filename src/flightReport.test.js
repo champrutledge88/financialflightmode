@@ -26,12 +26,12 @@ test('paycheck mix shows income shares and unassigned cash', () => {
   const r = report(); assert.equal(r.paycheckMix.overBy, 0); assert.equal(r.paycheckMix.unassigned, 650);
   assert.deepEqual(r.paycheckMix.shares.map(s => s.percent), [57,20,8,4,11]);
 });
-test('negative cash uses total outflow shares, omits unassigned, and rounds gap up', () => {
+test('negative cash uses total outflow shares, omits unassigned, and reports exact gap', () => {
   const r = report({ income: 4200, needs: 3200, wants: 1201, savings: 0, extraDebtPayment: 100 });
   assert.equal(r.paycheckMix.overBy, 301); assert.equal(r.paycheckMix.shares.length, 4);
   assert.equal(r.paycheckMix.shares[0].percent, 71);
   assert.equal(r.checks[0].state,'no'); assert.equal(r.checks[0].answer,'Over');
-  assert.equal(r.oneMove.text,'Find $325 to close the gap before your next payday.');
+  assert.equal(r.oneMove.text,'Find $301 to close the gap before your next payday.');
   assert.match(r.readouts[0].text,/Over by \$301/);
   assert.equal(r.warningLights[0], calculateFlightScore({ ...base, income: 4200, needs: 3200, wants: 1201 }).briefing.priorityAlerts[0].message);
 });
@@ -111,4 +111,12 @@ test('canonical report preserves approved objective tie breaks and pressure over
  assert.equal(override.plan.warningLights[0],'Cash Flow Control');
  assert.equal(stable.score,pressure.score);assert.equal(stable.stage.key,pressure.stage.key);
  assert.equal(override.oneMove.text,override.plan.doNow);
+});
+
+test('deficit action matches the exact gap instead of adding an unexplained buffer',()=>{
+ for(const gap of [.01,.99,10,24.99,25,25.01,301]) {
+  const r=report({income:6000,needs:4050+gap,wants:1200,savings:500,extraDebtPayment:250});
+  const amount=Number(r.oneMove.text.match(/Find \$([\d,.]+)/)[1].replaceAll(',',''));
+  assert.equal(amount,gap);
+ }
 });

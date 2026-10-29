@@ -50,7 +50,7 @@ export function buildFlightReport(result, { flightDate, immediatePressure = 'Sta
   const primaryAction = plan.warningLights?.[0]?.actionId;
   let move = plain(plan.doNow);
   let followLine = '';
-  if (overBy) move = `Find ${money(Math.ceil(overBy / 25) * 25)} to close the gap before your next payday.`;
+  if (overBy) move = `Find ${money(Math.round((overBy + Number.EPSILON) * 100) / 100)} to close the gap before your next payday.`;
   else if (m.savingsRate < .1 && m.cashRemaining > 0 && ['savingsSystem', 'emergencyRunway'].includes(primaryAction)) {
     // Work in cents and never recommend more than cash or the savings shortfall.
     const availableCents = Math.max(0, Math.floor((Math.min(m.cashRemaining, .1 * v.income - v.savings) + 1e-9) * 100));
