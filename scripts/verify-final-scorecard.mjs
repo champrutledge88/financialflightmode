@@ -1,3 +1,4 @@
+import { fillMoney, moneyInput } from './scorecard-test-helpers.mjs';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -9,7 +10,7 @@ const context=await browser.newContext({viewport:{width:390,height:844},reducedM
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
 const fields=['income','needs','wants','savings','extraDebtPayment','totalDebtBalance','emergencyFundSaved','emergencyFundGoal','investmentsCurrentValue'];
 async function run(values){
- for(let i=0;i<fields.length;i++) {await page.locator('#'+fields[i]).fill(String(values[i]));if(i!==6)await page.locator('[data-next]').click();}
+ for(let i=0;i<fields.length;i++) {await fillMoney(page,fields[i],values[i]);if(i!==6)await page.locator('[data-next]').click();}
  await page.getByRole('button',{name:'Stable',exact:true}).click();
  await page.getByRole('button',{name:'Save more consistently',exact:true}).click();
  await page.locator('[data-next]').click();

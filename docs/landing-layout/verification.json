@@ -1,0 +1,86 @@
+{
+  "origin": "http://127.0.0.1:4173",
+  "results": [
+    {
+      "width": 390,
+      "sections": [
+        "hero-section",
+        "walkthrough-section",
+        "scorecard-shell",
+        "how-section",
+        "social-proof-section",
+        "email-section",
+        "about-section",
+        "trust-section",
+        "disclaimer"
+      ],
+      "ctas": [
+        "Get Starter Kit",
+        "Send Me The Starter Kit"
+      ],
+      "noOverflow": true,
+      "reducedMotion": true,
+      "keyboardDisclosure": true,
+      "anchors": true,
+      "consent": true,
+      "newsletter": true,
+      "mockedLeadErrorAndSuccess": true,
+      "downloadLink": true,
+      "errors": []
+    },
+    {
+      "width": 760,
+      "sections": [
+        "hero-section",
+        "walkthrough-section",
+        "scorecard-shell",
+        "how-section",
+        "social-proof-section",
+        "email-section",
+        "about-section",
+        "trust-section",
+        "disclaimer"
+      ],
+      "ctas": [
+        "Get Starter Kit",
+        "Send Me The Starter Kit"
+      ],
+      "noOverflow": true,
+      "reducedMotion": true,
+      "keyboardDisclosure": true,
+      "anchors": true,
+      "consent": true,
+      "newsletter": true,
+      "mockedLeadErrorAndSuccess": true,
+      "downloadLink": true,
+      "errors": []
+    },
+    {
+      "width": 1280,
+      "sections": [
+        "hero-section",
+        "walkthrough-section",
+        "scorecard-shell",
+        "how-section",
+        "social-proof-section",
+        "email-section",
+        "about-section",
+        "trust-section",
+        "disclaimer"
+      ],
+      "ctas": [
+        "Get Starter Kit",
+        "Send Me The Starter Kit"
+      ],
+      "noOverflow": true,
+      "reducedMotion": true,
+      "keyboardDisclosure": true,
+      "anchors": true,
+      "consent": true,
+      "newsletter": true,
+      "mockedLeadErrorAndSuccess": true,
+      "downloadLink": true,
+      "errors": []
+    }
+  ]
+}

@@ -7,7 +7,7 @@ const plain = (text) => text.replace(/(\d)[-–—](\d)/g, '$1 to $2').replace(/
 const pct = (number) => `${(number * 100).toFixed(1)}%`;
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
-export function buildFlightReport(result, { flightDate, immediatePressure = 'Stable', shortTermObjective = '' }) {
+export function buildFlightReport(result, { flightDate, immediatePressure = 'Stable', shortTermObjective = '', inputBreakdown = null }) {
   const { values: v, metrics: m, briefing: b, stage } = result;
   const relative = Object.fromEntries(getRelativeCategoryScores(result.categoryScores));
   const instruments = [
@@ -68,6 +68,7 @@ export function buildFlightReport(result, { flightDate, immediatePressure = 'Sta
   const next = new Date(date); next.setDate(next.getDate() + 30);
   const formatDate = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return {
+    breakdown: inputBreakdown ? Object.fromEntries(['needs','wants','investments','cashAccounts'].map(key => [key,(inputBreakdown[key] || []).map(row => ({label:String(row.label).slice(0,60),amount:row.amount}))])) : null,
     focus: [immediatePressure, shortTermObjective].filter(Boolean),
     plan: { strongSignal: plain(plan.strongSignal.category), warningLights: (plan.warningLights || []).map(w => plain(w.category)),
       doNow: plain(plan.doNow), thisPayday: plain(plan.thisPayday), thisMonth: plain(plan.thisMonth),

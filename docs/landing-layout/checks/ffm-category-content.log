@@ -1,0 +1,42 @@
+{
+  "checks": [
+    {
+      "width": 390,
+      "needs": 3400,
+      "wants": 1200,
+      "savingsSingleField": true,
+      "investments": 2500,
+      "cashReference": 4000,
+      "emergencyUnchanged": 4000,
+      "score": 71,
+      "stage": "Cruise Control",
+      "priority": "Savings System",
+      "nextMove": 100,
+      "suggestedRunway": 10200,
+      "backEdit": true,
+      "centsRemoval": true,
+      "invalidBlocked": true,
+      "privateLabelsStayLocal": true
+    },
+    {
+      "width": 1280,
+      "needs": 3400,
+      "wants": 1200,
+      "savingsSingleField": true,
+      "investments": 2500,
+      "cashReference": 4000,
+      "emergencyUnchanged": 4000,
+      "score": 71,
+      "stage": "Cruise Control",
+      "priority": "Savings System",
+      "nextMove": 100,
+      "suggestedRunway": 10200,
+      "backEdit": true,
+      "centsRemoval": true,
+      "invalidBlocked": true,
+      "privateLabelsStayLocal": true
+    }
+  ],
+  "removeAllAndZero": true,
+  "errors": []
+}

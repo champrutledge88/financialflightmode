@@ -1,3 +1,4 @@
+import { fillMoney, moneyInput } from './scorecard-test-helpers.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -35,7 +36,7 @@ async function advance(page, example, width, screenshots=false) {
   if(screenshots) { await page.locator('#score-form').scrollIntoViewIfNeeded(); await shot(page,`${width}-step1`); }
   for(let index=0;index<names.length;index++) {
     assert.doesNotMatch(await page.locator('#score-form').innerText(), /[-–—]/);
-    await page.locator(`#${names[index]}`).fill(String(example.values[index]));
+    await fillMoney(page,names[index],example.values[index]);
     if(index===6) continue;
     if(screenshots && index===7) { await page.locator('#score-form').scrollIntoViewIfNeeded(); await shot(page,`${width}-step7`); }
     await page.locator('[data-next]').click();
@@ -137,8 +138,8 @@ try {
     assert.match(await page.locator('.cash-left').innerText(),/\$5,200/);
     await page.locator('[data-back]').click(); assert.equal(await page.locator('#income').inputValue(),'1,200');
     await page.locator('#income').press('Enter');
-    await page.locator('#needs').fill('1000'); await page.locator('#needs').press('Enter');
-    await page.locator('#wants').fill('100'); await page.locator('#wants').press('Enter');
+    await fillMoney(page,'needs',1000); await page.locator('[data-next]').click();
+    await fillMoney(page,'wants',100); await page.locator('[data-next]').click();
     await page.getByRole('button',{name:'None right now',exact:true}).click();
     await page.getByRole('button',{name:'None',exact:true}).click();
     await page.getByRole('button',{name:'No debt',exact:true}).click();

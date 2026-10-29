@@ -1,0 +1,30 @@
+{
+  "video": "/Users/rsg/Documents/Codex/2026-10-29/task-9/financial-cockpit-walkthrough-v3/renders/financial-cockpit-walkthrough-brand-v3.mp4",
+  "bytes": 5877378,
+  "sha256": "c05cf6d83e9f828617607872a985c89b7e5b2c1dbf5c0800b114295fe1bc503a",
+  "duration": 134,
+  "frames": 4020,
+  "dimensions": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "videoCodec": "h264",
+  "audioCodec": "aac",
+  "audioSampleRate": "48000",
+  "audioChannels": 2,
+  "fullDecodePassed": true,
+  "decodedFrames": 26,
+  "captions": {
+    "path": "/Users/rsg/Documents/Codex/2026-10-29/task-9/financial-cockpit-walkthrough-v3/captions.en.vtt",
+    "cues": 39,
+    "sha256": "bb77b13e1513b632e7cef634b131b1705517203ad1808b9d4d98ee61082ea37e"
+  },
+  "sourceRevision": "0081c89f1f631a4a1040b37da2f0469cf65631cf",
+  "sampledVisualReviewPassed": true,
+  "integratedLoudnessLUFS": -16.9,
+  "truePeakDBFS": -1.8,
+  "libraryVideo": "libfile_5925477274d08191a4e3860adca8903d",
+  "libraryCaptions": "libfile_b7f3ba8a9f2c8191a5815f63490a55fb",
+  "productionReplaced": false
+}

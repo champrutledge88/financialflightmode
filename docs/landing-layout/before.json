@@ -1,0 +1,152 @@
+[
+  {
+    "width": 390,
+    "sections": [
+      {
+        "id": "",
+        "class": "hero-section",
+        "title": "Flight Plan Budget Scorecard"
+      },
+      {
+        "id": "flight-notes",
+        "class": "flight-notes-feature",
+        "title": "A clearer view.A better next move."
+      },
+      {
+        "id": "",
+        "class": "starter-kit-strip",
+        "title": "Turn your score into a working budget system."
+      },
+      {
+        "id": "scorecard",
+        "class": "scorecard-shell",
+        "title": "Your Financial Cockpit"
+      },
+      {
+        "id": "how-it-works",
+        "class": "how-section",
+        "title": "Score. Brief. Act."
+      },
+      {
+        "id": "",
+        "class": "social-proof-section"
+      },
+      {
+        "id": "flight-briefing-form",
+        "class": "email-section",
+        "title": "GET THE FLIGHT PLAN BUDGET STARTER KIT."
+      },
+      {
+        "id": "starter-kit",
+        "class": "cta-section",
+        "title": "Your score shows where you are. The Starter Kit helps you act."
+      },
+      {
+        "id": "about",
+        "class": "about-section",
+        "title": "Your Money Needs A Flight Plan."
+      },
+      {
+        "id": "",
+        "class": "trust-section"
+      },
+      {
+        "id": "",
+        "class": "disclaimer"
+      }
+    ],
+    "ctas": [
+      {
+        "text": "Get Starter Kit",
+        "href": "#flight-briefing-form"
+      },
+      {
+        "text": "Get The Free Starter Kit",
+        "href": "#flight-briefing-form"
+      },
+      {
+        "text": "Send Me The Starter Kit",
+        "href": null
+      },
+      {
+        "text": "Get The Starter Kit",
+        "href": "#flight-briefing-form"
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "sections": [
+      {
+        "id": "",
+        "class": "hero-section",
+        "title": "Flight Plan Budget Scorecard"
+      },
+      {
+        "id": "flight-notes",
+        "class": "flight-notes-feature",
+        "title": "A clearer view.A better next move."
+      },
+      {
+        "id": "",
+        "class": "starter-kit-strip",
+        "title": "Turn your score into a working budget system."
+      },
+      {
+        "id": "scorecard",
+        "class": "scorecard-shell",
+        "title": "Your Financial Cockpit"
+      },
+      {
+        "id": "how-it-works",
+        "class": "how-section",
+        "title": "Score. Brief. Act."
+      },
+      {
+        "id": "",
+        "class": "social-proof-section"
+      },
+      {
+        "id": "flight-briefing-form",
+        "class": "email-section",
+        "title": "GET THE FLIGHT PLAN BUDGET STARTER KIT."
+      },
+      {
+        "id": "starter-kit",
+        "class": "cta-section",
+        "title": "Your score shows where you are. The Starter Kit helps you act."
+      },
+      {
+        "id": "about",
+        "class": "about-section",
+        "title": "Your Money Needs A Flight Plan."
+      },
+      {
+        "id": "",
+        "class": "trust-section"
+      },
+      {
+        "id": "",
+        "class": "disclaimer"
+      }
+    ],
+    "ctas": [
+      {
+        "text": "Get Starter Kit",
+        "href": "#flight-briefing-form"
+      },
+      {
+        "text": "Get The Free Starter Kit",
+        "href": "#flight-briefing-form"
+      },
+      {
+        "text": "Send Me The Starter Kit",
+        "href": null
+      },
+      {
+        "text": "Get The Starter Kit",
+        "href": "#flight-briefing-form"
+      }
+    ]
+  }
+]
