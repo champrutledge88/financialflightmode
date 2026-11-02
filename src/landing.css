@@ -1,7 +1,7 @@
 /* Approved V3 landing. Scorecard and report styling remain in styles.css. */
 .landing-v3 { background: #050505; -webkit-font-smoothing: antialiased; }
 .landing-v3 .v3-top {
-  position: relative; max-width: 1180px; padding: 32px 36px; background: #050505;
+  position: relative; max-width: 1180px; padding: 16px 36px; background: #050505;
   backdrop-filter: none; flex-direction: row; align-items: center; gap: 20px;
 }
 .v3-brand img { display: block; width: 77px; height: auto; }
@@ -9,17 +9,17 @@
 .v3-nav a { display: inline-flex; align-items: center; min-height: 44px; }
 .v3-nav .header-cta { padding: 12px 18px; font-size: 13px; white-space: nowrap; }
 .landing-v3 .v3-hero {
-  min-height: 0; padding: 51px 24px 0; text-align: center; font-family: Arial, sans-serif;
+  min-height: 0; padding: 16px 24px 16px; text-align: center; font-family: Arial, sans-serif;
   background: linear-gradient(180deg,rgba(5,5,5,.8) 0%,rgba(5,5,5,.65) 36%,rgba(5,5,5,.3) 66%,#050505 100%),
     url('/assets/runway-cockpit-hero-optimized.jpg') 90% center / cover;
 }
-.v3-eyebrow { font: 700 10px/1.5 Arial, sans-serif; letter-spacing: 2.3px; color: #ff8a4a; margin: 0 0 24px; text-transform: uppercase; }
+.v3-eyebrow { font: 700 10px/1.5 Arial, sans-serif; letter-spacing: 2.3px; color: #ff8a4a; margin: 0 0 12px; text-transform: uppercase; }
 .landing-v3 .v3-hero h1 {
-  font: 400 65px/1.12 Georgia, 'Times New Roman', serif; letter-spacing: -2.7px;
-  text-transform: none; text-shadow: none; max-width: 870px; margin: 0 auto 22px;
+  font: 400 58px/1.08 Georgia, 'Times New Roman', serif; letter-spacing: -2.7px;
+  text-transform: none; text-shadow: none; max-width: 870px; margin: 0 auto 14px;
 }
 .v3-hero h1 em { font-weight: 400; color: #ff5a00; }
-.v3-intro { font-size: 17px; line-height: 1.7; max-width: 545px; color: #e0e0e0; margin: 0 auto 28px; }
+.v3-intro { font-size: 17px; line-height: 1.7; max-width: 545px; color: #e0e0e0; margin: 0 auto 16px; }
 .v3-actions { display: flex; justify-content: center; gap: 12px; }
 .v3-primary, .v3-secondary {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
@@ -30,7 +30,7 @@
 .v3-primary:hover { background: #ff762b; }
 .v3-secondary:hover { background: #242424; }
 .landing-v3 a:focus-visible, .landing-v3 button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
-.v3-trust { font-size: 12px; line-height: 1.5; color: #ddd; background: #111; border-radius: 30px; width: fit-content; max-width: 100%; padding: 7px 14px; margin: 18px auto 45px; }
+.v3-trust { font-size: 12px; line-height: 1.5; color: #ddd; background: #111; border-radius: 30px; width: fit-content; max-width: 100%; padding: 7px 14px; margin: 0 auto 16px; }
 .v3-trust span { color: #9ebd8c; padding-right: 5px; }
 .v3-report-wrap { max-width: 830px; margin: auto; position: relative; }
 .v3-example { margin: 0 0 12px; font-size: 11px; line-height: 1.5; letter-spacing: 1.4px; text-transform: uppercase; color: #ddd; }
@@ -80,24 +80,44 @@
 .landing-v3 .footer-links a, .v3-results-link { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
 .landing-v3 .scorecard-shell, .landing-v3 #cockpit-walkthrough { scroll-margin-top: 24px; }
 .landing-v3 [hidden] { display: none !important; }
+/* The optional player opens in place; the actual check follows its link. */
+.landing-v3 .walkthrough-section { max-width: 1064px; padding: 0 24px; }
+.landing-v3 .cockpit-walkthrough { border: 0; background: transparent; }
+.landing-v3 .cockpit-walkthrough > summary {
+  width: fit-content; max-width: 100%; min-height: 44px; margin: 0 auto;
+  padding: 12px 18px; border: 1px solid #777; border-radius: 8px; background: #111;
+  font: 700 14px/1.4 Arial, sans-serif; cursor: pointer;
+}
+.v3-video-link span { color: #bbb; font-weight: 400; }
+.landing-v3 .walkthrough-content { padding-top: 18px; }
+.landing-v3 .walkthrough-section + .scorecard-shell { padding-top: 24px; padding-bottom: 40px; }
+.landing-v3 #scorecard > .section-heading { margin-bottom: 20px; }
+.landing-v3 #scorecard > .section-heading .v3-trust { margin: 12px auto 0; font: 12px/1.5 Arial, sans-serif; }
+.landing-v3 #scorecard > .section-heading h2 { font-size: clamp(32px, 4vw, 48px); }
+.landing-v3 .guided-form:has(.flow-start:not([hidden])) { padding: 20px; }
+.landing-v3 .flow-start { padding: 0; }
+.landing-v3 .flow-start h3 { margin: 10px 0 14px; }
+.landing-v3 .flow-start p { margin: 0 0 16px; }
+.v3-preview { padding: 24px 24px 0; text-align: center; font-family: Arial, sans-serif; }
 @media(max-width: 760px) {
   .v3-report-main { display: block; padding-top: 20px; }
   .v3-score-area { justify-content: center; margin-bottom: 23px; }
   .v3-score-copy p { max-width: 240px; }
 }
 @media(max-width: 600px) {
-  .landing-v3 .v3-top { padding: 15px 22px 10px; }
+  .landing-v3 .v3-top { padding: 10px 22px 6px; }
   .v3-brand img { width: 67px; }
   .v3-nav { gap: 12px; }
   .v3-nav .v3-how-link { display: none; }
   .v3-nav .header-cta { font-size: 12px; padding: 11px 13px; }
-  .landing-v3 .v3-hero { padding: 10px 23px 0; }
-  .v3-hero .v3-eyebrow { font-size: 10px; letter-spacing: 2px; margin-bottom: 18px; }
-  .landing-v3 .v3-hero h1 { font-size: 39px; line-height: 1.08; letter-spacing: -1.8px; margin-bottom: 22px; max-width: 390px; }
-  .v3-intro { font-size: 14px; line-height: 1.75; max-width: 330px; margin-bottom: 24px; }
+  .landing-v3 .v3-hero { padding: 8px 23px 12px; }
+  .v3-hero .v3-eyebrow { font-size: 10px; letter-spacing: 2px; margin-bottom: 12px; }
+  .landing-v3 .v3-hero h1 { font-size: 36px; line-height: 1.08; letter-spacing: -1.8px; margin-bottom: 14px; max-width: 390px; }
+  .v3-intro { font-size: 14px; line-height: 1.6; max-width: 330px; margin-bottom: 14px; }
   .v3-actions { flex-direction: column; gap: 10px; max-width: 320px; margin: auto; }
   .v3-primary, .v3-secondary { min-height: 52px; font-size: 13px; padding: 16px 13px; }
-  .v3-trust { font-size: 11px; padding: 8px 12px; margin: 17px auto 39px; }
+  .v3-trust { font-size: 11px; padding: 8px 12px; }
+  .landing-v3 .cockpit-walkthrough > summary { font-size: 13px; }
   .v3-report { padding: 17px 15px; border-radius: 12px 12px 0 0; }
   .v3-score-area { gap: 19px; }
   .v3-ring { width: 100px; height: 100px; padding: 6px; }
