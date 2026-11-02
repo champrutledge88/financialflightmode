@@ -1,4 +1,5 @@
 import { createCategoryEditor } from './categoryInputs.js?v=categories-1';
+import { addAmountFieldNavigation } from './amountFieldNavigation.js?v=field-nav-1';
 import { parseCurrency, formatCurrencyInput, paycheckToMonthly, moneyError } from './scorecardFlow.js?v=final-review-1';
 import { money } from './flightReport.js?v=categories-1';
 import { trackEvent } from './analytics.js?v=ga4-1';
@@ -88,6 +89,7 @@ export function enhanceScorecard(form, { onStart }) {
     form.querySelector('.flow-steps').append(panel); return panel;
   });
   journey.insertBefore(error, journey.querySelector('.flow-nav'));
+  addAmountFieldNavigation(form);
   let current = 0, started = false, completed = false, abandoned = false, paycheck = false, frequency = 'biweekly';
   const monthlyValue = () => paycheckToMonthly(parseCurrency(form.elements.income.value) || 0, paycheck ? frequency : 'monthly');
   const updateMonthly = () => {

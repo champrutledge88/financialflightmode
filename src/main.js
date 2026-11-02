@@ -1,4 +1,4 @@
-import { enhanceScorecard } from "./guidedScorecard.js?v=categories-1";
+import { enhanceScorecard } from "./guidedScorecard.js?v=field-nav-1";
 import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=categories-1";
 import { moneyError } from "./scorecardFlow.js?v=final-review-1";
 import { calculateFlightScore } from "./flightScoreCalculator.js?v=stage-order-1";
