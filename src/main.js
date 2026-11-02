@@ -18,6 +18,7 @@ scoreForm.addEventListener("submit", event => event.preventDefault());
 const leadForm = document.querySelector("#lead-form");
 const errorNode = document.querySelector("#form-error");
 const leadStatus = document.querySelector("#leadStatus");
+const leadSubmitLabel = leadForm.querySelector('button[type="submit"]').textContent;
 
 const fields = [
   "income",
@@ -93,7 +94,7 @@ const setLeadFormSending = (isSending) => {
   if (!button) return;
 
   button.disabled = isSending;
-  button.textContent = isSending ? "Sending..." : "Send Me The Starter Kit";
+  button.textContent = isSending ? "Sending..." : leadSubmitLabel;
 };
 
 const extractMailerLiteError = (data) => {
@@ -147,6 +148,8 @@ scoreForm.addEventListener("submit", (event) => {
     trackEvent("scorecard_complete");
   }
   guidedFlow?.complete();
+  const resultsLink = document.querySelector(".v3-results-link");
+  if (resultsLink) resultsLink.hidden = false;
   revealFlightReport(result, {
     animateScore,
     inputBreakdown: guidedFlow.getBreakdown(),
@@ -200,14 +203,21 @@ leadForm.addEventListener("submit", (event) => {
 
 const exampleResult = calculateFlightScore(getInputValues());
 renderFlightReport(exampleResult, { example: true });
+// The landing hero already contains a labeled example. Reveal the full report only after a check.
+if (document.querySelector(".v3-report-wrap")) document.querySelector("#flight-report").hidden = true;
 guidedFlow = enhanceScorecard(scoreForm, { onStart: trackScorecardStart });
 document.addEventListener("flight-report-edit", () => {
   document.querySelector("#flight-report").hidden = true;
+  const resultsLink = document.querySelector(".v3-results-link");
+  if (resultsLink) resultsLink.hidden = true;
   guidedFlow.edit();
 });
 
 // Closing the optional walkthrough also stops its sound.
 const cockpitWalkthrough = document.querySelector("#cockpit-walkthrough");
+document.querySelector(".v3-secondary")?.addEventListener("click", () => {
+  if (cockpitWalkthrough) cockpitWalkthrough.open = true;
+});
 cockpitWalkthrough?.addEventListener("toggle", () => {
   if (!cockpitWalkthrough.open) cockpitWalkthrough.querySelector("video")?.pause();
 });
