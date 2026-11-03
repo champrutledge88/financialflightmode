@@ -31,7 +31,13 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
           const input = document.activeElement.getBoundingClientRect();
           const v = window.visualViewport;
           const top = v?.offsetTop ?? 0, left = v?.offsetLeft ?? 0;
-          return input.top >= top - 1 && input.bottom <= bar.top + 1 &&
+          const header = document.querySelector('.site-header');
+          const upper = Math.max(top, header && getComputedStyle(header).position === 'fixed' ? header.getBoundingClientRect().bottom : 0);
+          const row = document.activeElement.closest('.category-row');
+          const name = row?.querySelector('[data-row-label]');
+          const heading = (name?.type === 'hidden' ? row.querySelector('legend') : name)?.getBoundingClientRect();
+          const fits = heading && input.bottom - heading.top <= bar.top - upper - 24;
+          return (!fits || heading.top >= upper) && input.top >= upper - 1 && input.bottom <= bar.top + 1 &&
             bar.left >= left - 1 && bar.right <= left + (v?.width ?? innerWidth) + 1 &&
             bar.bottom <= top + (v?.height ?? innerHeight) + 1;
         });
@@ -55,6 +61,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       await amounts.nth(2).focus();
       assert.equal(await nextAmount.innerText(), 'Next field');
       await activate(); await focused(ids[3]);
+      assert.equal(await toolbar.locator('strong').innerText(), 'Groceries');
       await activate(); await focused(ids[4]);
       assert.equal(await nextAmount.innerText(), 'Done');
       await activate();
@@ -90,6 +97,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       await custom.locator('[data-row-label]').fill('Other bill');
       const customId = await custom.locator('[data-row-amount]').getAttribute('id');
       await amounts.nth(4).focus(); await activate(); await focused(customId);
+      assert.equal(await toolbar.locator('strong').innerText(), 'Other bill');
       assert.equal(await nextAmount.innerText(), 'Done');
       await activate(); await stepIs(2);
       await page.locator('[data-next]').click();
@@ -108,10 +116,21 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       // A smaller visible area approximates an open keyboard; rotate and restore.
       await page.setViewportSize({ width: mobile ? 390 : 900, height: 400 });
       await amounts.nth(2).focus(); await checkVisible();
+      // Reproduce a late native focus pan after our focus handler has returned.
+      // Verify geometry and category context, not just document.activeElement.
+      await page.evaluate(() => window.scrollBy({ top: 450, behavior: 'instant' }));
+      await checkVisible();
+      assert.equal(await toolbar.locator('strong').innerText(), 'Insurance');
       await activate(); await focused(ids[3]); await checkVisible();
       await page.screenshot({ path: `${out}/${engine}-${width}-short-viewport.png` });
       await page.setViewportSize({ width: 844, height: 390 }); await checkVisible();
       await page.setViewportSize({ width, height: 844 }); await checkVisible();
+      // Exercise ordinary animation as well as the reduced-motion test context.
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await amounts.nth(0).focus(); await activate(); await activate();
+      await focused(ids[2]); await checkVisible();
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await amounts.nth(3).focus(); await checkVisible();
       if (engine === 'chromium') {
         const cdp = await context.newCDPSession(page);
         await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: 2 });
@@ -122,6 +141,23 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       }
       await page.locator('[data-next]').click(); await stepIs(3);
       await page.waitForFunction(() => document.querySelector('.amount-field-navigation').hidden);
+      const wants = page.locator('[data-field="wants"] [data-row-amount]');
+      await page.setViewportSize({ width: mobile ? 390 : 900, height: 400 });
+      await wants.first().focus(); await checkVisible();
+      const wantsNames = await page.locator('[data-field="wants"] [data-row-label]').evaluateAll(nodes => nodes.map(n => n.value));
+      assert.equal(await toolbar.locator('strong').innerText(), wantsNames[0]);
+      await activate(); await focused(await wants.nth(1).getAttribute('id')); await checkVisible();
+      assert.equal(await toolbar.locator('strong').innerText(), wantsNames[1]);
+      await page.screenshot({ path: `${out}/${engine}-${width}-wants-context.png` });
+      // A deliberate scroll must not be pulled back by the focus recovery window.
+      await page.evaluate(() => {
+        window.dispatchEvent(new Event('touchmove'));
+        window.scrollBy({ top: 180, behavior: 'instant' });
+      });
+      const manualY = await page.evaluate(() => scrollY);
+      await page.waitForTimeout(300);
+      assert.ok(Math.abs(await page.evaluate(() => scrollY) - manualY) < 2);
+      await page.setViewportSize({ width, height: 844 });
       await page.locator('[data-back]').click(); await stepIs(2);
       assert.equal(await amounts.nth(2).inputValue(), '123.45');
       await page.locator('[data-next]').click();
@@ -149,7 +185,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       await page.locator('[data-save-report]').waitFor();
       await toolbar.waitFor({ state: 'hidden' });
       assert.deepEqual(errors, []);
-      results.push({ engine, width, singleAndLastDone: true, consecutiveTaps: true, dynamicRows: true, hiddenDisabledReadonlySkipped: true, valuesAndValidationPreserved: true, keyboard: true, shortViewportAndRotation: true, zoom: engine === 'chromium' ? '2x viewport scale passed' : 'not emulated', fullReportCompleted: true, errors });
+      results.push({ engine, width, singleAndLastDone: true, consecutiveTaps: true, dynamicRows: true, hiddenDisabledReadonlySkipped: true, valuesAndValidationPreserved: true, keyboard: true, shortViewportAndRotation: true, labelAndInputGeometry: true, lateFocusPanRecovery: true, rapidNextWithMotion: true, zoom: engine === 'chromium' ? '2x viewport scale passed' : 'not emulated', fullReportCompleted: true, errors });
       await context.close();
     }
   } finally { await browser.close(); }

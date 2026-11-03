@@ -2217,8 +2217,12 @@ h1 span {
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 .amount-field-navigation[hidden] { display: none; }
-.amount-field-navigation span { min-width: 0; }
-.amount-field-navigation.compact span { display: none; }
+.amount-field-navigation span { min-width: 0; flex: 1; }
+.amount-field-navigation strong { display: block; font-size: 15px; overflow-wrap: anywhere; }
+.amount-field-navigation small { display: block; color: #bbb; font-size: 11px; margin-top: 2px; }
+.amount-field-navigation.compact { flex-wrap: wrap; }
+.amount-field-navigation.compact span { flex-basis: 100%; }
+.amount-field-navigation.compact small { display: none; }
 .amount-field-navigation.compact button { width: 100%; max-width: 100%; padding-left: 8px; padding-right: 8px; }
 .amount-field-navigation button {
   flex-shrink: 0; min-height: 44px; padding: 10px 18px; border: 0;

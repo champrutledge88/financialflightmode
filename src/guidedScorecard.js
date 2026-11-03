@@ -1,5 +1,5 @@
 import { createCategoryEditor } from './categoryInputs.js?v=categories-1';
-import { addAmountFieldNavigation } from './amountFieldNavigation.js?v=field-nav-1';
+import { addAmountFieldNavigation } from './amountFieldNavigation.js?v=field-nav-2';
 import { parseCurrency, formatCurrencyInput, paycheckToMonthly, moneyError } from './scorecardFlow.js?v=final-review-1';
 import { money } from './flightReport.js?v=categories-1';
 import { trackEvent } from './analytics.js?v=ga4-1';
