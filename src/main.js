@@ -1,4 +1,4 @@
-import { enhanceScorecard } from "./guidedScorecard.js?v=refinements-2";
+import { enhanceScorecard } from "./guidedScorecard.js?v=edge-bounce-4";
 import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=refinements-2";
 import { buildFlightReport, money } from "./flightReport.js?v=refinements-2";
 import { moneyError } from "./scorecardFlow.js?v=final-review-1";

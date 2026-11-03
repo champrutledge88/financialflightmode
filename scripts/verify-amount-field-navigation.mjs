@@ -115,12 +115,34 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
 
       // A smaller visible area approximates an open keyboard; rotate and restore.
       await page.setViewportSize({ width: mobile ? 390 : 900, height: 400 });
-      await amounts.nth(2).focus(); await checkVisible();
+      await amounts.nth(2).focus();
       // Reproduce a late native focus pan after our focus handler has returned.
       // Verify geometry and category context, not just document.activeElement.
       await page.evaluate(() => window.scrollBy({ top: 450, behavior: 'instant' }));
       await checkVisible();
       assert.equal(await toolbar.locator('strong').innerText(), 'Insurance');
+      // The recording shows repeated back-and-forth motion while the active
+      // category stays Housing. Repeated same-size resize/scroll notifications
+      // must not re-arm an already-consumed focus correction.
+      const correctionCount = await page.evaluate(async () => {
+        const original = window.scrollBy;
+        const originalY = scrollY;
+        // Model a subsequent browser pan after the one-shot correction. It must
+        // not start repeated corrective animation from unchanged resize events.
+        window.scrollBy({ top: 450, behavior: 'instant' });
+        let calls = 0;
+        window.scrollBy = (...args) => { calls++; return original.apply(window, args); };
+        for (let i = 0; i < 5; i++) {
+          window.visualViewport.dispatchEvent(new Event('resize'));
+          window.visualViewport.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new Event('scroll'));
+          await new Promise(resolve => setTimeout(resolve, 220));
+        }
+        window.scrollBy = original;
+        window.scrollTo({ top: originalY, behavior: 'instant' });
+        return calls;
+      });
+      assert.equal(correctionCount, 0, 'viewport notifications must not create a scroll feedback loop');
       await activate(); await focused(ids[3]); await checkVisible();
       await page.screenshot({ path: `${out}/${engine}-${width}-short-viewport.png` });
       await page.setViewportSize({ width: 844, height: 390 }); await checkVisible();
@@ -185,7 +207,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       await page.locator('[data-save-report]').waitFor();
       await toolbar.waitFor({ state: 'hidden' });
       assert.deepEqual(errors, []);
-      results.push({ engine, width, singleAndLastDone: true, consecutiveTaps: true, dynamicRows: true, hiddenDisabledReadonlySkipped: true, valuesAndValidationPreserved: true, keyboard: true, shortViewportAndRotation: true, labelAndInputGeometry: true, lateFocusPanRecovery: true, rapidNextWithMotion: true, zoom: engine === 'chromium' ? '2x viewport scale passed' : 'not emulated', fullReportCompleted: true, errors });
+      results.push({ engine, width, singleAndLastDone: true, consecutiveTaps: true, dynamicRows: true, hiddenDisabledReadonlySkipped: true, valuesAndValidationPreserved: true, keyboard: true, shortViewportAndRotation: true, labelAndInputGeometry: true, focusPanBeforeSettling: true, noScrollFeedback: true, rapidNextWithMotion: true, zoom: engine === 'chromium' ? '2x viewport scale passed' : 'not emulated', fullReportCompleted: true, errors });
       await context.close();
     }
   } finally { await browser.close(); }

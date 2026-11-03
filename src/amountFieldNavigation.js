@@ -19,7 +19,7 @@ export function addAmountFieldNavigation(form) {
   let active = null;
   let frame = 0;
   let settleTimer = 0;
-  let recoverUntil = 0;
+  let revealPending = false;
   const viewport = window.visualViewport;
   const usable = input => input.isConnected && !input.matches(':disabled, [readonly], [type="hidden"]') &&
     !input.closest('[hidden], [inert]') && input.getClientRects().length > 0 &&
@@ -28,7 +28,8 @@ export function addAmountFieldNavigation(form) {
     const panel = active?.closest('.flow-step');
     return panel ? [...panel.querySelectorAll('input[inputmode="decimal"]')].filter(usable) : [];
   };
-  const hide = () => { active = null; toolbar.hidden = true; clearTimeout(settleTimer); recoverUntil = 0; };
+  let viewportSize = [viewport?.width ?? innerWidth, viewport?.height ?? innerHeight];
+  const hide = () => { active = null; toolbar.hidden = true; clearTimeout(settleTimer); revealPending = false; };
   const contextFor = input => {
     const row = input.closest('.category-row');
     const label = input.closest('label');
@@ -77,18 +78,24 @@ export function addAmountFieldNavigation(form) {
       // persistent toolbar name supplies context while the input takes priority.
       const start = heading && rect.bottom - heading.top <= lower - upper ? Math.min(heading.top, rect.top) : rect.top;
       if (start < upper - 1 || rect.bottom > lower + 1) {
-        window.scrollBy({ top: start - upper - Math.max(0, (lower - upper - (rect.bottom - start)) / 2),
-          behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+        // Move only enough to reveal the field. On touch devices do not start a
+        // second scroll animation alongside the browser's keyboard/focus pan.
+        window.scrollBy({ top: start < upper ? start - upper : rect.bottom - lower,
+          behavior: matchMedia('(pointer: coarse), (prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
       }
     }
   };
   const schedule = (reveal = false) => {
     if (reveal) {
       clearTimeout(settleTimer);
-      // Safari can pan after focus() returns and while its keyboard animates.
-      // Wait for a quiet viewport, then measure fresh geometry once. Subsequent
-      // native scroll events can repair visibility during this bounded window.
-      settleTimer = setTimeout(() => update(true), 120);
+      // One reveal per focus or meaningful viewport size change. Consume it
+      // BEFORE scrolling: scroll/resize events produced by that correction must
+      // not launch another correction or extend a recovery loop.
+      revealPending = true;
+      settleTimer = setTimeout(() => {
+        revealPending = false;
+        update(true);
+      }, 180);
     }
     if (frame) return;
     frame = requestAnimationFrame(() => {
@@ -103,7 +110,6 @@ export function addAmountFieldNavigation(form) {
       // Moving the same element also preserves Shift+Tab back to the current amount.
       const label = active.closest('label');
       if (label && label.nextElementSibling !== toolbar) label.after(toolbar);
-      recoverUntil = performance.now() + 1400;
       update();
       schedule(true);
     } else schedule();
@@ -146,10 +152,16 @@ export function addAmountFieldNavigation(form) {
     subtree: true, childList: true, attributes: true,
     attributeFilter: ['hidden', 'disabled', 'readonly', 'type', 'inputmode', 'style', 'class'],
   });
-  const resize = () => { if (active) recoverUntil = performance.now() + 1400; schedule(Boolean(active)); };
-  const scroll = () => schedule(Boolean(active) && performance.now() < recoverUntil);
+  const resize = () => {
+    const size = [viewport?.width ?? innerWidth, viewport?.height ?? innerHeight];
+    // Browser chrome can emit resize repeatedly without a material size change.
+    const changed = size.some((value, index) => Math.abs(value - viewportSize[index]) > 24);
+    if (changed) viewportSize = size;
+    schedule(Boolean(active) && (changed || revealPending));
+  };
+  const scroll = () => schedule(revealPending);
   // Never drag the page back against an intentional finger/wheel scroll.
-  const manualScroll = () => { recoverUntil = 0; clearTimeout(settleTimer); };
+  const manualScroll = () => { revealPending = false; clearTimeout(settleTimer); };
   window.addEventListener('touchmove', manualScroll, { passive: true });
   window.addEventListener('wheel', manualScroll, { passive: true });
   viewport?.addEventListener('resize', resize);
