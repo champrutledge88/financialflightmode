@@ -18,6 +18,7 @@ try {
     result.score=score;result.stage=score<40?STAGES.preflight:score<70?STAGES.turbulence:score<90?STAGES.cruise:STAGES.flight;
     renderFlightReport(result,{example:true});
    },score);
+   await page.locator('.report-details > summary').click();
    const marker=page.locator('.flight-track .score-position-marker');const {track,dot}=await marker.evaluate(n=>({track:n.parentElement.getBoundingClientRect().toJSON(),dot:n.getBoundingClientRect().toJSON()}));
    assert.ok(Math.abs(dot.x+dot.width/2-(track.x+track.width*score/100))<.6,`Horizontal position ${width}/${score}`);
    assert.ok(Math.abs(dot.y+dot.height/2-(track.y+track.height/2))<.6,`Vertical alignment ${width}/${score}`);

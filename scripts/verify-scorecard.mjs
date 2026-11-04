@@ -10,8 +10,8 @@ const browser = await chromium.launch({ headless: true });
 const evidence = { browser: 'Chromium', runs: [], checks: [] };
 const errors = [];
 const cases = [
-  { name: 'Pre Flight', values: [4200,3200,1200,0,100,6000,200,2000,0], score:25, stage:'Pre Flight' },
-  { name: 'Cruise Control', values: [6000,3400,1200,500,250,18120,4000,8000,2500], score:71, stage:'Cruise Control' },
+  { name: 'Pre Flight', values: [4200,3200,1200,0,100,6000,200,2000,0], score:18, stage:'Pre Flight' },
+  { name: 'Cruise Control', values: [6000,3400,1200,500,250,18120,4000,8000,2500], score:75, stage:'Cruise Control', minimumDebtPayment:500 },
   { name: 'Flight Mode', values: [8000,2600,1000,1600,0,0,15000,15000,40000], score:100, stage:'Flight Mode' },
 ];
 const names = ['income','needs','wants','savings','extraDebtPayment','totalDebtBalance','emergencyFundSaved','emergencyFundGoal','investmentsCurrentValue'];
@@ -37,6 +37,7 @@ async function advance(page, example, width, screenshots=false) {
   for(let index=0;index<names.length;index++) {
     assert.doesNotMatch(await page.locator('#score-form').innerText(), /[-–—]/);
     await fillMoney(page,names[index],example.values[index]);
+    if(index===5 && example.minimumDebtPayment !== undefined) await fillMoney(page,'minimumDebtPayment',example.minimumDebtPayment);
     if(index===6) continue;
     if(screenshots && index===7) { await page.locator('#score-form').scrollIntoViewIfNeeded(); await shot(page,`${width}-step7`); }
     await page.locator('[data-next]').click();
@@ -150,7 +151,8 @@ try {
     await page.getByRole('button',{name:'Stable',exact:true}).click();
     await page.locator('[data-next]').click(); await page.keyboard.press('Escape');
     await page.waitForFunction(()=>!document.querySelector('.reveal-overlay'));
-    assert.equal(await page.locator('#flight-report .report-readouts dd').first().textContent(),'$4,100');
+    await page.locator('.report-details > summary').click();
+    assert.equal(await page.locator('#flight-report .report-readouts dd').first().textContent(),'$4,100 available to assign');
     assert.ok((await events(page)).some(e=>e.name==='scorecard_step_back'));
     assert.ok((await events(page)).some(e=>e.name==='reveal_skip'));
     assert.equal(await page.evaluate(()=>localStorage.length+sessionStorage.length),0);

@@ -24,7 +24,7 @@ test("preserves scorecard stage boundaries", () => {
   assert.equal(getStage({ score: 90, ...stableStageMetrics }).key, "flight");
 });
 
-test("preserves representative existing Scorecard results", () => {
+test("calibrates representative Scorecard results under version 2", () => {
   const fixtures = [
     {
       name: "Maya",
@@ -33,9 +33,9 @@ test("preserves representative existing Scorecard results", () => {
         totalDebtBalance: 14000, emergencyFundSaved: 500, emergencyFundGoal: 2000,
         investmentsCurrentValue: 0,
       },
-      score: 35,
-      stage: "preflight",
-      strongestSignal: "Emergency Runway",
+      score: 50,
+      stage: "turbulence",
+      strongestSignal: "Cash Remaining",
       warningLight: "Investment Status",
     },
     {
@@ -45,7 +45,7 @@ test("preserves representative existing Scorecard results", () => {
         totalDebtBalance: 6000, emergencyFundSaved: 200, emergencyFundGoal: 2000,
         investmentsCurrentValue: 0,
       },
-      score: 25,
+      score: 18,
       stage: "preflight",
       strongestSignal: "Debt Load",
       warningLight: "Cash Remaining",
@@ -57,10 +57,10 @@ test("preserves representative existing Scorecard results", () => {
         totalDebtBalance: 9000, emergencyFundSaved: 6000, emergencyFundGoal: 9000,
         investmentsCurrentValue: 8000,
       },
-      score: 82,
+      score: 74,
       stage: "cruise",
       strongestSignal: "Cash Remaining",
-      warningLight: "Savings Rate",
+      warningLight: "Debt Load",
     },
     {
       name: "Alex",

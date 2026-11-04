@@ -16,13 +16,13 @@ try {
   assert.deepEqual(sections.slice(0,6),['hero-section v3-hero','walkthrough-section','scorecard-shell','v3-preview','v3-how','email-section v3-kit']);
   assert.equal(await page.locator('.flight-notes-feature,.starter-kit-strip,.cta-section').count(),0);
   assert.equal(await page.locator('#cockpit-walkthrough-video').isVisible(),false,'Optional player does not delay access to the scorecard');
-  assert.match(await page.locator('h1').innerText(),/Know where your\s+money stands\.\s+Know what to do next\./i);
+  assert.match(await page.locator('h1').innerText(),/Your numbers\.\s+A clearer picture\.\s+One practical next move\./i);
   assert.ok(await page.locator('h1').evaluate(n=>n.getBoundingClientRect().right<=innerWidth),'Hero copy fits without hidden clipping');
   assert.equal(await page.locator('#flight-report').isVisible(),false,'Personal report is hidden before a check');
   assert.match(await page.locator('.v3-report-wrap').getAttribute('aria-label'),/Illustrative example/);
   assert.equal(await page.locator('.v3-pill').innerText(),'EXAMPLE REPORT');
-  assert.equal(await page.locator('.v3-ring strong').innerText(),'71');
-  assert.equal(await page.locator('.v3-stat strong').allTextContents().then(a=>a.join(',')),'$650,$100');
+  assert.equal(await page.locator('.v3-ring strong').innerText(),'69');
+  assert.equal(await page.locator('.v3-stat strong').allTextContents().then(a=>a.join(',')),'$650,Emergency Runway');
   assert.match(await page.locator('.v3-trust').innerText(),/No email or bank connection needed for your score/);
   const positions=await page.evaluate(()=>Object.fromEntries(['h1','.v3-actions .v3-primary','.v3-video-link','#scorecard','[data-start]','.v3-preview'].map(selector=>{const r=document.querySelector(selector).getBoundingClientRect();return [selector,{top:r.top,bottom:r.bottom}];})));
   assert.ok(positions['.v3-video-link'].top>=positions['.v3-actions .v3-primary'].bottom,'Video link follows primary CTA');

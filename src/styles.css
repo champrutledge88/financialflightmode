@@ -2245,3 +2245,20 @@ h1 span {
   .landing-header + main .hero-copy { min-width: 0; }
   .landing-header + main h1 { font-size: clamp(2.6rem, 10vw, 4.6rem); }
 }
+
+/* Keep the existing cockpit, with a focused opening and optional supporting detail. */
+.report-top { display:block; }
+.report-score { max-width:680px; margin:0 auto; }
+.report-details { margin-top:24px; }
+.report-details > summary { cursor:pointer; padding:20px; border:1px solid #555; border-radius:12px; color:#f2f2f2; font-weight:700; }
+.report-details > summary:focus-visible { outline:3px solid #e95c03; outline-offset:4px; }
+.report-details[open] > summary { margin-bottom:20px; }
+.v3-stat strong { overflow-wrap:anywhere; }
+.instrument-grid { grid-template-columns:repeat(2,minmax(0,1fr)); margin-bottom:20px; }
+.instrument { min-width:0; }
+.report-readouts dt { min-width:0; overflow-wrap:anywhere; }
+.report-readouts dd { flex-shrink:0; max-width:50%; overflow-wrap:anywhere; }
+@media(max-width:359px) {
+  .instrument-grid { grid-template-columns:1fr; }
+  .instrument:last-child { grid-column:auto; }
+}

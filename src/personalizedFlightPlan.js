@@ -47,7 +47,7 @@ export const actionLibrary = Object.freeze([
     doNow: "Set up or confirm one automatic transfer from checking to savings for your next payday.",
     thisPayday: "Let that automatic transfer run without touching it.",
     thisMonth: "Keep the transfer running every payday this month, even if the amount is small.",
-    thirtyDayMission: "Complete four consecutive automatic transfers to savings without skipping one.",
+    thirtyDayMission: "Complete your planned savings transfer on each payday this month.",
     workbookTab: "Savings Tracker + Monthly Budget",
     workbookAction: "Savings System row",
     emailSafe: true,
@@ -193,7 +193,7 @@ export const generatePersonalizedFlightPlan = ({
   const hasObjectiveFragility =
     pressureMetrics.savingsRate < 0.05 || pressureMetrics.emergencyFundLevel < 0.25;
   const isHardOverride =
-    pressureMetrics.cashRemaining <= 0 || (hasPressure && hasObjectiveFragility);
+    pressureMetrics.cashRemaining < 0 || (hasPressure && hasObjectiveFragility);
   const flagContextNote = hasPressure && !isHardOverride ? getFlagContextNote(immediatePressure) : null;
 
   if (fallbackApplies && !isHardOverride) {
