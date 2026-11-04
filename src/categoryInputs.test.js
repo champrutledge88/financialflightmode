@@ -21,14 +21,14 @@ test('cash and HYSA never enter invested total or emergency balance',()=>{
  assert.equal(sum([{kind:'cash',label:'',amount:'100'}],{accounts:true}).total,0);
  assert.equal(sum([{kind:'bad',label:'X',amount:'100'}],{accounts:true}).valid,false);
 });
-test('category fixture preserves production score and exact download breakdown',()=>{
+test('category fixture uses revised score and exact download breakdown',()=>{
  const needs=sum([{label:'Housing',amount:1800},{label:'Utilities',amount:250},{label:'Insurance',amount:150},{label:'Groceries',amount:700},{label:'Minimum debt payments',amount:500}]);
  const wants=sum([{label:'Dining out',amount:300},{label:'Subscriptions',amount:300},{label:'Shopping',amount:600}]);
  const investments=sum([{kind:'roth',label:'Roth',amount:1500},{kind:'brokerage',label:'Brokerage',amount:1000},{kind:'cash',label:'HYSA',amount:4000}],{accounts:true});
- const v={income:6000,needs:needs.total,wants:wants.total,savings:500,extraDebtPayment:250,totalDebtBalance:18120,emergencyFundSaved:4000,emergencyFundGoal:8000,investmentsCurrentValue:investments.total};
- const result=calculateFlightScore(v);assert.equal(result.score,71);assert.equal(result.stage.name,'Cruise Control');assert.equal(result.values.emergencyFundSaved,4000);
+ const v={income:6000,needs:needs.total,wants:wants.total,savings:500,extraDebtPayment:250,totalDebtBalance:18120,minimumDebtPayment:500,emergencyFundSaved:4000,emergencyFundGoal:8000,investmentsCurrentValue:investments.total};
+ const result=calculateFlightScore(v);assert.equal(result.score,75);assert.equal(result.stage.name,'Cruise Control');assert.equal(result.values.emergencyFundSaved,4000);
  const r=buildFlightReport(result,{flightDate:'2026-10-29',shortTermObjective:'Save more consistently',inputBreakdown:{needs:needs.details,wants:wants.details,investments:investments.details,cashAccounts:investments.cashAccounts}});
  assert.equal(r.oneMove.text,'Move $100 of unassigned cash into savings on payday.');
- const html=buildSnapshotHTML(r);assert.match(html,/HYSA/);assert.match(html,/Cash accounts for reference only/);assert.match(html,/not added to your Step 7 emergency balance/);
+ const html=buildSnapshotHTML(r);assert.match(html,/concise report keeps the totals/);assert.match(html,/\$4,000.00/);assert.doesNotMatch(html,/>HYSA</);
  r.breakdown.needs[0].label='<script>alert(1)</script>';assert.doesNotMatch(buildSnapshotHTML(r),/<script/);
 });

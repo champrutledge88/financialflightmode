@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "test:browser": "node scripts/verify-scorecard.mjs"
+    "test:browser": "node scripts/verify-scorecard.mjs",
+    "test:refinements": "node scripts/verify-scorecard-refinements.mjs",
+    "test:pagination": "node scripts/verify-report-pagination.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

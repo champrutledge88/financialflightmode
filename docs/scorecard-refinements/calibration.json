@@ -1,0 +1,396 @@
+{
+  "base": "e26b6569358fc906bc283e93d49d16f4b690bd92",
+  "version": "FFM 2 review",
+  "results": [
+    {
+      "name": "Landing example",
+      "input": {
+        "income": 4800,
+        "needs": 2800,
+        "wants": 750,
+        "savings": 400,
+        "extraDebtPayment": 200,
+        "totalDebtBalance": 14500,
+        "minimumDebtPayment": 500,
+        "emergencyFundSaved": 3000,
+        "emergencyFundGoal": 6000,
+        "investmentsCurrentValue": 3500
+      },
+      "before": {
+        "score": 71,
+        "stage": "Cruise Control",
+        "priority": "Debt Load",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 11,
+          "emergencyFund": 15,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 69,
+        "stage": "Turbulence",
+        "priority": "Emergency Runway",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 14,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "Fully assigned",
+      "input": {
+        "income": 6000,
+        "needs": 3400,
+        "wants": 1200,
+        "savings": 1150,
+        "extraDebtPayment": 250,
+        "totalDebtBalance": 18120,
+        "emergencyFundSaved": 4000,
+        "emergencyFundGoal": 8000,
+        "investmentsCurrentValue": 2500,
+        "minimumDebtPayment": 500
+      },
+      "before": {
+        "score": 66,
+        "stage": "Turbulence",
+        "priority": "Cash Flow Control",
+        "categories": {
+          "cashRemaining": 10,
+          "savingsRate": 22,
+          "debtPressure": 11,
+          "emergencyFund": 15,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 85,
+        "stage": "Cruise Control",
+        "priority": "Emergency Runway",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 22,
+          "debtPressure": 20,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "Savings transfer",
+      "input": {
+        "income": 6000,
+        "needs": 3400,
+        "wants": 1200,
+        "savings": 1000,
+        "extraDebtPayment": 250,
+        "totalDebtBalance": 18120,
+        "emergencyFundSaved": 4000,
+        "emergencyFundGoal": 8000,
+        "investmentsCurrentValue": 2500,
+        "minimumDebtPayment": 500
+      },
+      "before": {
+        "score": 66,
+        "stage": "Turbulence",
+        "priority": "Cash Flow Control",
+        "categories": {
+          "cashRemaining": 10,
+          "savingsRate": 22,
+          "debtPressure": 11,
+          "emergencyFund": 15,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 85,
+        "stage": "Cruise Control",
+        "priority": "Emergency Runway",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 22,
+          "debtPressure": 20,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "Income shortfall",
+      "input": {
+        "income": 4200,
+        "needs": 3400,
+        "wants": 1200,
+        "savings": 500,
+        "extraDebtPayment": 250,
+        "totalDebtBalance": 18120,
+        "emergencyFundSaved": 4000,
+        "emergencyFundGoal": 8000,
+        "investmentsCurrentValue": 2500,
+        "minimumDebtPayment": 500
+      },
+      "before": {
+        "score": 47,
+        "stage": "Turbulence",
+        "priority": "Cash Flow Control",
+        "categories": {
+          "cashRemaining": 0,
+          "savingsRate": 18,
+          "debtPressure": 6,
+          "emergencyFund": 15,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 50,
+        "stage": "Turbulence",
+        "priority": "Cash Flow Control",
+        "categories": {
+          "cashRemaining": 0,
+          "savingsRate": 18,
+          "debtPressure": 14,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "Smaller emergency goal",
+      "input": {
+        "income": 6000,
+        "needs": 3400,
+        "wants": 1200,
+        "savings": 500,
+        "extraDebtPayment": 250,
+        "totalDebtBalance": 18120,
+        "emergencyFundSaved": 4000,
+        "emergencyFundGoal": 2000,
+        "investmentsCurrentValue": 2500,
+        "minimumDebtPayment": 500
+      },
+      "before": {
+        "score": 76,
+        "stage": "Cruise Control",
+        "priority": "Debt Load",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 11,
+          "emergencyFund": 20,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 75,
+        "stage": "Cruise Control",
+        "priority": "Emergency Runway",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 20,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "Larger emergency goal",
+      "input": {
+        "income": 6000,
+        "needs": 3400,
+        "wants": 1200,
+        "savings": 500,
+        "extraDebtPayment": 250,
+        "totalDebtBalance": 18120,
+        "emergencyFundSaved": 4000,
+        "emergencyFundGoal": 16000,
+        "investmentsCurrentValue": 2500,
+        "minimumDebtPayment": 500
+      },
+      "before": {
+        "score": 66,
+        "stage": "Turbulence",
+        "priority": "Emergency Runway",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 11,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 75,
+        "stage": "Cruise Control",
+        "priority": "Emergency Runway",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 20,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "Large debt, low payments",
+      "input": {
+        "income": 6000,
+        "needs": 3400,
+        "wants": 1200,
+        "savings": 500,
+        "extraDebtPayment": 250,
+        "totalDebtBalance": 100000,
+        "emergencyFundSaved": 4000,
+        "emergencyFundGoal": 8000,
+        "investmentsCurrentValue": 2500,
+        "minimumDebtPayment": 300
+      },
+      "before": {
+        "score": 66,
+        "stage": "Turbulence",
+        "priority": "Debt Load",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 6,
+          "emergencyFund": 15,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 75,
+        "stage": "Cruise Control",
+        "priority": "Emergency Runway",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 20,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "Smaller debt, high payments",
+      "input": {
+        "income": 6000,
+        "needs": 3400,
+        "wants": 1200,
+        "savings": 500,
+        "extraDebtPayment": 250,
+        "totalDebtBalance": 10000,
+        "emergencyFundSaved": 4000,
+        "emergencyFundGoal": 8000,
+        "investmentsCurrentValue": 2500,
+        "minimumDebtPayment": 2200
+      },
+      "before": {
+        "score": 77,
+        "stage": "Cruise Control",
+        "priority": "Savings System",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 17,
+          "emergencyFund": 15,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 58,
+        "stage": "Turbulence",
+        "priority": "Debt Load",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 3,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "Unknown required payments",
+      "input": {
+        "income": 6000,
+        "needs": 3400,
+        "wants": 1200,
+        "savings": 500,
+        "extraDebtPayment": 250,
+        "totalDebtBalance": 18120,
+        "emergencyFundSaved": 4000,
+        "emergencyFundGoal": 8000,
+        "investmentsCurrentValue": 2500,
+        "minimumDebtPayment": null
+      },
+      "before": {
+        "score": 71,
+        "stage": "Cruise Control",
+        "priority": "Debt Load",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 11,
+          "emergencyFund": 15,
+          "investments": 8
+        }
+      },
+      "after": {
+        "score": 63,
+        "stage": "Turbulence",
+        "priority": "Debt Load",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 12,
+          "debtPressure": 8,
+          "emergencyFund": 10,
+          "investments": 8
+        }
+      }
+    },
+    {
+      "name": "No debt, strong reserves",
+      "input": {
+        "income": 8000,
+        "needs": 2600,
+        "wants": 1000,
+        "savings": 1600,
+        "extraDebtPayment": 0,
+        "totalDebtBalance": 0,
+        "emergencyFundSaved": 15000,
+        "emergencyFundGoal": 15000,
+        "investmentsCurrentValue": 40000,
+        "minimumDebtPayment": null
+      },
+      "before": {
+        "score": 100,
+        "stage": "Flight Mode",
+        "priority": "Ownership Mindset",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 25,
+          "debtPressure": 20,
+          "emergencyFund": 20,
+          "investments": 10
+        }
+      },
+      "after": {
+        "score": 100,
+        "stage": "Flight Mode",
+        "priority": "Ownership Mindset",
+        "categories": {
+          "cashRemaining": 25,
+          "savingsRate": 25,
+          "debtPressure": 20,
+          "emergencyFund": 20,
+          "investments": 10
+        }
+      }
+    }
+  ]
+}

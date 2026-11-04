@@ -20,7 +20,7 @@ try {
   await next(page);await fillRows(page,'wants',[300,300,600]);assert.match(await total(page,'wants').innerText(),/\$1,200.00/);
   await page.locator('#score-form').screenshot({path:out+`/wants-${width}.png`,style:'.site-header,.skip-link{visibility:hidden!important}'});
   await next(page);assert.equal(await page.locator('.flow-step:visible input:not([type=hidden])').count(),1);await page.locator('#savings').fill('500');await next(page);
-  await page.locator('#extraDebtPayment').fill('250');await next(page);await page.locator('#totalDebtBalance').fill('18120');await next(page);await page.locator('#emergencyFundSaved').fill('4000');await page.locator('#emergencyFundGoal').fill('8000');
+  await page.locator('#extraDebtPayment').fill('250');await next(page);await page.locator('#totalDebtBalance').fill('18120');await page.locator('#minimumDebtPayment').fill('500');await next(page);await page.locator('#emergencyFundSaved').fill('4000');await page.locator('#emergencyFundGoal').fill('8000');
   assert.match(await page.locator('[data-runway-goal]').innerText(),/\$10,200/);await next(page);
   await fillRows(page,'investmentsCurrentValue',[1500,1000]);const accounts=editor(page,'investmentsCurrentValue');
   await accounts.locator('[data-row-label]').nth(1).fill('HYSA');await next(page);assert.match(await page.locator('#form-error').innerText(),/Choose Cash or high yield savings/);
@@ -30,11 +30,12 @@ try {
   assert.equal(await page.locator('#emergencyFundSaved').inputValue(),'4,000');
   await page.locator('#score-form').screenshot({path:out+`/accounts-${width}.png`,style:'.site-header,.skip-link{visibility:hidden!important}'});
   await next(page);await page.getByRole('button',{name:'Stable',exact:true}).click();await page.getByRole('button',{name:'Save more consistently',exact:true}).click();await next(page);await page.locator('[data-save-report]').waitFor();
-  assert.equal(await page.locator('[data-report-score]').innerText(),'71');assert.equal(await page.locator('.report-stage').innerText(),'CRUISE CONTROL');assert.match(await page.locator('.one-move h3').innerText(),/MOVE \$100 /);
+  assert.equal(await page.locator('[data-report-score]').innerText(),'75');assert.equal(await page.locator('.report-stage').innerText(),'CRUISE CONTROL');assert.match(await page.locator('.one-move h3').innerText(),/MOVE \$100 /);
+  await page.locator('.report-details > summary').click();
   assert.match(await page.locator('#flight-report').innerText(),/Cash accounts listed here are excluded from investing/);
   const [download]=await Promise.all([page.waitForEvent('download'),page.locator('[data-save-report]').click()]);const path=out+`/fixture-${width}.html`;await download.saveAs(path);const html=await readFile(path,'utf8');
-  for(const token of ['Housing','Minimum debt payments','Roth IRA','Brokerage investments','HYSA reserve','$2,500.00','$4,000.00'])assert.ok(html.includes(token),token);
-  assert.match(html,/not added to your Step 7 emergency balance/);
+  for(const token of ['$2,500.00','$4,000.00','$3,400.00'])assert.ok(html.includes(token),token);
+  assert.doesNotMatch(html,/HYSA reserve/);assert.match(html,/concise report keeps the totals/);
   if(width===1280){const saved=await context.newPage();await saved.goto('file://'+path);await saved.pdf({path:out+'/fixture-1280.pdf',format:'A4',printBackground:true});await saved.close();}
   await page.locator('#flight-report').screenshot({path:out+`/report-${width}.png`,style:'.site-header,.skip-link{visibility:hidden!important}'});
   await page.locator('[data-edit-report]').click();await next(page);assert.equal(await amounts(page,'needs').first().inputValue(),'1,800');
@@ -49,7 +50,7 @@ try {
   const events=await page.evaluate(()=>window.dataLayer.filter(e=>e[0]==='event').map(e=>({name:e[1],params:e[2]})));
   for(const e of events) for(const [key,value] of Object.entries(e.params)){assert.doesNotMatch(key,/income|needs|wants|savings|debt|fund|invest|amount|value|account|nickname|label/i);assert.ok(!String(value).includes('PRIVATE_LABEL_'));}
   await writeFile(out+`/network-${width}.json`,JSON.stringify({requests,events},null,2));
-  checks.push({width,needs:3400,wants:1200,savingsSingleField:true,investments:2500,cashReference:4000,emergencyUnchanged:4000,score:71,stage:'Cruise Control',priority:'Savings System',nextMove:100,suggestedRunway:10200,backEdit:true,centsRemoval:true,invalidBlocked:true,privateLabelsStayLocal:true});await context.close();
+  checks.push({width,needs:3400,wants:1200,savingsSingleField:true,investments:2500,cashReference:4000,emergencyUnchanged:4000,score:75,stage:'Cruise Control',priority:'Emergency Runway',nextMove:100,suggestedRunway:10200,backEdit:true,centsRemoval:true,invalidBlocked:true,privateLabelsStayLocal:true});await context.close();
  }
  // Removal to empty, deliberate zero, and keyboard access to add controls.
  const c=await browser.newContext({viewport:{width:390,height:844}});const p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(origin,{waitUntil:'networkidle'});await p.locator('[data-start]').click();await p.locator('#income').fill('1000');await next(p);

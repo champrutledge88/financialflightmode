@@ -39,8 +39,8 @@ test('check thresholds include savings, debt, runway, extra payments and investm
   for (const [rate,state,answer] of [[.1,'yes','Yes'],[.05,'partial','Almost'],[.049,'no','Not yet']]) {
     const c=report({savings:6000*rate}).checks[1]; assert.equal(c.state,state); assert.equal(c.answer,answer);
   }
-  for (const [ratio,state,answer] of [[0,'yes','No debt'],[2,'yes','Yes'],[4,'partial','Close'],[4.01,'no','Not yet']]) {
-    const c=report({totalDebtBalance:6000*ratio}).checks[2]; assert.equal(c.state,state); assert.equal(c.answer,answer);
+  for (const [payment,state,answer] of [[600,'yes','10.0%'],[1200,'partial','20.0%'],[1260,'no','21.0%'],[null,'partial','Limited']]) {
+    const c=report({minimumDebtPayment:payment}).checks[2]; assert.equal(c.state,state); assert.equal(c.answer,answer);
   }
   for (const [months,state] of [[1,'yes'],[.5,'partial'],[.49,'no']]) assert.equal(report({ emergencyFundSaved:3400*months }).checks[3].state,state);
   assert.equal(report({totalDebtBalance:0,extraDebtPayment:0}).checks[4].answer,'No debt');
@@ -53,9 +53,9 @@ test('runway rounds months, keeps goal months, caps display at six, and handles 
     const r=report({emergencyFundSaved:3400*months}); assert.equal(r.runway.zone,zone); assert.equal(r.runway.scaleMonths,Math.min(6,months));
   }
   assert.equal(report().runway.monthsCovered,1.2); assert.equal(report().runway.goalMonths,8000/3400);
-  assert.equal(report({needs:0,emergencyFundSaved:1}).checks[3].state,'yes');
+  assert.equal(report({needs:0,emergencyFundSaved:1}).checks[3].state,'no');
   assert.equal(report({needs:0,emergencyFundSaved:0}).checks[3].state,'no');
-  assert.equal(report({needs:0,emergencyFundSaved:1}).runway.monthsCovered,6);
+  assert.equal(report({needs:0,emergencyFundSaved:1}).runway.monthsCovered,0);
   assert.equal(report({needs:0,emergencyFundSaved:0,emergencyFundGoal:0}).runway.goalMonths,0);
 });
 test('lights prioritize alerts, then no checks, then partial checks and cap at three', () => {

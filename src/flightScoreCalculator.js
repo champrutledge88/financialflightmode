@@ -45,9 +45,7 @@ const cleanNumber = (value) => {
 
 const scoreCashRemaining = (cashRemaining, income) => {
   if (cashRemaining < 0 || income <= 0) return 0;
-  const ratio = cashRemaining / income;
-  if (ratio < 0.05) return 10;
-  if (ratio < 0.1) return 18;
+  // Affordability is independent of whether surplus is deliberately assigned.
   return 25;
 };
 
@@ -59,18 +57,16 @@ const scoreSavingsRate = (savingsRate) => {
   return 25;
 };
 
-const scoreDebtPressure = (totalDebtBalance, income, extraDebtPayment) => {
+// FFM educational thresholds, version 2. These are not lender DTI cutoffs.
+const scoreDebtPressure = (totalDebtBalance, income, minimumDebtPayment) => {
   if (totalDebtBalance <= 0) return 20;
-  if (income <= 0) return 3;
-
-  const ratio = totalDebtBalance / income;
-  let score = 3;
-  if (ratio <= 1) score = 18;
-  else if (ratio <= 2) score = 14;
-  else if (ratio <= 4) score = 8;
-
-  const paymentBonus = extraDebtPayment > 0 ? clamp(extraDebtPayment / Math.max(income * 0.05, 1), 0, 1) * 3 : 0;
-  return Math.min(20, Math.round(score + paymentBonus));
+  // Missing payment information receives conservative provisional points.
+  if (minimumDebtPayment === null || income <= 0) return 8;
+  const share = minimumDebtPayment / income;
+  if (share <= 0.1) return 20;
+  if (share <= 0.2) return 14;
+  if (share <= 0.35) return 8;
+  return 3;
 };
 
 const scoreEmergencyFund = (emergencyFundLevel) => {
@@ -124,12 +120,12 @@ export const PRIORITY_ALERTS = Object.freeze({
   savingsRate: Object.freeze({
     key: "savingsRate",
     label: "Savings Rate",
-    message: "You are saving under 5% of take home pay. Start with one automatic transfer on payday, even a small one.",
+    message: "You are saving under 5% of take home pay. Review a repeatable payday contribution after essential bills and required payments are covered.",
   }),
   emergencyFund: Object.freeze({
     key: "emergencyFund",
     label: "Emergency Runway",
-    message: "Your emergency runway is under 25% of your goal. Building it protects every other part of the plan.",
+    message: "Your emergency cash covers less than three quarters of a month of needs. Building it protects every other part of the plan.",
   }),
 });
 
@@ -189,19 +185,25 @@ export const calculateFlightScore = (inputValues) => {
     emergencyFundSaved: cleanNumber(inputValues.emergencyFundSaved),
     emergencyFundGoal: cleanNumber(inputValues.emergencyFundGoal),
     investmentsCurrentValue: cleanNumber(inputValues.investmentsCurrentValue),
+    minimumDebtPayment: inputValues.minimumDebtPayment === null || inputValues.minimumDebtPayment === undefined || String(inputValues.minimumDebtPayment).trim() === ''
+      ? null : cleanNumber(inputValues.minimumDebtPayment),
   };
 
-  const cashRemaining = values.income - values.needs - values.wants - values.savings - values.extraDebtPayment;
+  const cashRemaining = Math.round((values.income - values.needs - values.wants - values.savings - values.extraDebtPayment) * 100) / 100;
   const savingsRate = values.income > 0 ? values.savings / values.income : 0;
   const debtToIncome = values.income > 0 ? values.totalDebtBalance / values.income : 0;
   const emergencyFundLevel =
     values.emergencyFundGoal > 0 ? values.emergencyFundSaved / values.emergencyFundGoal : 0;
 
+  const runwayMonths = values.needs > 0 ? values.emergencyFundSaved / values.needs : null;
+  // Keep personal goal progress separate from the fixed three-month scoring benchmark.
+  const emergencyRunwayLevel = runwayMonths === null ? 0 : runwayMonths / 3;
+  const debtPaymentShare = values.income > 0 && values.minimumDebtPayment !== null ? values.minimumDebtPayment / values.income : null;
   const categoryScores = {
     cashRemaining: scoreCashRemaining(cashRemaining, values.income),
     savingsRate: scoreSavingsRate(savingsRate),
-    debtPressure: scoreDebtPressure(values.totalDebtBalance, values.income, values.extraDebtPayment),
-    emergencyFund: scoreEmergencyFund(emergencyFundLevel),
+    debtPressure: scoreDebtPressure(values.totalDebtBalance, values.income, values.minimumDebtPayment),
+    emergencyFund: scoreEmergencyFund(emergencyRunwayLevel),
     investments: scoreInvestmentStatus(values.investmentsCurrentValue),
   };
 
@@ -216,11 +218,15 @@ export const calculateFlightScore = (inputValues) => {
     savingsRate,
     debtToIncome,
     emergencyFundLevel,
+    emergencyRunwayLevel,
+    runwayMonths,
+    debtPaymentShare,
+    debtAssessmentLimited: values.totalDebtBalance > 0 && values.minimumDebtPayment === null,
     investmentStatus: getInvestmentLabel(values.investmentsCurrentValue),
   };
 
   const stage = getStage({ score, cashRemaining });
-  const priorityAlerts = getPriorityAlerts({ cashRemaining, savingsRate, emergencyFundLevel });
+  const priorityAlerts = getPriorityAlerts({ cashRemaining, savingsRate, emergencyFundLevel: emergencyRunwayLevel });
 
   return {
     values,

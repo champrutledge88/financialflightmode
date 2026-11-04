@@ -1,8 +1,8 @@
 import { createCategoryEditor } from './categoryInputs.js?v=categories-1';
 import { addAmountFieldNavigation } from './amountFieldNavigation.js?v=field-nav-2';
 import { parseCurrency, formatCurrencyInput, paycheckToMonthly, moneyError } from './scorecardFlow.js?v=final-review-1';
-import { money } from './flightReport.js?v=categories-1';
-import { trackEvent } from './analytics.js?v=ga4-1';
+import { money } from './flightReport.js?v=refinements-2';
+import { trackEvent } from './analytics.js?v=refinements-2';
 
 const steps = [
   { name: 'monthly_income', question: 'What is your monthly take home income?', helper: 'Use money received after taxes and deductions. All amounts are in US dollars.', fields: ['income'], example: 'For example, add up what lands in your account after taxes each month.' },
@@ -10,12 +10,12 @@ const steps = [
   { name: 'monthly_wants', question: 'What do you spend on wants each month?', fields: ['wants'], helper: 'Dining out, optional subscriptions and shopping. Essential subscriptions belong in needs. Count each expense once.', example: 'For example, add a typical month of dining out, entertainment, and shopping.' },
   { name: 'monthly_saving', question: 'How much cash do you set aside each month?', helper: 'New cash savings contributions, not the balance already saved. Do not count payroll retirement deductions again.', fields: ['savings'], zero: 'None right now', example: 'For example, count regular transfers into savings, even small ones.' },
   { name: 'extra_payment', question: 'How much extra do you pay toward debt each month?', helper: 'Only payments above the minimum. Your minimum payments belong in monthly needs.', fields: ['extraDebtPayment'], zero: 'None', example: 'For example, count only the extra you pay above the amount due.' },
-  { name: 'total_balance', question: 'Total debt you owe today, not counting your mortgage?', fields: ['totalDebtBalance'], zero: 'No debt', helper: 'Include car loans, credit cards, student loans, personal loans, and medical bills. Leave out your mortgage.', example: 'For example, add your latest balances for loans and cards outside your mortgage.' },
+  { name: 'total_balance', question: 'Total debt you owe today, not counting your mortgage?', fields: ['totalDebtBalance', 'minimumDebtPayment'], zero: 'No debt', helper: 'Include car loans, credit cards, student loans, personal loans, and medical bills. Leave out your mortgage. If you owe debt, enter its required monthly payments below. Those payments are already in your needs; we do not subtract them again.', example: 'For example, add your latest balances for loans and cards outside your mortgage.' },
   { name: 'emergency_runway', question: 'How much emergency cash do you have today?', helper: 'Enter the current cash balance and your savings goal. Leave investments out. Your goal is a balance, not a monthly transfer.', fields: ['emergencyFundSaved', 'emergencyFundGoal'], example: 'For example, count cash you could use for an unexpected bill. Your goal can be three months of needs.' },
   { name: 'long_term', question: 'Invested so far for the long term?', fields: ['investmentsCurrentValue'], zero: 'None yet', helper: 'List current invested balances by account. Roth and brokerage investments count. Cash and high yield savings are listed separately, not scored as investments.', example: 'For example, add your retirement account and other investment balances.' },
   { name: 'current_pressure', question: 'What feels most pressing right now?', helper: 'Your focus can guide your plan when supported by your numbers. It does not change your score.', fields: ['immediatePressure', 'shortTermObjective'] },
 ];
-const labels = { income: 'Monthly take home income', needs: 'Monthly needs', wants: 'Monthly wants', savings: 'Monthly cash savings contributions', extraDebtPayment: 'Monthly extra debt payment', totalDebtBalance: 'Total debt balance', emergencyFundSaved: 'Emergency fund saved', emergencyFundGoal: 'Emergency fund goal', investmentsCurrentValue: 'Invested so far' };
+const labels = { income: 'Monthly take home income', needs: 'Monthly needs', wants: 'Monthly wants', savings: 'Monthly cash savings contributions', extraDebtPayment: 'Monthly extra debt payment', totalDebtBalance: 'Total debt balance', minimumDebtPayment: 'Required monthly debt payments outside your mortgage (optional)', emergencyFundSaved: 'Emergency fund saved', emergencyFundGoal: 'Emergency fund goal', investmentsCurrentValue: 'Invested so far' };
 
 export function enhanceScorecard(form, { onStart }) {
   const originalLabels = Object.fromEntries([...form.querySelectorAll('label')].map(label => [label.htmlFor, label]));
@@ -33,9 +33,12 @@ export function enhanceScorecard(form, { onStart }) {
       const label = originalLabels[field];
       if (labels[field]) {
         label.querySelector(':scope > span').textContent = labels[field];
+        if (field === 'minimumDebtPayment') {
+          const help = document.createElement('small'); help.textContent = 'Not sure? Leave blank. Your debt assessment will be limited. A confirmed zero means no payments are currently required.'; label.append(help);
+        }
         const input = label.querySelector('input');
         input.type = 'text'; input.value = ''; input.inputMode = 'decimal'; input.autocomplete = 'off';
-        input.removeAttribute('min'); input.removeAttribute('step'); input.required = true;
+        input.removeAttribute('min'); input.removeAttribute('step'); input.required = field !== 'minimumDebtPayment';
         input.setAttribute('aria-describedby', 'form-error');
         input.addEventListener('input', () => {
           const start = input.selectionStart; const before = input.value;
@@ -76,7 +79,7 @@ export function enhanceScorecard(form, { onStart }) {
     }
     if (step.zero) {
       const chip = document.createElement('button'); chip.type = 'button'; chip.className = 'zero-chip'; chip.textContent = step.zero;
-      chip.onclick = () => { const field=step.fields[0]; if(categoryEditors[field]) categoryEditors[field].zero(); else form.elements[field].value='0'; next(); }; panel.append(chip);
+      chip.onclick = () => { const field=step.fields[0]; if(categoryEditors[field]) categoryEditors[field].zero(); else form.elements[field].value='0'; if (field === 'totalDebtBalance') form.elements.minimumDebtPayment.value = ''; next(); }; panel.append(chip);
     }
     if (index === 6) {
       const chip = document.createElement('button'); chip.type = 'button'; chip.dataset.runwayGoal = ''; chip.onclick = () => { form.elements.emergencyFundGoal.value = formatCurrencyInput(String(parseCurrency(form.elements.needs.value) * 3)); next(); }; panel.append(chip);
@@ -104,18 +107,29 @@ export function enhanceScorecard(form, { onStart }) {
     node.textContent = remaining < 0 ? `Cash left so far: over by ${money(remaining)}` : `Cash left so far: ${money(remaining)}`;
     const goal = form.querySelector('[data-runway-goal]'); goal.textContent = `Use 3 months (${money((parseCurrency(form.elements.needs.value) || 0) * 3)})`;
   };
+  const syncDebtPayment = () => {
+    const hasDebt = parseCurrency(form.elements.totalDebtBalance.value) > 0;
+    const label = form.elements.minimumDebtPayment.closest('label'); label.hidden = !hasDebt;
+    if (!hasDebt) form.elements.minimumDebtPayment.value = '';
+  };
+  form.elements.totalDebtBalance.addEventListener('input', syncDebtPayment);
   const show = index => {
     current = index; panels.forEach((panel, i) => panel.hidden = i !== current);
     form.querySelector('.flow-progress').textContent = `Step ${current + 1} of 9`;
     form.querySelector('progress').value = current + 1;
     form.querySelector('[data-next]').textContent = current === 8 ? 'Run My Flight Check' : 'Continue';
-    error.textContent = ''; updateGauge(); panels[current].querySelector('h3').focus();
+    error.textContent = ''; updateGauge(); syncDebtPayment(); panels[current].querySelector('h3').focus();
     trackEvent('scorecard_step_view', { step_number: current + 1, step_name: steps[current].name });
   };
   const valid = () => {
     for (const field of steps[current].fields.filter(field => labels[field])) {
       if (categoryEditors[field]) { const validation=categoryEditors[field].validate(); if(validation!==true){error.textContent=validation.message;validation.focus();return false;} continue; }
-      const input = form.elements[field]; const message = moneyError(parseCurrency(input.value), field);
+      const input = form.elements[field];
+      if (field === 'minimumDebtPayment' && (input.closest('label').hidden || input.value.trim() === '')) continue;
+      if (field === 'minimumDebtPayment' && parseCurrency(input.value) > parseCurrency(form.elements.needs.value)) {
+        error.textContent = 'Required debt payments are part of your needs. Check both amounts; do not add these payments twice.'; input.focus(); return false;
+      }
+      const message = moneyError(parseCurrency(input.value), field);
       if (message) { error.textContent = message; input.setAttribute('aria-invalid', 'true'); input.focus(); return false; }
     }
     if (current === 8 && !form.elements.immediatePressure.value) { error.textContent = 'Choose what feels most pressing to run your Flight Check.'; panels[current].querySelector('button').focus(); return false; }
@@ -152,7 +166,7 @@ export function enhanceScorecard(form, { onStart }) {
     trackEvent('scorecard_abandon', { last_step_number: current + 1, last_step_name: steps[current].name, transport_type: 'beacon' });
   });
   return {
-    getValues: () => Object.fromEntries(Object.keys(labels).map(field => [field, field === 'income' ? monthlyValue() : parseCurrency(form.elements[field].value)])),
+    getValues: () => Object.fromEntries(Object.keys(labels).map(field => [field, field === 'income' ? monthlyValue() : field === 'minimumDebtPayment' && (form.elements[field].closest('label').hidden || !form.elements[field].value.trim()) ? null : parseCurrency(form.elements[field].value)])),
     getBreakdown: () => ({ needs: categoryEditors.needs.summary().details || [], wants: categoryEditors.wants.summary().details || [], investments: categoryEditors.investmentsCurrentValue.summary().details || [], cashAccounts: categoryEditors.investmentsCurrentValue.summary().cashAccounts || [] }),
     complete: () => { completed = true; },
     edit: () => { journey.hidden = false; form.querySelector('.flow-start').hidden = true; completed = false; show(0); form.scrollIntoView({block:'start'}); },

@@ -45,7 +45,7 @@ const derivedContextFromValues = (values) => {
     pressureMetrics: {
       cashRemaining: result.metrics.cashRemaining,
       savingsRate: result.metrics.savingsRate,
-      emergencyFundLevel: result.metrics.emergencyFundLevel,
+      emergencyFundLevel: result.metrics.emergencyRunwayLevel,
     },
   };
 };
@@ -111,25 +111,13 @@ const assertPrimitive = (value) => {
   if (typeof value === "number") assert.equal(Number.isFinite(value), true);
 };
 
-test("reproduces SPEC Persona 1 Maya: Strong Signal, Hard Override, and ordered Warning Lights", () => {
-  const plan = generatePersonalizedFlightPlan({
-    derivedContext: derivedContextFromValues(personaValues.Maya),
-    immediatePressure: "Stable",
-    shortTermObjective: "",
-  });
-
-  assert.deepEqual(plan.strongSignal, {
-    category: "Emergency Runway",
-    actionId: "emergencyRunway",
-    isTieBreak: false,
-  });
-  assert.equal(plan.decisionPath, "HardOverride");
-  assert.deepEqual(warningCategories(plan), ["Cash Flow Control", "Debt Load"]);
-  assert.equal(plan.doNow, actionLibrary[0].doNow);
-  assert.deepEqual(plan.workbookConnection, {
-    tab: "Monthly Budget + Dashboard",
-    action: "Cash Flow Control row",
-  });
+test("version 2 Maya: fully assigned plan prioritizes runway without a deficit override", () => {
+  const plan = generatePersonalizedFlightPlan({derivedContext: derivedContextFromValues(personaValues.Maya), immediatePressure: 'Stable', shortTermObjective: ''});
+  assert.deepEqual(plan.strongSignal, {category:'Cash Flow Control',actionId:'cashFlowControl',isTieBreak:false});
+  assert.equal(plan.decisionPath, 'StageSuppression');
+  assert.deepEqual(warningCategories(plan), ['Emergency Runway','Debt Load']);
+  assert.equal(plan.doNow, actionLibrary[3].doNow);
+  assert.equal(plan.workbookConnection.tab,'Savings Tracker + Dashboard');
 });
 
 test("reproduces SPEC Persona 2 Jordan: Strong Signal, forced cash Warning Light, and deterministic #2", () => {
@@ -162,8 +150,8 @@ test("reproduces SPEC Persona 3 Priya: objective breaks the close tie without ch
     isTieBreak: false,
   });
   assert.equal(plan.decisionPath, "ObjectiveTieBreak");
-  assert.deepEqual(warningCategories(plan), ["Savings System", "Emergency Runway"]);
-  assert.equal(plan.thirtyDayMission, actionLibrary[1].thirtyDayMission);
+  assert.deepEqual(warningCategories(plan), ["Debt Load", "Savings System"]);
+  assert.equal(plan.thirtyDayMission, actionLibrary[2].thirtyDayMission);
 });
 
 test("reproduces SPEC Persona 4 Alex: all-tied Strong Signal with Flag Context subordinate to fallback", () => {
@@ -190,8 +178,8 @@ test("reproduces SPEC Persona 4 Alex: all-tied Strong Signal with Flag Context s
   });
 });
 
-test("SPEC AC5: exactly-zero and negative cash always force Cash Flow Control first", () => {
-  for (const name of ["Maya", "Jordan"]) {
+test("version 2: negative cash forces Cash Flow Control first", () => {
+  for (const name of ["Jordan"]) {
     const plan = generatePersonalizedFlightPlan({
       derivedContext: derivedContextFromValues(personaValues[name]),
       immediatePressure: "Stable",
@@ -212,7 +200,7 @@ test("Hard Override takes precedence over a future fallback collision", () => {
         ["emergencyFund", 1],
         ["investments", 1],
       ],
-      pressureMetrics: { cashRemaining: 0, savingsRate: 0.1, emergencyFundLevel: 1 },
+      pressureMetrics: { cashRemaining: -1, savingsRate: 0.1, emergencyFundLevel: 1 },
     }),
     immediatePressure: "Stable",
     shortTermObjective: "",
@@ -233,7 +221,7 @@ test("Hard Override Warning Light #2 is the single mathematically weakest catego
         ["emergencyFund", 0.25],
         ["investments", 0.4],
       ],
-      pressureMetrics: { cashRemaining: 0, savingsRate: 0.1, emergencyFundLevel: 1 },
+      pressureMetrics: { cashRemaining: -1, savingsRate: 0.1, emergencyFundLevel: 1 },
     }),
     immediatePressure: "Stable",
     shortTermObjective: "Build a cushion",
@@ -252,7 +240,7 @@ test("Hard Override uses the Warning Light safety order only for an exact weakes
         ["emergencyFund", 0.5],
         ["investments", 0.4],
       ],
-      pressureMetrics: { cashRemaining: 0, savingsRate: 0.1, emergencyFundLevel: 1 },
+      pressureMetrics: { cashRemaining: -1, savingsRate: 0.1, emergencyFundLevel: 1 },
     }),
     immediatePressure: "Stable",
     shortTermObjective: "Save more consistently",

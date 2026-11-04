@@ -15,6 +15,7 @@ async function run(values){
  await page.getByRole('button',{name:'Save more consistently',exact:true}).click();
  await page.locator('[data-next]').click();
  await page.locator('[data-save-report]').waitFor();
+ await page.locator('.report-details > summary').click();
 }
 const checks=[];
 try {

@@ -1,8 +1,9 @@
-import { enhanceScorecard } from "./guidedScorecard.js?v=field-nav-2";
-import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=categories-1";
+import { enhanceScorecard } from "./guidedScorecard.js?v=refinements-2";
+import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=refinements-2";
+import { buildFlightReport, money } from "./flightReport.js?v=refinements-2";
 import { moneyError } from "./scorecardFlow.js?v=final-review-1";
-import { calculateFlightScore } from "./flightScoreCalculator.js?v=stage-order-1";
-import { trackEvent } from "./analytics.js?v=ga4-1";
+import { calculateFlightScore } from "./flightScoreCalculator.js?v=refinements-2";
+import { trackEvent } from "./analytics.js?v=refinements-2";
 
 const MAILERLITE_ACCOUNT_ID = "2411474";
 const MAILERLITE_FORM_ID = "189897889621738735";
@@ -27,6 +28,7 @@ const fields = [
   "savings",
   "extraDebtPayment",
   "totalDebtBalance",
+  "minimumDebtPayment",
   "emergencyFundSaved",
   "emergencyFundGoal",
   "investmentsCurrentValue",
@@ -72,7 +74,7 @@ const animateScore = (start, end, scoreValue, scoreRing, duration = 520) => {
 
 const validateInputs = () => {
   const values = getInputValues();
-  const invalid = fields.find(field => moneyError(Number(values[field]), field));
+  const invalid = fields.find(field => !(field === "minimumDebtPayment" && values[field] === null) && moneyError(Number(values[field]), field));
   if (invalid) {
     errorNode.textContent = moneyError(Number(values[invalid]), invalid);
     return false;
@@ -203,6 +205,20 @@ leadForm.addEventListener("submit", (event) => {
 
 const exampleResult = calculateFlightScore(getInputValues());
 renderFlightReport(exampleResult, { example: true });
+const illustration = document.querySelector('.v3-report');
+if (illustration) {
+  const report = buildFlightReport(exampleResult, { flightDate: new Date() });
+  illustration.querySelector('.v3-ring strong').textContent = report.score;
+  illustration.querySelector('.v3-score-copy h3').textContent = report.stage.name;
+  illustration.querySelector('.v3-score-copy p').textContent = report.summary;
+  const stats = illustration.querySelectorAll('.v3-stat');
+  stats[0].querySelector('strong').textContent = money(report.paycheckMix.unassigned);
+  stats[1].querySelector('span').textContent = 'YOUR PRIORITY';
+  stats[1].querySelector('strong').textContent = report.plan.warningLights[0] || 'Ownership Mindset';
+  const next = illustration.querySelector('.v3-next p');
+  next.replaceChildren(); const heading = document.createElement('b'); heading.textContent = 'Your next move';
+  next.append(heading, document.createElement('br'), report.oneMove.text);
+}
 // The landing hero already contains a labeled example. Reveal the full report only after a check.
 if (document.querySelector(".v3-report-wrap")) document.querySelector("#flight-report").hidden = true;
 guidedFlow = enhanceScorecard(scoreForm, { onStart: trackScorecardStart });
