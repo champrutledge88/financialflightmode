@@ -1,4 +1,4 @@
-import { chromium, webkit } from 'playwright';
+import { chromium, webkit, firefox } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fillMoney } from './scorecard-test-helpers.mjs';
@@ -7,12 +7,13 @@ const origin = process.env.SCORECARD_ORIGIN || 'http://127.0.0.1:4173';
 const out = process.env.SCORECARD_EVIDENCE_DIR || '/tmp/ffm-amount-navigation';
 await mkdir(out, { recursive: true });
 const results = [];
-for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
+for (const [engine, browserType] of Object.entries({ chromium, webkit, firefox })) {
+  if (process.env.FFM_ENGINE && process.env.FFM_ENGINE !== engine) continue;
   const browser = await browserType.launch();
   try {
-    for (const width of [390, 1280]) {
-      const mobile = width === 390;
-      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce' });
+    for (const width of [320, 390, 412, 1280]) {
+      const mobile = width < 760;
+      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: mobile && engine !== 'firefox', hasTouch: mobile, reducedMotion: 'reduce' });
       const page = await context.newPage();
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
@@ -58,6 +59,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       const ids = await amounts.evaluateAll(nodes => nodes.map(n => n.id));
       await amounts.nth(0).fill('3000');
       await amounts.nth(2).fill('123.45');
+      await amounts.nth(1).focus();
       await amounts.nth(2).focus();
       assert.equal(await nextAmount.innerText(), 'Next field');
       await activate(); await focused(ids[3]);
@@ -143,6 +145,19 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
         return calls;
       });
       assert.equal(correctionCount, 0, 'viewport notifications must not create a scroll feedback loop');
+      // Real browser chrome changes height, not merely event count. Once focus
+      // is settled, alternating heights must not start new page corrections.
+      await page.evaluate(() => {
+        window.__originalScrollBy = window.scrollBy;
+        window.__heightCorrections = 0;
+        window.scrollBy = (...args) => { window.__heightCorrections++; return window.__originalScrollBy(...args); };
+      });
+      for (const height of [440, 400, 440, 400]) {
+        await page.setViewportSize({ width: mobile ? 390 : 900, height });
+        await page.waitForTimeout(320);
+      }
+      assert.equal(await page.evaluate(() => window.__heightCorrections), 0);
+      await page.evaluate(() => { window.scrollBy = window.__originalScrollBy; delete window.__originalScrollBy; delete window.__heightCorrections; });
       await activate(); await focused(ids[3]); await checkVisible();
       await page.screenshot({ path: `${out}/${engine}-${width}-short-viewport.png` });
       await page.setViewportSize({ width: 844, height: 390 }); await checkVisible();
@@ -208,6 +223,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       await toolbar.waitFor({ state: 'hidden' });
       assert.deepEqual(errors, []);
       results.push({ engine, width, singleAndLastDone: true, consecutiveTaps: true, dynamicRows: true, hiddenDisabledReadonlySkipped: true, valuesAndValidationPreserved: true, keyboard: true, shortViewportAndRotation: true, labelAndInputGeometry: true, focusPanBeforeSettling: true, noScrollFeedback: true, rapidNextWithMotion: true, zoom: engine === 'chromium' ? '2x viewport scale passed' : 'not emulated', fullReportCompleted: true, errors });
+      console.log(`Passed ${engine} ${width}px`);
       await context.close();
     }
   } finally { await browser.close(); }

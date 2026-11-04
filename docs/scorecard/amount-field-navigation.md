@@ -6,9 +6,9 @@ The control resolves eligible fields from the current DOM, skipping hidden, disa
 
 The active category or field name stays visible in the toolbar, including at zoom. Visibility checks include the category label and input when both fit and account for the fixed header.
 
-The recording-driven candidate removes the repeated recovery window. It permits one reveal after focus or a material viewport dimension change (more than 24 CSS pixels), waiting 180ms for viewport settling. That reveal is consumed before scrolling. Ordinary scroll and same-size resize events position the toolbar without starting a new correction. Touch devices and reduced-motion users receive one immediate, minimal visibility adjustment instead of a competing smooth scroll animation. Deliberate touch/wheel scrolling cancels a pending adjustment.
+The recording-driven candidate removes the repeated recovery window. It permits one reveal after focus or a material viewport width change (more than 24 CSS pixels), waiting 250ms for viewport settling. That reveal is consumed before scrolling. Ordinary scroll and height-only resize events position the toolbar without starting a new correction. Touch devices and reduced-motion users receive one immediate, minimal visibility adjustment instead of a competing smooth scroll animation. Deliberate touch/wheel scrolling cancels a pending adjustment.
 
-This deliberately stops repairing late browser pans after the one-shot adjustment. It eliminates the feedback mechanism but cannot guarantee real-device visibility until the affected iPhone/browser is checked. Pointer handling is unchanged: the supplied recording does not establish which control was touched when the keyboard closed.
+This deliberately stops repairing late browser pans after the one-shot adjustment. It eliminates the feedback mechanism but cannot guarantee real-device visibility until the affected iPhone/browser is checked. A narrowly scoped touchend cancellation prevents Firefox from synthesizing a second click onto the element exposed after Done hides the bar. Keyboard and assistive clicks are preserved.
 
 This is an in-page accessory, not a modification of the native iOS keyboard.
 
@@ -22,10 +22,12 @@ node scripts/verify-amount-field-navigation.mjs
 node scripts/verify-scorecard.mjs
 ```
 
-The focused navigation suite covers Chromium and WebKit at 390px and 1280px widths, repeated taps, single and final fields, keyboard navigation, dynamic categories, skipped fields, empty and negative amounts, value retention, reduced viewport height, rotation, and full report completion. It asserts category/input geometry, a pan during the pending focus-settling interval and no re-armed correction on unchanged viewport notifications, rapid navigation with ordinary motion, wants-category context, and respect for intentional scrolling. Chromium additionally covers 2x viewport zoom. WebKit on macOS uses Option+Tab to include buttons in sequential keyboard focus.
+The focused navigation suite covers Chromium, WebKit and Firefox at 320px, 390px, 412px and 1280px widths, repeated taps, single and final fields, keyboard navigation, dynamic categories, skipped fields, empty and negative amounts, value retention, reduced viewport height, rotation, and full report completion. It asserts category/input geometry, a pan during the pending focus-settling interval and no re-armed correction on unchanged viewport notifications and alternating browser-chrome heights, rapid navigation with ordinary motion, wants-category context, and respect for intentional scrolling. Chromium additionally covers 2x viewport zoom. WebKit on macOS uses Option+Tab to include buttons in sequential keyboard focus.
 
-Headless engines do not display the native iOS keyboard. A physical iPhone Safari check is still needed to confirm keyboard retention and accessory placement during real typing, rotation and zoom.
+Headless engines do not display the native iOS keyboard. Physical iPhone Edge, Safari and Chrome checks are still needed to confirm keyboard retention and accessory placement during real typing, rotation and zoom.
 
 ## Release status
 
-The context/scroll release is `e26b6569358fc906bc283e93d49d16f4b690bd92`. This recording-driven candidate is based on that release, is not deployed, and requires fresh deployment approval. Browser tests are regression checks, not proof that the observed iPhone issue is resolved.
+The current base is `0317cd0` with the latest landing/report refinements. This recording-driven candidate preserves that release, is not deployed, and requires fresh deployment approval. Browser tests are regression checks, not proof that the observed iPhone issue is resolved.
+
+Firefox runs use a touch-enabled desktop viewport because Playwright Firefox does not support isMobile. These engine runs are not actual iOS or Android browser certification. iPhone Simulator UI testing was blocked by the locked host Mac; no Android tooling or desktop Edge was available.

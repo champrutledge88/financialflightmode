@@ -28,7 +28,7 @@ export function addAmountFieldNavigation(form) {
     const panel = active?.closest('.flow-step');
     return panel ? [...panel.querySelectorAll('input[inputmode="decimal"]')].filter(usable) : [];
   };
-  let viewportSize = [viewport?.width ?? innerWidth, viewport?.height ?? innerHeight];
+  let viewportWidth = viewport?.width ?? innerWidth;
   const hide = () => { active = null; toolbar.hidden = true; clearTimeout(settleTimer); revealPending = false; };
   const contextFor = input => {
     const row = input.closest('.category-row');
@@ -88,14 +88,14 @@ export function addAmountFieldNavigation(form) {
   const schedule = (reveal = false) => {
     if (reveal) {
       clearTimeout(settleTimer);
-      // One reveal per focus or meaningful viewport size change. Consume it
+      // One reveal per focus or meaningful viewport width change. Consume it
       // BEFORE scrolling: scroll/resize events produced by that correction must
       // not launch another correction or extend a recovery loop.
       revealPending = true;
       settleTimer = setTimeout(() => {
         revealPending = false;
         update(true);
-      }, 180);
+      }, 250);
     }
     if (frame) return;
     frame = requestAnimationFrame(() => {
@@ -140,6 +140,10 @@ export function addAmountFieldNavigation(form) {
   button.addEventListener('pointerup', event => {
     if (event.button === 0) { event.preventDefault(); advance(); }
   });
+  // Firefox can synthesize a click on the newly exposed element after Done
+  // hides this bar. Cancel the compatibility click for this touch only; the
+  // pointerup above already handled it. Keyboard/assistive clicks are unchanged.
+  button.addEventListener('touchend', event => event.preventDefault(), { passive: false });
   button.addEventListener('click', event => {
     event.preventDefault();
     if (event.detail === 0) advance();
@@ -153,10 +157,13 @@ export function addAmountFieldNavigation(form) {
     attributeFilter: ['hidden', 'disabled', 'readonly', 'type', 'inputmode', 'style', 'class'],
   });
   const resize = () => {
-    const size = [viewport?.width ?? innerWidth, viewport?.height ?? innerHeight];
-    // Browser chrome can emit resize repeatedly without a material size change.
-    const changed = size.some((value, index) => Math.abs(value - viewportSize[index]) > 24);
-    if (changed) viewportSize = size;
+    const width = viewport?.width ?? innerWidth;
+    // Edge iOS browser chrome expands/collapses during scrolling. Height changes
+    // must NEVER re-arm a consumed reveal: that recreates the keyboard bounce.
+    // Width changes cover rotation/zoom; pending focus still waits for keyboard
+    // height/pan events to settle before its one adjustment.
+    const changed = Math.abs(width - viewportWidth) > 24;
+    if (changed) viewportWidth = width;
     schedule(Boolean(active) && (changed || revealPending));
   };
   const scroll = () => schedule(revealPending);
