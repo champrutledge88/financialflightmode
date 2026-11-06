@@ -2120,9 +2120,9 @@ h1 span {
 .flight-check svg { width: 24px; height: 24px; }
 .flight-check strong { grid-column: 2; }
 .flight-check.yes svg { color: #8bdc65; } .flight-check.partial svg { color: #ffc400; } .flight-check.no svg { color: #ff3b20; }
-.flight-track { height: 4px; background: #777; position: relative; margin: 48px 16px 26px; }
+.flight-track { height: 4px; background: #777; position: relative; margin: 28px 0 26px; }
 .score-position-marker { position: absolute; width: 14px; height: 14px; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; background: #e95c03; border: 2px solid #1a1a1a; box-shadow: 0 0 0 1px rgba(255,255,255,.65); }
-.flight-stages { display: grid; grid-template-columns: 40fr 30fr 20fr 10fr; gap: 8px; }
+.flight-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
 .flight-stages > div { padding: 10px 4px; border-top: 3px solid #555; font-size: 13px; }
 .flight-stages strong, .flight-stages span { display: block; }
 .flight-stages .current { color: #e95c03; border-color: #e95c03; }
@@ -2157,7 +2157,7 @@ h1 span {
 .reveal-tiles .warning-lights.has-warnings h3::before { animation: warning-blink .4s 2; }
 @keyframes tile-fill { to { opacity: 1; } } @keyframes move-up { to { opacity: 1; transform: translateY(0); } } @keyframes warning-blink { 50% { opacity: .15; } 100% { opacity: 1; } }
 @media (max-width: 759px) {
-  .flight-report { scroll-margin-top: 24px; }.guided-form { padding: 22px 18px; }.report-header { display: block; }.report-top, .report-columns { grid-template-columns: 1fr; }.report-card { padding: 20px 16px; }.instrument { padding: 16px; }.checks-grid { grid-template-columns: 1fr; }.flight-stages { grid-template-columns: repeat(4,1fr); }.flight-stages > div { font-size: 11px; }.one-move { padding: 24px 20px; }.flow-nav .primary-button { flex: 1; }.flow-step h3 { font-size: 28px; }.report-readouts { font-size: 14px; }
+  .flight-report { scroll-margin-top: 24px; }.guided-form { padding: 22px 18px; }.report-header { display: block; }.report-top, .report-columns { grid-template-columns: 1fr; }.report-card { padding: 20px 16px; }.instrument { padding: 16px; }.checks-grid { grid-template-columns: 1fr; }.flight-stages > div { font-size: 11px; }.one-move { padding: 24px 20px; }.flow-nav .primary-button { flex: 1; }.flow-step h3 { font-size: 28px; }.report-readouts { font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .flight-report *, .guided-form *, .reveal-overlay * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -2266,3 +2266,7 @@ h1 span {
 /* Keep the full report destination clear of the fixed desktop header. */
 .report-details > summary { scroll-margin-top: 128px; }
 @media(max-width:760px) { .report-details > summary { scroll-margin-top: 24px; } }
+
+@media (max-width: 360px) {
+  .flight-stages > div { font-size: 10px; padding-inline: 2px; }
+}
