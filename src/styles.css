@@ -2181,7 +2181,7 @@ h1 span {
 /* Saved checkpoint controls follow the existing cockpit language. */
 .report-actions { display:flex; flex-wrap:wrap; gap:12px; margin:20px 0; }
 .report-actions button { min-height:48px; padding:12px 18px; border:1px solid #e95c03; border-radius:8px; color:#fff; background:#1a1a1a; font:inherit; font-weight:700; cursor:pointer; }
-.report-actions button:first-child { background:#e95c03; color:#050505; }
+.report-actions [data-view-report] { background:#e95c03; color:#050505; }
 .report-readouts dt { overflow-wrap:anywhere; }
 @media(max-width:760px) { .report-actions button { width:100%; } .report-readouts dt { max-width:68%; } }
 
@@ -2262,3 +2262,7 @@ h1 span {
   .instrument-grid { grid-template-columns:1fr; }
   .instrument:last-child { grid-column:auto; }
 }
+
+/* Keep the full report destination clear of the fixed desktop header. */
+.report-details > summary { scroll-margin-top: 128px; }
+@media(max-width:760px) { .report-details > summary { scroll-margin-top: 24px; } }
