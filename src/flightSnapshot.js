@@ -38,7 +38,7 @@ footer{font-size:11px;color:#555;border-top:1px solid #bbb;margin-top:22px;paddi
 </style></head><body><main class="sheet">
 <section class="report-page" aria-label="Page 1: Your briefing">
 <header><p class="brand">FINANCIAL FLIGHT MODE</p><h1>Your Flight Report</h1><p class="meta">${escape(report.flightDate)} · Next check ${escape(report.nextCheckDate)} · US dollars</p></header>
-<p class="print-hint">Keep this file privately. Print or save as PDF for a two-page report.</p>
+<p class="print-hint">Keep this file privately. Print or save as PDF for a two page report.</p>
 <section class="score"><strong>${report.score}<small style="font-size:16px"> / 100</small></strong><div><h2>${escape(report.stage.name)}</h2><p>${escape(report.summary)}</p>${report.stageNote ? `<p>${escape(report.stageNote)}</p>` : ''}<p class="note">Educational estimate.${report.debtAssessmentLimited ? ' Debt assessment limited.' : ''}</p></div></section>
 <section class="priority"><h2>Your next 7 days</h2><h3>${escape(report.oneMove.text)}</h3><p><strong>Why this comes first:</strong> ${escape(report.reason)}</p>${report.oneMove.followLine ? `<p>${escape(report.oneMove.followLine)}</p>` : ''}<p><strong>Starter Kit:</strong> ${escape(report.oneMove.starterSection)}</p></section>
 <h2>Your instrument readouts</h2><dl>${rows(report.readouts.map(r=>[r.label,r.text]))}</dl>
@@ -49,7 +49,7 @@ footer{font-size:11px;color:#555;border-top:1px solid #bbb;margin-top:22px;paddi
 <header><p class="brand">YOUR CHECKPOINT</p><h2 class="page-title">Review. Reflect. Adjust.</h2><p class="meta">${escape(report.flightDate)} · Return on ${escape(report.nextCheckDate)}</p></header>
 <h2>Your input snapshot</h2><p class="note">Monthly amounts are flows; other amounts are balances. Required debt payments are already included in needs.</p>
 <dl>${rows(report.inputs.map(r=>[shortLabels[r.label]||r.label,dollars(r.amount)]))}</dl>
-<p class="note">Category and account details remain in your on-screen cockpit. This concise report keeps the totals.</p>
+<p class="note">Category and account details remain in your on screen cockpit. This concise report keeps the totals.</p>
 <section class="lines"><h2>Reflect on ${escape(report.nextCheckDate)}</h2><p>What action did I take?</p><p>What changed in my cash, savings or debt?</p><p>What will I adjust before the next payday?</p></section>
 <footer>Education only. A planning signal, not personal financial advice. FFM does not store your answers. Keep this saved copy private. Scoring ${escape(report.scoringVersion)}. Compare future checkpoints using the same definitions.</footer>
 <p class="page-number">2 / 2</p>

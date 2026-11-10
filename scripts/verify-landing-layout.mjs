@@ -55,7 +55,7 @@ try {
   await summary.focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>!document.querySelector('#cockpit-walkthrough').open);
   await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('#cockpit-walkthrough').open);
   await page.locator('.header-cta').click();assert.equal(new URL(page.url()).hash,'#scorecard');
-  assert.match(await page.locator('.signup-disclosure').innerText(),/Weekly Briefing is separate/);
+  assert.match(await page.locator('.signup-disclosure').innerText(),/Control Tower Briefing is separate/);
   assert.equal(await page.getByRole('link',{name:'Get Newsletter',exact:true}).getAttribute('href'),'https://briefing.financialflightmode.com');
   let requests=0;
   await page.route('https://assets.mailerlite.com/jsonp/**',route=>{
