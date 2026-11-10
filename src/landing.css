@@ -150,3 +150,42 @@
   .v3-score-area { gap: 12px; }
   .v3-score-copy h3 { font-size: 21px; }
 }
+
+/* Hold the scorecard's space until the guided flow is built, so the example
+   report below it does not jump when the script runs (layout shift). Only
+   applies where scripts run; heights match the guided start card per width. */
+@media (scripting: enabled) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 407px; }
+}
+@media (scripting: enabled) and (max-width: 669px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 427px; }
+}
+@media (scripting: enabled) and (max-width: 489px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 459px; }
+}
+@media (scripting: enabled) and (max-width: 469px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 489px; }
+}
+@media (scripting: enabled) and (max-width: 389px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 509px; }
+}
+@media (scripting: enabled) and (max-width: 359px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 527px; }
+}
+@media (scripting: enabled) and (max-width: 329px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 545px; }
+}
+@media (scripting: enabled) and (min-width: 1000px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 419px; }
+}
+@media (scripting: enabled) and (min-width: 1260px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 436px; }
+}
+
+/* Phones get a 1000px copy of the same hero photo (41 KB instead of 98 KB). */
+@media (max-width: 760px) {
+  .landing-v3 .v3-hero {
+    background-image: linear-gradient(180deg,rgba(5,5,5,.8) 0%,rgba(5,5,5,.65) 36%,rgba(5,5,5,.3) 66%,#050505 100%),
+      url('/assets/runway-cockpit-hero-1000.jpg');
+  }
+}
