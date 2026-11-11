@@ -2270,3 +2270,17 @@ h1 span {
 @media (max-width: 360px) {
   .flight-stages > div { font-size: 10px; padding-inline: 2px; }
 }
+
+/* Explain existing Pre Flight checks without adding questions or changing scoring. */
+.flow-step h3 .question-emphasis { color: #e95c03; }
+.check-visual { grid-column: 1 / -1; min-width: 0; }
+.flight-check .check-value { font-size: 15px; font-weight: 700; line-height: 1.5; margin: 2px 0 12px; }
+.check-meter { position: relative; height: 12px; background: #454545; border-radius: 4px; margin: 4px 2px; }
+.check-meter i { display: block; height: 100%; border-radius: 4px; background: #e95c03; }
+.check-meter b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #f2f2f2; transform: translateX(-50%); }
+.check-scale { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: #ccc; margin-top: 8px; }
+.flight-check .check-context { font-size: 13px; line-height: 1.5; color: #ccc; margin: 12px 0 0; }
+.check-status { display: flex; align-items: center; gap: 8px; min-height: 24px; font-size: 13px; }
+.check-status i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ccc; }
+.check-status .active { background: #8bdc65; border-color: #8bdc65; }
+.check-status .unknown { background: #ffc400; border-color: #ffc400; }
