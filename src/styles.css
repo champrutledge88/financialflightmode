@@ -4,8 +4,8 @@
   --panel: #f4f4f4;
   --white: #ffffff;
   --soft-white: #f2f2f2;
-  --orange: #ff5a00;
-  --orange-deep: #e95c03;
+  --orange: #e95c03;
+  --orange-deep: var(--orange);
   --green: #8bdc65;
   --amber: #ffc400;
   --red: #ff3b20;
@@ -45,7 +45,7 @@ a {
   background: var(--orange);
   border-radius: 8px;
   box-shadow: 0 14px 36px rgba(255, 90, 0, 0.28);
-  color: var(--white);
+  color: var(--black);
   font-size: 14px;
   font-weight: 900;
   left: 16px;
@@ -380,7 +380,7 @@ h1 span {
   border: 0;
   border-radius: 8px;
   box-shadow: 0 16px 38px rgba(255, 90, 0, 0.3);
-  color: var(--white);
+  color: var(--black);
   cursor: pointer;
   display: inline-flex;
   font-family: Impact, Oswald, "Arial Narrow", sans-serif;
@@ -2226,7 +2226,7 @@ h1 span {
 .amount-field-navigation.compact button { width: 100%; max-width: 100%; padding-left: 8px; padding-right: 8px; }
 .amount-field-navigation button {
   flex-shrink: 0; min-height: 44px; padding: 10px 18px; border: 0;
-  border-radius: 8px; background: #ff5a00; color: #050505;
+  border-radius: 8px; background: var(--orange); color: #050505;
   font: 700 16px/1.4 Arial, sans-serif; cursor: pointer; touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
