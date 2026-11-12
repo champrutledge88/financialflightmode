@@ -27,7 +27,7 @@ export function enhanceScorecard(form, { onStart }) {
   const categoryFields = ['needs','wants','investmentsCurrentValue'];
   const panels = steps.map((step, index) => {
     const panel = document.createElement('section'); panel.className = 'flow-step'; panel.hidden = true;
-    panel.innerHTML = `<h3 tabindex="-1" id="step-heading-${index + 1}">${step.question}</h3>${step.helper ? `<p class="flow-helper">${step.helper}</p>` : ''}`;
+    panel.innerHTML = `<h3 tabindex="-1" id="step-heading-${index + 1}">${step.name === 'total_balance' ? step.question.replace('mortgage', '<span class="question-emphasis">mortgage</span>') : step.question}</h3>${step.helper ? `<p class="flow-helper">${step.helper}</p>` : ''}`;
     panel.setAttribute('aria-labelledby', `step-heading-${index + 1}`);
     step.fields.forEach(field => {
       const label = originalLabels[field];
