@@ -2284,3 +2284,8 @@ h1 span {
 .check-status i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ccc; }
 .check-status .active { background: #8bdc65; border-color: #8bdc65; }
 .check-status .unknown { background: #ffc400; border-color: #ffc400; }
+/* EMAIL MY FLIGHT PLAN */
+.plan-email .lead-form { margin-top: 16px; }
+.plan-email .lead-form .plan-consent { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; font-weight: 600; line-height: 1.45; text-transform: none; }
+.plan-email .lead-form .plan-consent input { flex: 0 0 auto; width: 20px; height: 20px; min-height: 0; margin: 2px 0 0; padding: 0; accent-color: #e95c03; }
+.plan-email .lead-form button { min-height: 48px; }

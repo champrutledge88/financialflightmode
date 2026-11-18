@@ -1,12 +1,42 @@
 import { buildCheckVisuals, renderCheckVisual } from './checkVisuals.js';
 import { buildSnapshotHTML, snapshotFilename } from './flightSnapshot.js?v=concise-2';
-import { buildFlightReport, money } from './flightReport.js?v=refinements-2';
+import { buildFlightReport, money } from './flightReport.js?v=plan-email-1';
+import { submitFlightPlanEmail, FLIGHT_PLAN_CONSENT_TEXT } from './flightPlanEmail.js?v=plan-email-1';
 import { trackEvent, getScoreBand } from './analytics.js?v=refinements-2';
 
 const escape = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icon = state => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="${state === 'yes' ? 'M5 12l4 4L19 6' : state === 'partial' ? 'M5 12h14' : 'M6 6l12 12M18 6L6 18'}"/></svg>`;
 const stages = [['preflight', 'Pre Flight', '0 to 39'], ['turbulence', 'Turbulence', '40 to 69'], ['cruise', 'Cruise Control', '70 to 89'], ['flight', 'Flight Mode', '90 to 100']];
 let activeReveal = null;
+const validEmail = value => value.length <= 254 && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value);
+
+// EMAIL MY FLIGHT PLAN: consent is unchecked by default and required. Analytics carry no email or amounts.
+function wirePlanEmailForm(form, report) {
+  if (!form) return;
+  const status = form.querySelector('[data-plan-email-status]');
+  const button = form.querySelector('button[type="submit"]');
+  const label = button.textContent;
+  const stage = report.emailPlan.stage, scoreRange = getScoreBand(report.score);
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const email = form.elements.planEmail.value.trim();
+    if (!validEmail(email)) { status.textContent = 'Enter a valid email address.'; form.elements.planEmail.focus(); return; }
+    if (!form.elements.planConsent.checked) { status.textContent = 'Check the box so we can email your Flight Plan.'; form.elements.planConsent.focus(); return; }
+    trackEvent('personalized_plan_email_submit', { stage, score_range: scoreRange });
+    button.disabled = true; button.textContent = 'Sending...'; status.textContent = 'Sending your Flight Plan...';
+    submitFlightPlanEmail({ email, emailPlan: report.emailPlan })
+      .then(() => {
+        trackEvent('personalized_plan_email_success', { stage, score_range: scoreRange });
+        form.reset();
+        status.textContent = 'Sent. Check your inbox. If this is your first time, confirm your email address first and your Flight Plan will follow.';
+      })
+      .catch(error => {
+        trackEvent('personalized_plan_email_error', { stage, score_range: scoreRange, error_type: error.name === 'AbortError' ? 'timeout' : 'provider_error' });
+        status.textContent = error.name === 'AbortError' ? 'This is taking longer than expected. Please try again.' : 'We could not send your Flight Plan right now. Please try again.';
+      })
+      .finally(() => { button.disabled = false; button.textContent = label; });
+  });
+}
 
 export function renderFlightReport(result, { example = false, inputBreakdown = null } = {}) {
   const form = document.querySelector('#score-form');
@@ -27,6 +57,11 @@ export function renderFlightReport(result, { example = false, inputBreakdown = n
     <div class="report-top"><div class="report-score"><p>Financial Flight Score</p><div class="report-ring" style="--score:${report.score}"><strong data-report-score>${report.score}</strong><span>out of 100</span></div><h3 class="report-stage">${escape(report.stage.name)}</h3><p>${escape(report.summary)}</p><p>An educational signal based on your estimates.${report.debtAssessmentLimited ? ' Debt assessment limited.' : ''}</p>${report.stageNote ? `<p>${escape(report.stageNote)}</p>` : ''}</div>
     </div>
     <article class="one-move" id="report-next-move"><p class="eyebrow">Your Next 7 Days · ${escape(report.plan.warningLights[0] || 'Ownership Mindset')}</p><h3>${escape(report.oneMove.text)}</h3><p><strong>Why this comes first:</strong> ${escape(report.reason)}</p>${report.oneMove.followLine ? `<p>${escape(report.oneMove.followLine)}</p>` : ''}<p>Starter Kit section: <strong>${escape(report.oneMove.starterSection)}</strong></p></article>
+    ${example ? '' : `<article class="report-card plan-email" id="report-email-plan"><p class="eyebrow">Keep your plan</p><h3>Email my Flight Plan</h3><p>Get your score, stage, and next three moves in your inbox so your plan is there when payday comes. We send your plan steps only. Your dollar amounts stay on this device.</p>
+    <form class="lead-form plan-email-form" data-plan-email-form novalidate><label for="planEmail">Your email address</label><input id="planEmail" name="planEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+    <label class="plan-consent"><input type="checkbox" name="planConsent" required /> <span>${escape(FLIGHT_PLAN_CONSENT_TEXT)}</span></label>
+    <button class="primary-button" type="submit">EMAIL MY FLIGHT PLAN</button><p data-plan-email-status role="status" aria-live="polite"></p>
+    <p class="signup-disclosure">Education only. Unsubscribe anytime. Read our <a href="/privacy.html">Privacy Policy</a>.</p></form></article>`}
     ${example ? '' : '<div class="report-actions report-view-actions"><button type="button" data-view-report aria-controls="report-full-details" aria-expanded="false">View my full report</button></div><p>Explore your detailed results here. No email or download needed.</p>'}
     <article class="report-card" id="report-checkpoint"><h3>Keep your checkpoint</h3><p>On ${escape(report.nextCheckDate)}, ask: What action did I take? What changed? What will I adjust before payday?</p>${example ? '<p>Complete your own check to save a personal report. These example numbers are not your answers.</p>' : '<div class="report-actions"><button type="button" data-save-report>Download my report</button><button type="button" data-print-report>Print or save PDF</button><button type="button" data-edit-report>Edit my answers</button></div><p data-save-status role="status"></p><p>Your download contains your financial answers. Keep it privately. FFM does not store a copy.</p>'}</article>
     <details class="report-details" id="report-full-details"><summary>Explore your instruments and full breakdown</summary><div class="instrument-grid">${report.instruments.map((i, n) => `<article class="instrument ${i.tone}" style="--order:${n}"><h3>${i.label}</h3><strong>${i.word}</strong><span>${i.rating}/5</span><div class="rating-segments" aria-label="${i.rating} out of 5">${Array.from({ length: 5 }, (_, j) => `<i class="${j < i.rating ? 'filled' : ''}"></i>`).join('')}</div></article>`).join('')}</div>
@@ -65,6 +100,7 @@ export function renderFlightReport(result, { example = false, inputBreakdown = n
       view.opener = null; view.document.open(); view.document.write(buildSnapshotHTML(report)); view.document.close(); view.focus(); view.print();
     };
     node.querySelector('[data-edit-report]').onclick = () => document.dispatchEvent(new Event('flight-report-edit'));
+    wirePlanEmailForm(node.querySelector('[data-plan-email-form]'), report);
   }
   return node;
 }

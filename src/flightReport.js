@@ -85,7 +85,25 @@ export function buildFlightReport(result, { flightDate, immediatePressure = 'Sta
     ? new Date(...flightDate.split('-').map((part, i) => Number(part) - (i === 1 ? 1 : 0))) : new Date(flightDate);
   const next = new Date(date); next.setDate(next.getDate() + 30);
   const formatDate = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  // EMAIL MY FLIGHT PLAN sends only approved action library copy (engineering plan §9).
+  // The on screen moves above can include dollar amounts, so they are never reused here.
+  const emailAction = plan.warningLights?.[0]?.actionId || plan.fallback?.actionId || 'ownershipMindsetFallback';
+  const emailPlan = Object.freeze({
+    score: result.score,
+    stage: plain(stage.name),
+    strongSignalCategory: plain(plan.strongSignal.category),
+    warningLight1Category: plain(plan.warningLights?.[0]?.category || 'Ownership Mindset'),
+    warningLight2Category: plain(plan.warningLights?.[1]?.category || ''),
+    actionId: emailAction,
+    workbookTab: plain(plan.workbookConnection.tab),
+    workbookAction: plain(plan.workbookConnection.action),
+    doNow: plain(plan.doNow),
+    thisPayday: plain(plan.thisPayday),
+    thisMonth: plain(plan.thisMonth),
+    thirtyDayMission: plain(plan.thirtyDayMission),
+  });
   return {
+    emailPlan,
     breakdown: inputBreakdown ? Object.fromEntries(['needs','wants','investments','cashAccounts'].map(key => [key,(inputBreakdown[key] || []).map(row => ({label:String(row.label).slice(0,60),amount:row.amount}))])) : null,
     focus: [immediatePressure, shortTermObjective].filter(Boolean),
     plan: { strongSignal: plain(plan.strongSignal.category), warningLights: (plan.warningLights || []).map(w => plain(w.category)),
