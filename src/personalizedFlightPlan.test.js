@@ -77,8 +77,8 @@ const standardPlanSummary = {
   warningLight1Category: "Savings System",
   warningLight2Category: "Emergency Runway",
   actionId: "savingsSystem",
-  workbookTab: "Savings Tracker + Monthly Budget",
-  workbookAction: "Savings System row",
+  workbookTab: "Monthly Budget + Know Your Numbers",
+  workbookAction: "Savings Rate row",
   doNow: "Set up or confirm one automatic transfer from checking to savings for your next payday.",
   thisPayday: "Let that automatic transfer run without touching it.",
   thisMonth: "Keep the transfer running every payday this month, even if the amount is small.",
@@ -101,8 +101,8 @@ const calibrationInput = {
   },
   decisionPath: "ObjectiveTieBreak",
   actionId: "savingsSystem",
-  workbookTab: "Savings Tracker + Monthly Budget",
-  workbookAction: "Savings System row",
+  workbookTab: "Monthly Budget + Know Your Numbers",
+  workbookAction: "Savings Rate row",
   testId: "W1-PRIYA",
 };
 
@@ -117,7 +117,7 @@ test("version 2 Maya: fully assigned plan prioritizes runway without a deficit o
   assert.equal(plan.decisionPath, 'StageSuppression');
   assert.deepEqual(warningCategories(plan), ['Emergency Runway','Debt Load']);
   assert.equal(plan.doNow, actionLibrary[3].doNow);
-  assert.equal(plan.workbookConnection.tab,'Savings Tracker + Dashboard');
+  assert.equal(plan.workbookConnection.tab,'Debt & Runway + Weekly Review');
 });
 
 test("reproduces SPEC Persona 2 Jordan: Strong Signal, forced cash Warning Light, and deterministic #2", () => {
@@ -173,8 +173,8 @@ test("reproduces SPEC Persona 4 Alex: all-tied Strong Signal with Flag Context s
     note: "You flagged an unexpected bill — your reserves look strong enough to absorb it. If this reflects a bigger recent change, retake this with updated numbers.",
   });
   assert.deepEqual(plan.workbookConnection, {
-    tab: "Dashboard + Month-End Reset",
-    action: "Ownership Mindset review",
+    tab: "Weekly Review + Flight Plan Summary",
+    action: "This Week's One Action",
   });
 });
 
@@ -494,12 +494,12 @@ test("SPEC AC10: every non-fallback plan has two distinct Warning Lights and fal
 
 test("SPEC AC12 and AC14: the six immutable action entries have exact workbook routes and safe fixed copy", () => {
   const expectedRoutes = [
-    ["cashFlowControl", "Monthly Budget + Dashboard", "Cash Flow Control row"],
-    ["savingsSystem", "Savings Tracker + Monthly Budget", "Savings System row"],
-    ["debtLoad", "Debt Snowball + Monthly Budget", "Debt Load row"],
-    ["emergencyRunway", "Savings Tracker + Dashboard", "Emergency Runway row"],
-    ["wealthFuel", "Investment Tracker + Savings Rate", "Wealth Fuel row"],
-    ["ownershipMindsetFallback", "Dashboard + Month-End Reset", "Ownership Mindset review"],
+    ["cashFlowControl", "Monthly Budget + Know Your Numbers", "Net Remaining row"],
+    ["savingsSystem", "Monthly Budget + Know Your Numbers", "Savings Rate row"],
+    ["debtLoad", "Debt & Runway + Monthly Budget", "Priority TARGET debt row"],
+    ["emergencyRunway", "Debt & Runway + Weekly Review", "Runway goal and payday contribution"],
+    ["wealthFuel", "Monthly Budget + Know Your Numbers", "Investing rows and Savings Rate"],
+    ["ownershipMindsetFallback", "Weekly Review + Flight Plan Summary", "This Week's One Action"],
   ];
 
   assert.equal(actionLibrary.length, 6);
@@ -508,6 +508,21 @@ test("SPEC AC12 and AC14: the six immutable action entries have exact workbook r
     actionLibrary.map(({ actionId, workbookTab, workbookAction }) => [actionId, workbookTab, workbookAction]),
     expectedRoutes,
   );
+  // Tab names in the shipped Starter Kit workbook (assets/downloads/financial-flight-mode-starter-kit.zip).
+  const starterKitTabs = [
+    "Start Here",
+    "Know Your Numbers",
+    "Monthly Budget",
+    "Debt & Runway",
+    "Weekly Review",
+    "Flight Plan Summary",
+  ];
+  for (const { workbookTab } of actionLibrary) {
+    for (const tab of workbookTab.split(" + ")) {
+      assert.ok(starterKitTabs.includes(tab), `${tab} is not a Starter Kit workbook tab`);
+    }
+  }
+
   for (const entry of actionLibrary) {
     assert.equal(Object.isFrozen(entry), true);
     assert.equal(entry.emailSafe, true);
