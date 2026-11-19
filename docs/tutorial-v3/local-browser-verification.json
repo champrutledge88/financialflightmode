@@ -1,0 +1,47 @@
+{
+  "origin": "http://127.0.0.1:4173",
+  "results": [
+    {
+      "viewportWidth": 390,
+      "duration": 134,
+      "width": 1920,
+      "height": 1080,
+      "cues": 39,
+      "captions": "showing",
+      "preload": "none",
+      "playback": true,
+      "pauseOnClose": true,
+      "noAutoload": true,
+      "noOverflow": true,
+      "browserErrors": []
+    },
+    {
+      "viewportWidth": 760,
+      "duration": 134,
+      "width": 1920,
+      "height": 1080,
+      "cues": 39,
+      "captions": "showing",
+      "preload": "none",
+      "playback": true,
+      "pauseOnClose": true,
+      "noAutoload": true,
+      "noOverflow": true,
+      "browserErrors": []
+    },
+    {
+      "viewportWidth": 1280,
+      "duration": 134,
+      "width": 1920,
+      "height": 1080,
+      "cues": 39,
+      "captions": "showing",
+      "preload": "none",
+      "playback": true,
+      "pauseOnClose": true,
+      "noAutoload": true,
+      "noOverflow": true,
+      "browserErrors": []
+    }
+  ]
+}

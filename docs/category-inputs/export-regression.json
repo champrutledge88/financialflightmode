@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "Invalid and unknown income cannot advance; tiny cash recommends only $10; one canonical result and saved focus",
+    "HTML download opens offline with exact input amounts, dated priority and reflection; no network requests; print layout rendered at mobile and desktop widths",
+    "Print control opens same canonical standalone report and invokes native print entry point",
+    "Edit, Back and recalculation preserve answers and replace stale report; cents cap; Results navigation; no answers in URL or web storage",
+    "Both entry pages: no JavaScript financial form or form-owned financial inputs; email lead form preserved"
+  ],
+  "errors": []
+}

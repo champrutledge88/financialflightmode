@@ -39,9 +39,9 @@ export const trackEvent = (eventName, parameters = {}) => {
 
 export const getScoreBand = (score) => {
   if (score < 40) return "0-39";
-  if (score < 60) return "40-59";
-  if (score < 80) return "60-79";
-  return "80-100";
+  if (score < 70) return "40-69";
+  if (score < 90) return "70-89";
+  return "90-100";
 };
 
 initializeGoogleAnalytics();

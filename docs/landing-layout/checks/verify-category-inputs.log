@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at file:///tmp/ffm-layout-verify-category-inputs/fixture-1280.html
+Call log:
+[2m  - navigating to "file:///tmp/ffm-layout-verify-category-inputs/fixture-1280.html", waiting until "load"[22m
+
+    at /workspace/financialflightmode/scripts/verify-category-inputs.mjs:38:68 {
+  log: [
+    '  - navigating to "file:///tmp/ffm-layout-verify-category-inputs/fixture-1280.html", waiting until "load"'
+  ],
+  name: 'Error'
+}
+
+Node.js v24.19.0
