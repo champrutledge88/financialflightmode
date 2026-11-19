@@ -19,7 +19,7 @@ const reportFor = changes => buildFlightReport(calculateFlightScore({ ...base, .
 const allowedKeys = ['fields[email]', 'fields[flight_plan_consent_version]', 'fields[flight_plan_consent_timestamp]', 'fields[flight_plan_score]',
   'fields[flight_plan_stage]', 'fields[flight_plan_strong_signal]', 'fields[flight_plan_warning_light_1]', 'fields[flight_plan_warning_light_2]',
   'fields[flight_plan_action_id]', 'fields[flight_plan_workbook_tab]', 'fields[flight_plan_workbook_action]', 'fields[flight_plan_do_now]',
-  'fields[flight_plan_this_payday]', 'fields[flight_plan_this_month]', 'fields[flight_plan_thirty_day_mission]', 'ml-submit', 'anticsrf'];
+  'fields[flight_plan_this_payday]', 'fields[flight_plan_this_month]', 'fields[flight_plan_thirty_day_mission]', 'fields[flight_plan_do_now_status]', 'ml-submit', 'anticsrf'];
 const libraryCopy = new Set(actionLibrary.flatMap(a => [a.doNow, a.thisPayday, a.thisMonth, a.thirtyDayMission, a.workbookTab, a.workbookAction].map(t => t.replace(/[-–—]/g, ' '))));
 
 for (const [name, changes] of Object.entries(scenarios)) {
@@ -29,6 +29,7 @@ for (const [name, changes] of Object.entries(scenarios)) {
     assert.deepEqual([...body.keys()], allowedKeys);
     assert.equal(body.get('fields[flight_plan_consent_version]'), FLIGHT_PLAN_CONSENT_VERSION);
     assert.equal(body.get('fields[flight_plan_score]'), String(report.score));
+    assert.equal(body.get('fields[flight_plan_do_now_status]'), 'pending');
     for (const key of ['do_now', 'this_payday', 'this_month', 'thirty_day_mission', 'workbook_tab', 'workbook_action']) {
       assert.ok(libraryCopy.has(body.get(`fields[flight_plan_${key}]`)), `${key} must come from the action library`);
     }
