@@ -1,6 +1,6 @@
 import { enhanceScorecard } from "./guidedScorecard.js?v=edge-bounce-4";
-import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=stage-marker-1";
-import { buildFlightReport, money } from "./flightReport.js?v=refinements-2";
+import { renderFlightReport, revealFlightReport } from "./flightReportUI.js?v=plan-email-1";
+import { buildFlightReport, money } from "./flightReport.js?v=plan-email-1";
 import { moneyError } from "./scorecardFlow.js?v=final-review-1";
 import { calculateFlightScore } from "./flightScoreCalculator.js?v=refinements-2";
 import { trackEvent } from "./analytics.js?v=refinements-2";
