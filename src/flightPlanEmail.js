@@ -41,6 +41,8 @@ export const buildFlightPlanFormBody = ({ email, consentTimestamp, emailPlan }) 
     if (hasMoneyValue(value)) throw new TypeError(`${key} must not contain a financial amount.`);
     body.append(`fields[${field}]`, String(value));
   });
+  // Each new plan starts a fresh 7 day check-in, so the previous Do Now answer is reset.
+  body.append("fields[flight_plan_do_now_status]", "pending");
   body.append("ml-submit", "1");
   body.append("anticsrf", "true");
   return body;
