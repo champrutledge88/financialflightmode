@@ -8,6 +8,10 @@
 /thank-you.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/check-in.html
+  X-Robots-Tag: noindex
+  Cache-Control: public, max-age=0, must-revalidate
+
 /cockpit-sw.js
   Cache-Control: public, max-age=0, must-revalidate
   Service-Worker-Allowed: /cockpit
