@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Flight Plan check in for Financial Flight Mode." />
+    <title>Financial Flight Mode | Flight Plan Check In</title>
+    <link rel="stylesheet" href="/src/styles.css?v=plan-email-1" />
+  </head>
+  <body class="legal-page">
+    <main class="legal-shell">
+      <a class="legal-back" href="/">Back To Financial Flight Mode</a>
+      <p class="eyebrow">Flight Plan Check In</p>
+      <h1 data-checkin-title>Thanks for checking in.</h1>
+      <section>
+        <p data-checkin-body>Your answer is in. Watch your inbox for your next step.</p>
+        <p>You can retake the Scorecard any time to update your Flight Plan.</p>
+        <p><a class="primary-button" href="/ffm-scorecard.html">RETAKE THE SCORECARD</a></p>
+      </section>
+    </main>
+    <script>
+      // Display only. The answer is recorded by the email link click, never by this page.
+      (function () {
+        var copy = {
+          done: ["Nice work. One move made.", "Your answer is in. Watch your inbox for your next step so you can keep the momentum going."],
+          started: ["Started counts.", "Your answer is in. Watch your inbox for a smaller version of the step you can finish in about 10 minutes."],
+          not_yet: ["No problem. Life gets busy.", "Your answer is in. Watch your inbox for a smaller first step. If you reply and tell us what got in the way, we will use it to make your next plan easier."]
+        };
+        var answer = new URLSearchParams(window.location.search).get("answer");
+        if (!Object.prototype.hasOwnProperty.call(copy, answer)) return;
+        document.querySelector("[data-checkin-title]").textContent = copy[answer][0];
+        document.querySelector("[data-checkin-body]").textContent = copy[answer][1];
+      })();
+    </script>
+  </body>
+</html>
