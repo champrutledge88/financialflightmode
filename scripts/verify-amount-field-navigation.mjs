@@ -1,0 +1,232 @@
+import { chromium, webkit, firefox } from 'playwright';
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { fillMoney } from './scorecard-test-helpers.mjs';
+
+const origin = process.env.SCORECARD_ORIGIN || 'http://127.0.0.1:4173';
+const out = process.env.SCORECARD_EVIDENCE_DIR || '/tmp/ffm-amount-navigation';
+await mkdir(out, { recursive: true });
+const results = [];
+for (const [engine, browserType] of Object.entries({ chromium, webkit, firefox })) {
+  if (process.env.FFM_ENGINE && process.env.FFM_ENGINE !== engine) continue;
+  const browser = await browserType.launch();
+  try {
+    for (const width of [320, 390, 412, 1280]) {
+      const mobile = width < 760;
+      const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: mobile && engine !== 'firefox', hasTouch: mobile, reducedMotion: 'reduce' });
+      const page = await context.newPage();
+      const errors = [];
+      page.on('pageerror', error => errors.push(error.message));
+      // No provider writes can leave this test, even if future UI code changes.
+      await page.route('https://assets.mailerlite.com/jsonp/**', route => route.abort());
+      await page.goto(origin + (mobile ? '/' : '/ffm-scorecard.html'));
+      await page.locator('[data-start]').click();
+      const toolbar = page.locator('.amount-field-navigation');
+      const nextAmount = page.locator('[data-next-amount]');
+      const activate = async () => mobile ? nextAmount.tap() : nextAmount.click();
+      const focused = async id => page.waitForFunction(id => document.activeElement.id === id, id);
+      const stepIs = async number => assert.match(await page.locator('.flow-progress').innerText(), new RegExp(`Step ${number} of 9`));
+      const checkVisible = async () => {
+        await page.waitForFunction(() => {
+          const bar = document.querySelector('.amount-field-navigation').getBoundingClientRect();
+          const input = document.activeElement.getBoundingClientRect();
+          const v = window.visualViewport;
+          const top = v?.offsetTop ?? 0, left = v?.offsetLeft ?? 0;
+          const header = document.querySelector('.site-header');
+          const upper = Math.max(top, header && getComputedStyle(header).position === 'fixed' ? header.getBoundingClientRect().bottom : 0);
+          const row = document.activeElement.closest('.category-row');
+          const name = row?.querySelector('[data-row-label]');
+          const heading = (name?.type === 'hidden' ? row.querySelector('legend') : name)?.getBoundingClientRect();
+          const fits = heading && input.bottom - heading.top <= bar.top - upper - 24;
+          return (!fits || heading.top >= upper) && input.top >= upper - 1 && input.bottom <= bar.top + 1 &&
+            bar.left >= left - 1 && bar.right <= left + (v?.width ?? innerWidth) + 1 &&
+            bar.bottom <= top + (v?.height ?? innerHeight) + 1;
+        });
+      };
+
+      // A single amount offers Done, not an accidental step submit.
+      await page.locator('#income').focus();
+      assert.equal(await nextAmount.innerText(), 'Done');
+      await activate();
+      await toolbar.waitFor({ state: 'hidden' });
+      assert.equal(await page.locator('[data-next]').evaluate(n => n === document.activeElement), true);
+      assert.equal(await page.locator('#income').inputValue(), '');
+      await stepIs(1);
+      await fillMoney(page, 'income', 6000);
+      await page.locator('[data-next]').click();
+      await stepIs(2);
+      const amounts = page.locator('[data-field="needs"] [data-row-amount]');
+      const ids = await amounts.evaluateAll(nodes => nodes.map(n => n.id));
+      await amounts.nth(0).fill('3000');
+      await amounts.nth(2).fill('123.45');
+      await amounts.nth(1).focus();
+      await amounts.nth(2).focus();
+      assert.equal(await nextAmount.innerText(), 'Next field');
+      await activate(); await focused(ids[3]);
+      assert.equal(await toolbar.locator('strong').innerText(), 'Groceries');
+      await activate(); await focused(ids[4]);
+      assert.equal(await nextAmount.innerText(), 'Done');
+      await activate();
+      await toolbar.waitFor({ state: 'hidden' });
+      await stepIs(2);
+      assert.equal(await amounts.nth(2).inputValue(), '123.45');
+      assert.equal(await amounts.nth(4).inputValue(), '');
+      assert.match(await page.locator('[data-field="needs"] .category-total').innerText(), /3,123.45/);
+
+      // Disabled, hidden and readonly fields are skipped without changing values.
+      await amounts.nth(1).evaluate(n => n.disabled = true);
+      await amounts.nth(2).evaluate(n => n.closest('fieldset').hidden = true);
+      await amounts.nth(3).evaluate(n => n.readOnly = true);
+      await amounts.nth(0).focus(); await activate(); await focused(ids[4]);
+      await amounts.nth(1).evaluate(n => n.disabled = false);
+      await amounts.nth(2).evaluate(n => n.closest('fieldset').hidden = false);
+      await amounts.nth(3).evaluate(n => n.readOnly = false);
+
+      // Keyboard access to the accessory works without changing Enter on inputs.
+      // macOS WebKit uses Option+Tab to include buttons with its default preference.
+      const forwardTab = engine === 'webkit' ? 'Alt+Tab' : 'Tab';
+      const backwardTab = engine === 'webkit' ? 'Alt+Shift+Tab' : 'Shift+Tab';
+      await amounts.nth(0).focus(); await amounts.nth(0).press(forwardTab);
+      assert.equal(await nextAmount.evaluate(n => n === document.activeElement), true);
+      await nextAmount.press(backwardTab); await focused(ids[0]);
+      await amounts.nth(0).press(forwardTab); await nextAmount.press('Enter'); await focused(ids[1]);
+      await amounts.nth(1).press('Enter'); await focused(ids[2]);
+
+      // Recompute destinations after category edits, including removal of the focused row.
+      await page.locator('[data-field="needs"] .add-category').click();
+      await page.waitForFunction(() => document.querySelector('.amount-field-navigation').hidden);
+      const custom = page.locator('[data-field="needs"] .category-row').last();
+      await custom.locator('[data-row-label]').fill('Other bill');
+      const customId = await custom.locator('[data-row-amount]').getAttribute('id');
+      await amounts.nth(4).focus(); await activate(); await focused(customId);
+      assert.equal(await toolbar.locator('strong').innerText(), 'Other bill');
+      assert.equal(await nextAmount.innerText(), 'Done');
+      await activate(); await stepIs(2);
+      await page.locator('[data-next]').click();
+      await stepIs(2); await focused(customId);
+      assert.match(await page.locator('#form-error').innerText(), /Enter an amount/);
+      await custom.locator('.remove-category').click(); await focused(ids[4]);
+      assert.equal(await nextAmount.innerText(), 'Done');
+
+      // No implicit zero, formatting, validation bypass, or step jump on navigation.
+      await amounts.nth(2).fill('-5'); await activate(); await focused(ids[3]);
+      assert.equal(await amounts.nth(2).inputValue(), '-5');
+      await page.locator('[data-next]').click(); await stepIs(2); await focused(ids[2]);
+      assert.equal(await amounts.nth(2).getAttribute('aria-invalid'), 'true');
+      await amounts.nth(2).fill('123.45');
+
+      // A smaller visible area approximates an open keyboard; rotate and restore.
+      await page.setViewportSize({ width: mobile ? 390 : 900, height: 400 });
+      await amounts.nth(2).focus();
+      // Reproduce a late native focus pan after our focus handler has returned.
+      // Verify geometry and category context, not just document.activeElement.
+      await page.evaluate(() => window.scrollBy({ top: 450, behavior: 'instant' }));
+      await checkVisible();
+      assert.equal(await toolbar.locator('strong').innerText(), 'Insurance');
+      // The recording shows repeated back-and-forth motion while the active
+      // category stays Housing. Repeated same-size resize/scroll notifications
+      // must not re-arm an already-consumed focus correction.
+      const correctionCount = await page.evaluate(async () => {
+        const original = window.scrollBy;
+        const originalY = scrollY;
+        // Model a subsequent browser pan after the one-shot correction. It must
+        // not start repeated corrective animation from unchanged resize events.
+        window.scrollBy({ top: 450, behavior: 'instant' });
+        let calls = 0;
+        window.scrollBy = (...args) => { calls++; return original.apply(window, args); };
+        for (let i = 0; i < 5; i++) {
+          window.visualViewport.dispatchEvent(new Event('resize'));
+          window.visualViewport.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new Event('scroll'));
+          await new Promise(resolve => setTimeout(resolve, 220));
+        }
+        window.scrollBy = original;
+        window.scrollTo({ top: originalY, behavior: 'instant' });
+        return calls;
+      });
+      assert.equal(correctionCount, 0, 'viewport notifications must not create a scroll feedback loop');
+      // Real browser chrome changes height, not merely event count. Once focus
+      // is settled, alternating heights must not start new page corrections.
+      await page.evaluate(() => {
+        window.__originalScrollBy = window.scrollBy;
+        window.__heightCorrections = 0;
+        window.scrollBy = (...args) => { window.__heightCorrections++; return window.__originalScrollBy(...args); };
+      });
+      for (const height of [440, 400, 440, 400]) {
+        await page.setViewportSize({ width: mobile ? 390 : 900, height });
+        await page.waitForTimeout(320);
+      }
+      assert.equal(await page.evaluate(() => window.__heightCorrections), 0);
+      await page.evaluate(() => { window.scrollBy = window.__originalScrollBy; delete window.__originalScrollBy; delete window.__heightCorrections; });
+      await activate(); await focused(ids[3]); await checkVisible();
+      await page.screenshot({ path: `${out}/${engine}-${width}-short-viewport.png` });
+      await page.setViewportSize({ width: 844, height: 390 }); await checkVisible();
+      await page.setViewportSize({ width, height: 844 }); await checkVisible();
+      // Exercise ordinary animation as well as the reduced-motion test context.
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await amounts.nth(0).focus(); await activate(); await activate();
+      await focused(ids[2]); await checkVisible();
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await amounts.nth(3).focus(); await checkVisible();
+      if (engine === 'chromium') {
+        const cdp = await context.newCDPSession(page);
+        await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: 2 });
+        await page.waitForFunction(() => visualViewport.scale === 2);
+        await checkVisible(); await activate(); await focused(ids[4]); await checkVisible();
+        await page.screenshot({ path: `${out}/${engine}-${width}-zoom.png` });
+        await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: 1 });
+      }
+      await page.locator('[data-next]').click(); await stepIs(3);
+      await page.waitForFunction(() => document.querySelector('.amount-field-navigation').hidden);
+      const wants = page.locator('[data-field="wants"] [data-row-amount]');
+      await page.setViewportSize({ width: mobile ? 390 : 900, height: 400 });
+      await wants.first().focus(); await checkVisible();
+      const wantsNames = await page.locator('[data-field="wants"] [data-row-label]').evaluateAll(nodes => nodes.map(n => n.value));
+      assert.equal(await toolbar.locator('strong').innerText(), wantsNames[0]);
+      await activate(); await focused(await wants.nth(1).getAttribute('id')); await checkVisible();
+      assert.equal(await toolbar.locator('strong').innerText(), wantsNames[1]);
+      await page.screenshot({ path: `${out}/${engine}-${width}-wants-context.png` });
+      // A deliberate scroll must not be pulled back by the focus recovery window.
+      await page.evaluate(() => {
+        window.dispatchEvent(new Event('touchmove'));
+        window.scrollBy({ top: 180, behavior: 'instant' });
+      });
+      const manualY = await page.evaluate(() => scrollY);
+      await page.waitForTimeout(300);
+      assert.ok(Math.abs(await page.evaluate(() => scrollY) - manualY) < 2);
+      await page.setViewportSize({ width, height: 844 });
+      await page.locator('[data-back]').click(); await stepIs(2);
+      assert.equal(await amounts.nth(2).inputValue(), '123.45');
+      await page.locator('[data-next]').click();
+      for (const [field, value] of [['wants', 500], ['savings', 200], ['extraDebtPayment', 0], ['totalDebtBalance', 0]]) {
+        await fillMoney(page, field, value); await page.locator('[data-next]').click();
+      }
+      await stepIs(7);
+      await page.locator('#emergencyFundSaved').fill('100');
+      await activate(); await focused('emergencyFundGoal');
+      assert.equal(await nextAmount.innerText(), 'Done');
+      await activate(); await stepIs(7);
+      await page.locator('[data-next]').click(); await stepIs(7);
+      assert.equal(await page.locator('#emergencyFundGoal').getAttribute('aria-invalid'), 'true');
+      await page.locator('#emergencyFundGoal').fill('1000');
+      await page.locator('[data-next]').click(); await stepIs(8);
+      const investments = page.locator('[data-field="investmentsCurrentValue"] [data-row-amount]');
+      await investments.first().fill('0'); await activate();
+      await focused(await investments.last().getAttribute('id'));
+      assert.equal(await nextAmount.innerText(), 'Done');
+      await activate(); await stepIs(8);
+      await page.locator('[data-next]').click(); await stepIs(9);
+      await toolbar.waitFor({ state: 'hidden' });
+      await page.getByRole('button', { name: 'Stable', exact: true }).click();
+      await page.locator('[data-next]').click();
+      await page.locator('[data-save-report]').waitFor();
+      await toolbar.waitFor({ state: 'hidden' });
+      assert.deepEqual(errors, []);
+      results.push({ engine, width, singleAndLastDone: true, consecutiveTaps: true, dynamicRows: true, hiddenDisabledReadonlySkipped: true, valuesAndValidationPreserved: true, keyboard: true, shortViewportAndRotation: true, labelAndInputGeometry: true, focusPanBeforeSettling: true, noScrollFeedback: true, rapidNextWithMotion: true, zoom: engine === 'chromium' ? '2x viewport scale passed' : 'not emulated', fullReportCompleted: true, errors });
+      console.log(`Passed ${engine} ${width}px`);
+      await context.close();
+    }
+  } finally { await browser.close(); }
+}
+await writeFile(`${out}/verification.json`, JSON.stringify({ origin, results, nativeKeyboard: 'Requires physical iOS Safari verification; headless engines do not display the system keyboard.' }, null, 2) + '\n');
+console.log(JSON.stringify(results, null, 2));

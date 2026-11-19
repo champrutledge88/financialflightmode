@@ -1,0 +1,153 @@
+import { buildCheckVisuals, renderCheckVisual } from './checkVisuals.js';
+import { buildSnapshotHTML, snapshotFilename } from './flightSnapshot.js?v=concise-2';
+import { buildFlightReport, money } from './flightReport.js?v=plan-email-1';
+import { submitFlightPlanEmail, FLIGHT_PLAN_CONSENT_TEXT } from './flightPlanEmail.js?v=plan-email-1';
+import { trackEvent, getScoreBand } from './analytics.js?v=refinements-2';
+
+const escape = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const icon = state => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="${state === 'yes' ? 'M5 12l4 4L19 6' : state === 'partial' ? 'M5 12h14' : 'M6 6l12 12M18 6L6 18'}"/></svg>`;
+const stages = [['preflight', 'Pre Flight', '0 to 39'], ['turbulence', 'Turbulence', '40 to 69'], ['cruise', 'Cruise Control', '70 to 89'], ['flight', 'Flight Mode', '90 to 100']];
+let activeReveal = null;
+const validEmail = value => value.length <= 254 && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value);
+
+// EMAIL MY FLIGHT PLAN: consent is unchecked by default and required. Analytics carry no email or amounts.
+function wirePlanEmailForm(form, report) {
+  if (!form) return;
+  const status = form.querySelector('[data-plan-email-status]');
+  const button = form.querySelector('button[type="submit"]');
+  const label = button.textContent;
+  const stage = report.emailPlan.stage, scoreRange = getScoreBand(report.score);
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const email = form.elements.planEmail.value.trim();
+    if (!validEmail(email)) { status.textContent = 'Enter a valid email address.'; form.elements.planEmail.focus(); return; }
+    if (!form.elements.planConsent.checked) { status.textContent = 'Check the box so we can email your Flight Plan.'; form.elements.planConsent.focus(); return; }
+    trackEvent('personalized_plan_email_submit', { stage, score_range: scoreRange });
+    button.disabled = true; button.textContent = 'Sending...'; status.textContent = 'Sending your Flight Plan...';
+    submitFlightPlanEmail({ email, emailPlan: report.emailPlan })
+      .then(() => {
+        trackEvent('personalized_plan_email_success', { stage, score_range: scoreRange });
+        form.reset();
+        status.textContent = 'Sent. Check your inbox. If this is your first time, confirm your email address first and your Flight Plan will follow.';
+      })
+      .catch(error => {
+        trackEvent('personalized_plan_email_error', { stage, score_range: scoreRange, error_type: error.name === 'AbortError' ? 'timeout' : 'provider_error' });
+        status.textContent = error.name === 'AbortError' ? 'This is taking longer than expected. Please try again.' : 'We could not send your Flight Plan right now. Please try again.';
+      })
+      .finally(() => { button.disabled = false; button.textContent = label; });
+  });
+}
+
+export function renderFlightReport(result, { example = false, inputBreakdown = null } = {}) {
+  const form = document.querySelector('#score-form');
+  const report = buildFlightReport(result, { flightDate: new Date(), immediatePressure: example ? 'Stable' : form.elements.immediatePressure.value, shortTermObjective: example ? '' : form.elements.shortTermObjective.value, inputBreakdown });
+  const checkVisuals = buildCheckVisuals(result);
+  if (example) report.focus = [];
+  // This path indicates the actual stage, including the cash-flow guardrail.
+  const stagePosition = (stages.findIndex(([key]) => key === report.stage.key) + 0.5) / stages.length * 100;
+  let node = document.querySelector('#flight-report');
+  if (!node) {
+    node = document.createElement('section'); node.id = 'flight-report'; node.className = 'flight-report';
+    document.querySelector('#score-form').after(node);
+  }
+  node.hidden = false;
+  node.innerHTML = `
+    <header class="report-header"><div><p class="eyebrow">${example ? 'Example report' : 'Your cockpit briefing'}</p><h2 tabindex="-1">Your Flight Report</h2></div><p>${escape(report.flightDate)}<br><span>Next check ${escape(report.nextCheckDate)}</span></p></header>
+    ${example ? '' : '<nav class="report-quick-links" aria-label="Flight Report shortcuts"><a href="#report-next-move">Your next move</a><a href="#report-checkpoint">Save your report</a></nav>'}
+    <div class="report-top"><div class="report-score"><p>Financial Flight Score</p><div class="report-ring" style="--score:${report.score}"><strong data-report-score>${report.score}</strong><span>out of 100</span></div><h3 class="report-stage">${escape(report.stage.name)}</h3><p>${escape(report.summary)}</p><p>An educational signal based on your estimates.${report.debtAssessmentLimited ? ' Debt assessment limited.' : ''}</p>${report.stageNote ? `<p>${escape(report.stageNote)}</p>` : ''}</div>
+    </div>
+    <article class="one-move" id="report-next-move"><p class="eyebrow">Your Next 7 Days · ${escape(report.plan.warningLights[0] || 'Ownership Mindset')}</p><h3>${escape(report.oneMove.text)}</h3><p><strong>Why this comes first:</strong> ${escape(report.reason)}</p>${report.oneMove.followLine ? `<p>${escape(report.oneMove.followLine)}</p>` : ''}<p>Starter Kit section: <strong>${escape(report.oneMove.starterSection)}</strong></p></article>
+    ${example ? '' : `<article class="report-card plan-email" id="report-email-plan"><p class="eyebrow">Keep your plan</p><h3>Email my Flight Plan</h3><p>Get your score, stage, and next three moves in your inbox so your plan is there when payday comes. We send your plan steps only. Your dollar amounts stay on this device.</p>
+    <form class="lead-form plan-email-form" data-plan-email-form novalidate><label for="planEmail">Your email address</label><input id="planEmail" name="planEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+    <label class="plan-consent"><input type="checkbox" name="planConsent" required /> <span>${escape(FLIGHT_PLAN_CONSENT_TEXT)}</span></label>
+    <button class="primary-button" type="submit">EMAIL MY FLIGHT PLAN</button><p data-plan-email-status role="status" aria-live="polite"></p>
+    <p class="signup-disclosure">Education only. Unsubscribe anytime. Read our <a href="/privacy.html">Privacy Policy</a>.</p></form></article>`}
+    ${example ? '' : '<div class="report-actions report-view-actions"><button type="button" data-view-report aria-controls="report-full-details" aria-expanded="false">View my full report</button></div><p>Explore your detailed results here. No email or download needed.</p>'}
+    <article class="report-card" id="report-checkpoint"><h3>Keep your checkpoint</h3><p>On ${escape(report.nextCheckDate)}, ask: What action did I take? What changed? What will I adjust before payday?</p>${example ? '<p>Complete your own check to save a personal report. These example numbers are not your answers.</p>' : '<div class="report-actions"><button type="button" data-save-report>Download my report</button><button type="button" data-print-report>Print or save PDF</button><button type="button" data-edit-report>Edit my answers</button></div><p data-save-status role="status"></p><p>Your download contains your financial answers. Keep it privately. FFM does not store a copy.</p>'}</article>
+    <details class="report-details" id="report-full-details"><summary>Explore your instruments and full breakdown</summary><div class="instrument-grid">${report.instruments.map((i, n) => `<article class="instrument ${i.tone}" style="--order:${n}"><h3>${i.label}</h3><strong>${i.word}</strong><span>${i.rating}/5</span><div class="rating-segments" aria-label="${i.rating} out of 5">${Array.from({ length: 5 }, (_, j) => `<i class="${j < i.rating ? 'filled' : ''}"></i>`).join('')}</div></article>`).join('')}</div>
+    <article class="report-card paycheck"><h3>Where Your Paycheck Goes</h3><p class="report-pill">${report.paycheckMix.overBy ? `Over by ${money(report.paycheckMix.overBy)}` : `${money(report.paycheckMix.unassigned)} unassigned`}</p><div class="paycheck-bar" aria-hidden="true">${report.paycheckMix.shares.map(s => `<i class="mix-${s.key}" style="flex:${s.amount}"></i>`).join('')}</div><ul class="mix-legend">${report.paycheckMix.shares.map(s => `<li><i class="mix-${s.key}"></i>${s.label} <strong>${s.percent}%</strong></li>`).join('')}</ul>${report.paycheckMix.overBy ? '<p>Shares show your total outflow because your plan exceeds income.</p>' : ''}</article>
+    <article class="report-card"><h3>Pre Flight Checks</h3><div class="checks-grid">${report.checks.map((c, i) => `<div class="flight-check ${c.state}">${icon(c.state)}<span>${c.label}</span><strong>${c.answer}</strong>${renderCheckVisual(checkVisuals[i])}</div>`).join('')}</div></article>
+    <article class="report-card"><h3>Flight Path</h3><p>Current stage: <strong>${escape(report.stage.name)}</strong></p><div class="flight-track"><span class="score-position-marker" style="left:${stagePosition}%" role="img" aria-label="Current stage: ${escape(report.stage.name)}. Score: ${report.score} out of 100."></span></div><div class="flight-stages">${stages.map(([key, name, range]) => `<div class="${key === report.stage.key ? 'current' : ''}" ${key === report.stage.key ? 'aria-current="step"' : ''}><strong>${name}</strong><span>${range}</span></div>`).join('')}</div><p>${escape(report.stage.message)}</p></article>
+    <div class="report-columns"><article class="report-card"><h3>Instrument Readouts</h3><dl class="report-readouts">${report.readouts.map(r => `<div><dt>${r.label}</dt><dd>${escape(r.text)}</dd></div>`).join('')}</dl></article>
+    <article class="report-card"><h3>Emergency Runway</h3><p class="runway-number">${report.runway.monthsCovered.toFixed(1)} <span>months covered</span></p>${report.runway.noMonthlyNeeds ? '<p>Monthly needs are required to assess runway. No runway protection is assumed.</p>' : ''}<div class="runway-track" role="img" aria-label="${report.runway.monthsCovered.toFixed(1)} months covered. Goal ${report.runway.goalMonths.toFixed(1)} months. Scale 0 to 6 months."><div class="runway-fill" style="width:${report.runway.scaleMonths / 6 * 100}%"></div><i class="goal-marker" style="left:${Math.min(6, report.runway.goalMonths) / 6 * 100}%"></i></div><div class="runway-zones"><span>Thin<br>Under 1</span><span>Building<br>1 to under 3</span><span>Cleared<br>3 or more</span></div><p>${report.runway.zone} · Scale 6 months</p><h4>Your emergency goal</h4><p>${money(report.runway.saved)} of ${money(report.runway.goal)} saved${report.runway.goal > 0 ? ` · ${(report.runway.goalProgress * 100).toFixed(1)}% complete` : ' · No personal goal set'}. Your goal does not change your runway score.</p></article></div>
+    <div class="report-columns"><article class="report-card lights green-lights"><h3>Green Lights</h3><p><strong>Strongest signal:</strong> ${escape(report.plan.strongSignal)}</p>${report.greenLights.length ? report.greenLights.map(s => `<p>${escape(s)}</p>`).join('') : '<p>Start with your next move. Every check is a place to build.</p>'}</article><article class="report-card lights warning-lights ${report.warningLights.length ? 'has-warnings' : ''}"><h3>Warning Lights</h3><p><strong>Plan priorities:</strong> ${report.plan.warningLights.length ? report.plan.warningLights.map(escape).join(' · ') : 'Ownership Mindset'}</p>${report.warningLights.length ? report.warningLights.map(s => `<p>${escape(s)}</p>`).join('') : '<p>No warning lights on these checks. Keep your next review on the calendar.</p>'}</article></div>
+
+    <article class="report-card"><h3>Follow through on this priority</h3><p><strong>Do now:</strong> ${escape(report.plan.doNow)}</p><p><strong>This payday:</strong> ${escape(report.plan.thisPayday)}</p><p><strong>This month:</strong> ${escape(report.plan.thisMonth)}</p><p><strong>Your 30 day mission:</strong> ${escape(report.plan.thirtyDayMission)}</p><p>${escape(report.plan.flagContextNote)}</p></article>
+    <article class="report-card"><h3>Your input snapshot</h3><p>US dollars. Monthly amounts are flows. Current balances and your emergency goal are totals.</p>${report.focus.length ? `<p>Your focus: ${report.focus.map(escape).join(' · ')}. Your focus can guide the plan when supported by your numbers. It does not change your score.</p>` : ''}<dl class="report-readouts">${report.inputs.map(r => `<div><dt>${escape(r.label)}</dt><dd>${money(r.amount)}</dd></div>`).join('')}</dl></article>
+
+    ${report.breakdown ? `<article class="report-card"><h3>Your categories and accounts</h3>${[['needs','Monthly needs'],['wants','Monthly wants'],['investments','Current investments'],['cashAccounts','Cash accounts for reference only']].map(([key,title]) => report.breakdown[key].length ? `<h4>${title}</h4><dl class="report-readouts">${report.breakdown[key].map(row=>`<div><dt>${escape(row.label)}</dt><dd>${money(row.amount)}</dd></div>`).join('')}</dl>` : '').join('')}<p>Cash accounts listed here are excluded from investing and are not added to your Step 7 emergency balance.</p></article>` : ''}
+    </details><p class="report-footer">Education only. This score is a planning signal. Your numbers were not stored.</p>`;
+  if (!example) {
+    const details = node.querySelector('#report-full-details');
+    const viewReport = node.querySelector('[data-view-report]');
+    viewReport.onclick = () => {
+      details.open = true;
+      viewReport.setAttribute('aria-expanded', 'true');
+      const summary = details.querySelector('summary');
+      summary.focus({ preventScroll: true });
+      summary.scrollIntoView({ behavior: 'instant', block: 'start' });
+    };
+    details.addEventListener('toggle', () => viewReport.setAttribute('aria-expanded', String(details.open)));
+    node.querySelector('[data-save-report]').onclick = () => {
+      const url = URL.createObjectURL(new Blob([buildSnapshotHTML(report)], {type:'text/html;charset=utf-8'}));
+      const link = document.createElement('a'); link.href = url; link.download = snapshotFilename(report); link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      node.querySelector('[data-save-status]').textContent = 'Your dated HTML report is ready in Downloads. Open it anytime, or print it to PDF.';
+    };
+    node.querySelector('[data-print-report]').onclick = () => {
+      const view = window.open('', '_blank');
+      if (!view) { node.querySelector('[data-save-status]').textContent = 'Allow this print window, or download the report and use its browser Print menu.'; return; }
+      view.opener = null; view.document.open(); view.document.write(buildSnapshotHTML(report)); view.document.close(); view.focus(); view.print();
+    };
+    node.querySelector('[data-edit-report]').onclick = () => document.dispatchEvent(new Event('flight-report-edit'));
+    wirePlanEmailForm(node.querySelector('[data-plan-email-form]'), report);
+  }
+  return node;
+}
+
+export function revealFlightReport(result, { animateScore, onComplete, inputBreakdown = null }) {
+  activeReveal?.();
+  const node = renderFlightReport(result, { inputBreakdown });
+  node.scrollIntoView({ behavior: 'instant', block: 'start' });
+  const finish = (skipped = false) => {
+    if (done) return;
+    done = true; timers.forEach(clearTimeout); cancelScore();
+    document.removeEventListener('keydown', onKey);
+    if (skipped) trackEvent('reveal_skip', { reveal_phase: phase });
+    document.querySelector('main')?.removeAttribute('inert');
+    overlay.remove(); node.classList.remove('revealing'); node.removeAttribute('aria-hidden');
+    onComplete();
+    trackEvent('report_view', { stage_key: result.stage.key, score_band: getScoreBand(result.score), is_return: false });
+    node.scrollIntoView({ behavior: 'instant', block: 'start' }); node.querySelector('h2').focus({ preventScroll: true });
+    activeReveal = null;
+  };
+  let done = false, phase = 'instruments', cancelScore = () => {};
+  const timers = [];
+  const overlay = document.createElement('div'); overlay.className = 'reveal-overlay'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Your Flight Check is ready');
+  overlay.innerHTML = `<div class="reveal-content"><button type="button" class="reveal-skip">Skip</button><p class="eyebrow">Your Flight Check</p><h2>Reading your instruments</h2><div class="reveal-names">${['Cash Flow', 'Savings Rate', 'Debt Load', 'Runway', 'Investing Fuel'].map(n => `<span>${n}</span>`).join('')}</div><div class="reveal-gauge" style="--score:0"><strong>0</strong><span>out of 100</span></div><h3 class="reveal-stage">${escape(result.stage.name)}</h3><div class="reveal-path"><span class="score-position-marker" aria-hidden="true"></span></div><p class="reveal-status" aria-live="polite">Preparing your report</p></div>`;
+  const onKey = event => {
+    if (event.key === 'Escape') finish(true);
+    if (event.key === 'Tab') { event.preventDefault(); overlay.querySelector('button').focus(); }
+  };
+  document.addEventListener('keydown', onKey);
+  activeReveal = finish;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+  node.classList.add('revealing'); node.setAttribute('aria-hidden', 'true'); document.body.append(overlay); document.querySelector('main')?.setAttribute('inert', '');
+  overlay.querySelector('button').focus(); overlay.querySelector('button').onclick = () => finish(true);
+  const later = (fn, delay) => timers.push(setTimeout(fn, delay));
+  overlay.querySelectorAll('.reveal-names span').forEach((s, i) => later(() => s.classList.add('on'), i * 220));
+  later(() => {
+    phase = 'score';
+    cancelScore = animateScore(0, result.score, overlay.querySelector('.reveal-gauge strong'), overlay.querySelector('.reveal-gauge'), 1500);
+  }, 1200);
+  later(() => {
+    phase = 'stage'; overlay.classList.add('stage-locked');
+    overlay.querySelector('.reveal-path .score-position-marker').style.left = `${result.score}%`;
+    try { navigator.vibrate?.(15); } catch { /* Optional device feedback. */ }
+  }, 2700);
+  later(() => {
+    phase = 'tiles'; node.classList.add('reveal-tiles'); overlay.classList.add('reveal-finishing');
+    overlay.querySelector('.reveal-status').textContent = 'Your next move is ready';
+  }, 3200);
+  later(() => finish(), 4000);
+}

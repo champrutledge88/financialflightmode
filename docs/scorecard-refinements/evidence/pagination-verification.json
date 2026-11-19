@@ -1,0 +1,52 @@
+{
+  "checks": [
+    {
+      "name": "baseline",
+      "format": "A4",
+      "pages": 2,
+      "reflectOnPage2": true
+    },
+    {
+      "name": "baseline",
+      "format": "Letter",
+      "pages": 2,
+      "reflectOnPage2": true
+    },
+    {
+      "name": "large-values",
+      "format": "A4",
+      "pages": 2,
+      "reflectOnPage2": true
+    },
+    {
+      "name": "large-values",
+      "format": "Letter",
+      "pages": 2,
+      "reflectOnPage2": true
+    },
+    {
+      "name": "deficit",
+      "format": "A4",
+      "pages": 2,
+      "reflectOnPage2": true
+    },
+    {
+      "name": "deficit",
+      "format": "Letter",
+      "pages": 2,
+      "reflectOnPage2": true
+    },
+    {
+      "name": "no-needs",
+      "format": "A4",
+      "pages": 2,
+      "reflectOnPage2": true
+    },
+    {
+      "name": "no-needs",
+      "format": "Letter",
+      "pages": 2,
+      "reflectOnPage2": true
+    }
+  ]
+}

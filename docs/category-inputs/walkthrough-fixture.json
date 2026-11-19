@@ -1,0 +1,76 @@
+{
+  "income": 6000,
+  "needs": [
+    {
+      "label": "Housing (rent or mortgage)",
+      "amount": 1800
+    },
+    {
+      "label": "Utilities",
+      "amount": 250
+    },
+    {
+      "label": "Insurance",
+      "amount": 150
+    },
+    {
+      "label": "Groceries",
+      "amount": 700
+    },
+    {
+      "label": "Minimum debt payments",
+      "amount": 500
+    }
+  ],
+  "wants": [
+    {
+      "label": "Dining out",
+      "amount": 300
+    },
+    {
+      "label": "Optional subscriptions",
+      "amount": 300
+    },
+    {
+      "label": "Shopping",
+      "amount": 600
+    }
+  ],
+  "savings": 500,
+  "extraDebtPayment": 250,
+  "totalDebtBalance": 18120,
+  "emergencyFundSaved": 4000,
+  "emergencyFundGoal": 8000,
+  "investmentAccounts": [
+    {
+      "kind": "roth",
+      "nickname": "",
+      "amount": 1500
+    },
+    {
+      "kind": "brokerage",
+      "nickname": "",
+      "amount": 1000
+    },
+    {
+      "kind": "cash",
+      "nickname": "HYSA reserve",
+      "amount": 4000
+    }
+  ],
+  "immediatePressure": "Stable",
+  "shortTermObjective": "Save more consistently",
+  "expected": {
+    "needs": 3400,
+    "wants": 1200,
+    "investmentsCurrentValue": 2500,
+    "cashReferenceOnly": 4000,
+    "emergencyFundSaved": 4000,
+    "cashRemaining": 650,
+    "score": 71,
+    "stage": "Cruise Control",
+    "suggestedThreeMonthGoal": 10200,
+    "nextMove": "Move $100 of unassigned cash into savings on payday.",
+    "savingsRateAfterMove": "10.0%"
+  }
+}

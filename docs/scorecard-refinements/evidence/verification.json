@@ -1,0 +1,54 @@
+{
+  "browser": "134.0.6998.35",
+  "checks": [
+    {
+      "width": 320,
+      "score": 75,
+      "download": true,
+      "edit": true,
+      "openingOrder": true,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "score": 75,
+      "download": true,
+      "edit": true,
+      "openingOrder": true,
+      "noOverflow": true
+    },
+    {
+      "width": 1280,
+      "score": 75,
+      "download": true,
+      "edit": true,
+      "openingOrder": true,
+      "noOverflow": true
+    },
+    {
+      "name": "Unknown payment",
+      "score": 63
+    },
+    {
+      "name": "No debt",
+      "score": 75
+    },
+    {
+      "name": "Deficit",
+      "score": 50
+    },
+    {
+      "name": "Fully assigned",
+      "score": 85
+    },
+    {
+      "animatedReveal": true
+    },
+    {
+      "legacyEntry": true
+    }
+  ],
+  "errors": [],
+  "analyticsKeysOnly": true,
+  "noFinancialSubmission": true
+}

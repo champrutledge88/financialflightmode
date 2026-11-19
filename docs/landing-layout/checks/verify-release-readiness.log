@@ -1,0 +1,24 @@
+{
+  "origin": "http://127.0.0.1:4173",
+  "checks": [
+    {
+      "width": 390,
+      "headerContrast": 6.516667312865659,
+      "exactDeficit": 10,
+      "earlyActionAndSave": true,
+      "shortcuts": true,
+      "downloadMatches": true,
+      "errors": []
+    },
+    {
+      "width": 1280,
+      "headerContrast": 6.516667312865659,
+      "exactDeficit": 10,
+      "earlyActionAndSave": true,
+      "shortcuts": true,
+      "downloadMatches": true,
+      "errors": []
+    }
+  ],
+  "privacyDisclosure": true
+}
