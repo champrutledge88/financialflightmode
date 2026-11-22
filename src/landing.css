@@ -18,14 +18,14 @@
   font: 400 58px/1.08 Georgia, 'Times New Roman', serif; letter-spacing: -2.7px;
   text-transform: none; text-shadow: none; max-width: 870px; margin: 0 auto 14px;
 }
-.v3-hero h1 em { font-weight: 400; color: #ff5a00; }
+.v3-hero h1 em { font-weight: 400; color: var(--orange); }
 .v3-intro { font-size: 17px; line-height: 1.7; max-width: 545px; color: #e0e0e0; margin: 0 auto 16px; }
 .v3-actions { display: flex; justify-content: center; gap: 12px; }
 .v3-primary, .v3-secondary {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   border-radius: 8px; min-height: 52px; padding: 16px 25px; font: 700 14px/1.4 Arial, sans-serif;
 }
-.v3-primary { border: 1px solid #ff5a00; background: #ff5a00; color: #050505; box-shadow: 0 6px 15px #ca5f2620; }
+.v3-primary { border: 1px solid var(--orange); background: var(--orange); color: #050505; box-shadow: 0 6px 15px #ca5f2620; }
 .v3-secondary { border: 1px solid #777; color: #eee; background: #111; }
 .v3-primary:hover { background: #ff762b; }
 .v3-secondary:hover { background: #242424; }
@@ -41,7 +41,7 @@
 .v3-pill { font-size: 10px; color: #ff965e; background: #2c231e; border-radius: 30px; padding: 7px 10px; white-space: nowrap; }
 .v3-report-main { display: grid; grid-template-columns: .9fr 1.1fr; gap: 26px; padding: 24px 0 4px; }
 .v3-score-area { display: flex; align-items: center; gap: 20px; }
-.v3-ring { width: 115px; height: 115px; border-radius: 50%; background: conic-gradient(#ff5a00 0 71%,#38342f 71%); padding: 7px; flex-shrink: 0; transform: rotate(-90deg); }
+.v3-ring { width: 115px; height: 115px; border-radius: 50%; background: conic-gradient(var(--orange) 0 71%,#38342f 71%); padding: 7px; flex-shrink: 0; transform: rotate(-90deg); }
 .v3-ring-in { background: #151515; border-radius: 50%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(90deg); }
 .v3-ring strong { font-size: 39px; font-weight: 500; letter-spacing: -2px; }
 .v3-ring small { font-size: 10px; color: #aaa; letter-spacing: 1px; }
@@ -54,13 +54,13 @@
 .v3-next { grid-column: 1 / -1; background: #2b1c14; padding: 13px; border: 1px solid #3b2619; border-radius: 8px; display: flex; gap: 10px; align-items: center; }
 .v3-next b { color: #ff7d35; font-size: 13px; }
 .v3-next p { font-size: 12px; line-height: 1.5; margin: 0; color: #d6b7a3; }
-.v3-check { background: #ff5a00; color: #050505; display: grid; place-items: center; border-radius: 50%; width: 23px; height: 23px; flex-shrink: 0; }
+.v3-check { background: var(--orange); color: #050505; display: grid; place-items: center; border-radius: 50%; width: 23px; height: 23px; flex-shrink: 0; }
 .v3-how { background: #151515; padding: 65px 26px 58px; text-align: center; font-family: Arial, sans-serif; }
 .v3-how h2, .v3-kit h2 { font: 400 36px/1.2 Georgia, serif; text-transform: none; letter-spacing: -1px; margin: 0 0 12px; }
 .v3-how > p { font-size: 14px; line-height: 1.7; color: #bbb; margin: 0 0 30px; }
 .v3-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; max-width: 900px; margin: auto; text-align: left; }
 .v3-step { border-top: 1px solid #333; padding-top: 18px; }
-.v3-num { font: 20px Georgia, serif; color: #ff5a00; }
+.v3-num { font: 20px Georgia, serif; color: var(--orange); }
 .v3-step h3 { font: 700 15px/1.4 Arial, sans-serif; text-transform: none; margin: 13px 0 8px; }
 .v3-step p { font-size: 14px; color: #bbb; line-height: 1.7; margin: 0; }
 .landing-v3 .v3-kit { display: block; text-align: center; max-width: 650px; margin: auto; padding: 48px 28px; background: transparent; border: 0; font-family: Arial, sans-serif; }
@@ -71,7 +71,7 @@
 .v3-kit .lead-form label { font-size: 13px; font-weight: 600; text-transform: none; }
 .v3-kit .lead-form input { min-height: 52px; border: 1px solid #777; background: #171717; color: #eee; font-size: 14px; }
 .v3-kit .lead-form input::placeholder { color: #aaa; opacity: 1; }
-.v3-kit .primary-button { background: #ff5a00; color: #050505; font: 700 14px/1.4 Arial, sans-serif; text-transform: none; letter-spacing: 0; box-shadow: none; }
+.v3-kit .primary-button { background: var(--orange); color: #050505; font: 700 14px/1.4 Arial, sans-serif; text-transform: none; letter-spacing: 0; box-shadow: none; }
 .v3-kit .lead-form p { color: #bbb; text-align: center; font-size: 13px; line-height: 1.7; }
 .v3-kit .lead-form .signup-disclosure { margin-top: 6px; font-size: 12px; }
 .v3-kit .signup-disclosure a { color: #ff965e; }
@@ -149,4 +149,43 @@
   .v3-report-head { flex-wrap: wrap; }
   .v3-score-area { gap: 12px; }
   .v3-score-copy h3 { font-size: 21px; }
+}
+
+/* Hold the scorecard's space until the guided flow is built, so the example
+   report below it does not jump when the script runs (layout shift). Only
+   applies where scripts run; heights match the guided start card per width. */
+@media (scripting: enabled) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 407px; }
+}
+@media (scripting: enabled) and (max-width: 669px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 427px; }
+}
+@media (scripting: enabled) and (max-width: 489px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 459px; }
+}
+@media (scripting: enabled) and (max-width: 469px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 489px; }
+}
+@media (scripting: enabled) and (max-width: 389px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 509px; }
+}
+@media (scripting: enabled) and (max-width: 359px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 527px; }
+}
+@media (scripting: enabled) and (max-width: 329px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 545px; }
+}
+@media (scripting: enabled) and (min-width: 1000px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 419px; }
+}
+@media (scripting: enabled) and (min-width: 1260px) {
+  .landing-v3 .scorecard-shell:not(:has(.guided-form)) { min-height: 436px; }
+}
+
+/* Phones get a 1000px copy of the same hero photo (41 KB instead of 98 KB). */
+@media (max-width: 760px) {
+  .landing-v3 .v3-hero {
+    background-image: linear-gradient(180deg,rgba(5,5,5,.8) 0%,rgba(5,5,5,.65) 36%,rgba(5,5,5,.3) 66%,#050505 100%),
+      url('/assets/runway-cockpit-hero-1000.jpg');
+  }
 }
