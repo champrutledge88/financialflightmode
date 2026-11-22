@@ -14,18 +14,18 @@
       <p class="eyebrow">Flight Plan Check In</p>
       <h1 data-checkin-title>Thanks for checking in.</h1>
       <section>
-        <p data-checkin-body>Your answer is in. Watch your inbox for your next step.</p>
+        <p data-checkin-body>Open your Flight Plan and pick one small step you can take this week.</p>
         <p>You can retake the Scorecard any time to update your Flight Plan.</p>
         <p><a class="primary-button" href="/ffm-scorecard.html">RETAKE THE SCORECARD</a></p>
       </section>
     </main>
     <script>
-      // Display only. The answer is recorded by the email link click, never by this page.
+      // The URL selects guidance. It cannot confirm that an email click was recorded or a follow-up was sent.
       (function () {
         var copy = {
-          done: ["Nice work. One move made.", "Your answer is in. Watch your inbox for your next step so you can keep the momentum going."],
-          started: ["Started counts.", "Your answer is in. Watch your inbox for a smaller version of the step you can finish in about 10 minutes."],
-          not_yet: ["No problem. Life gets busy.", "Your answer is in. Watch your inbox for a smaller first step. If you reply and tell us what got in the way, we will use it to make your next plan easier."]
+          done: ["Nice work. One move made.", "Take a minute to write down what worked. Then pick a day to repeat that step."],
+          started: ["Started counts.", "Open your Flight Plan and spend 10 minutes on the part of your next step you can finish today."],
+          not_yet: ["No problem. Life gets busy.", "Pick one piece of your next step that takes five minutes. Put it on your calendar for this week."]
         };
         var answer = new URLSearchParams(window.location.search).get("answer");
         if (!Object.prototype.hasOwnProperty.call(copy, answer)) return;
